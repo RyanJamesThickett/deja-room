@@ -1,7 +1,7 @@
 {
   // Déjà Room's multiplayer server. Deployed by scripts/deploy.sh; run locally with `pnpm mp`.
   "$schema": "../node_modules/wrangler/config-schema.json",
-  "name": "deja-room-mp",
+  "name": "mp",
   "main": "src/index.ts",
   "compatibility_date": "2026-11-01",
   "durable_objects": {
