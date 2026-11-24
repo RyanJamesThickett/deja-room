@@ -22,6 +22,10 @@ export interface RoomDef {
   items: ItemCatalog
   /** How many changes to spot before moving on; bigger, busier rooms get more. */
   changes: number
+  /** Seconds to find each change, if not the usual. Big co-op levels get longer, to split up and argue. */
+  huntSeconds?: number
+  /** Seconds for the first look, if not worked out from how many things the room has. */
+  studySeconds?: number
   bounds: Bounds
   /** Where the player stands (and looks) for the first look. After each change they're dropped somewhere random. */
   start: { position: Vec3; target: Vec3 }

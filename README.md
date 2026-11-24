@@ -48,15 +48,43 @@ Copy `src/game/rooms/shop/` as a starting point: `bounds.ts`, `items.ts`, a memo
 
 `pnpm dev`, then open `/?shot=x,y,z,tx,ty,tz` to render the room from a fixed camera with no HUD. Add `&swap=plant:bush,books:more` to show swap variants, `&move=tv:0` to apply a move, and `&room=spaceship` to pick a room. Add `&overlaps=1` to list everything that clips something else or pokes through a wall, in the default layout and with every swap and move applied (`src/dev/overlaps.ts`).
 
+## Multiplayer
+
+**Multiplayer!** on the title screen leads to two modes:
+
+- **VS**: two players, same room, same changes, at the same time. Each hunts alone; both results are revealed together, then the next change starts for both. Points as in solo; the quicker total time breaks a tie.
+- **Co-op**: 1 to 6 players in bigger levels made for teams (`COOP_ROOMS` in `src/game/rooms/index.ts`). Everyone wanders the same level (shown to each other as the faceless figure, with a name tag) and votes by clicking: your pin goes on what you think changed, and once everyone has a pin down, the most-voted thing is the team's guess. A different player breaks ties each change.
+
+Games are found by a four-letter code (consonants only, so no code spells anything) or an invite link (`?join=BKRT`). There are no accounts: each browser tab gets a random id and a generated name ("Wobbly Lamp"), so there's no typed text anywhere to moderate. Nothing is stored once a game ends.
+
+| File | What it does |
+| --- | --- |
+| `server/src/index.ts` | The match server: a Cloudflare Worker that gives each room code its own Durable Object (an in-memory game: who's in, the clock, results and votes). It never knows what changed; every browser works that out from the seed. |
+| `src/net/protocol.ts` | Every message and the shared timings, imported by both the game and the server. |
+| `src/net/useMatch.ts` | The game's connection: WebSocket, reconnecting, a clock lined up with the server's, rejoining after a refresh. |
+| `src/net/MultiplayerUI.tsx`, `CoopScene.tsx` | The menus, lobby and vote board; teammates and vote pins in the 3D view. |
+
+To play it locally, run both of these, each in its own terminal, then open the game in two windows side by side (or one normal and one private window):
+
+```bash
+pnpm dev
+```
+
+```bash
+pnpm mp
+```
+
+`pnpm mp` runs the match server with `wrangler dev` on port 8799; Vite forwards `/mp` to it.
+
 ## Hosting
 
-It's a static site, published free on Cloudflare Pages (unlimited bandwidth, which matters with ~70MB of 3D assets):
+The game is a static site, published free on Cloudflare Pages (unlimited bandwidth, which matters with ~100MB of 3D assets). The match server is a Cloudflare Worker with Durable Objects, also free:
 
 ```bash
 bash scripts/deploy.sh
 ```
 
-The first run opens a browser to log in to Cloudflare and creates the `deja-room` project; later runs just rebuild and upload. Set `PAGES_PROJECT=other-name` to use a different project name. `public/_headers` tells browsers to cache the models and textures for a week.
+The first run opens a browser to log in to Cloudflare and creates the `deja-room` project; later runs just rebuild and upload. It deploys the match server first, then builds the game with the server's address baked in (`VITE_MP_URL`). Set `PAGES_PROJECT=other-name` to use a different project name. `public/_headers` tells browsers to cache the models and textures for a week.
 
 ## Credits
 

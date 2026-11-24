@@ -1,0 +1,13 @@
+{
+  // Déjà Room's multiplayer server. Deployed by scripts/deploy.sh; run locally with `pnpm mp`.
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "deja-room-mp",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  "durable_objects": {
+    "bindings": [{ "name": "MATCH", "class_name": "Match" }]
+  },
+  // SQLite-backed Durable Objects are the kind the free plan allows (this one never writes to storage)
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Match"] }],
+  "observability": { "enabled": true }
+}

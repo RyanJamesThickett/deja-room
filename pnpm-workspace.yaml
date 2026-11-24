@@ -1,0 +1,4 @@
+# packages allowed to run install scripts (wrangler needs both: esbuild bundles, workerd is the local Workers runtime)
+allowBuilds:
+  esbuild: true
+  workerd: true

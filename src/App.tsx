@@ -1,34 +1,43 @@
 import { useProgress } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
-import { type MouseEvent, Suspense, useEffect, useEffectEvent, useMemo, useRef, useState, type ReactNode } from 'react'
+import { type CSSProperties, type MouseEvent, Suspense, useEffect, useEffectEvent, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { ItemDef } from './game/items'
 import { generateMutation, PALETTE, type Mutation, type Vec3 } from './game/mutations'
 import { requestLock } from './game/pointerLock'
 import { readSeed } from './game/rng'
-import { ROOMS } from './game/rooms'
+import { ALL_ROOMS, COOP_ROOMS, ROOMS } from './game/rooms'
+import { checkWorld } from './game/rooms/checkworld'
 import type { RoomDef } from './game/rooms/types'
 import { duckMusic, hushMusic, loadSoundSettings, muffleMusic, saveSoundSettings, sfx, type SoundSettings, unlockAudio } from './audio'
 import { loadProgress, saveProgress, withRoomDone } from './progress'
+import { PoseSender, Teammates, VotePins } from './net/CoopScene'
+import { CoopVoteBoard, Lobby, MultiplayerMenu } from './net/MultiplayerUI'
+import { ATTEMPTS, isCode, type MatchState, PLAYER_COLOURS, SHIFT_COVER_MS, SHIFT_MS } from './net/protocol'
+import { outcomeLine, standings } from './net/results'
+import { rememberedGame, useMatch } from './net/useMatch'
 import { CameraRig, type Guess, GuessPicker, House, InspectorBoxes, MissMarker, RevealMarker, ShowMe, type Snapshot, SnapshotProbe, WalkView } from './game/scene'
 import './App.css'
 
 /** Changes per room before you move on to the next room. */
 /** Time to find each change (the clock starts when the splash ends). */
 const HUNT_SECONDS = 35
+/** Co-op in a room that doesn't set its own: longer, to agree on a vote. */
+const COOP_HUNT_SECONDS = 60
 /** First look at a room: about 4.3s per changeable thing, 1 to 3 minutes. */
 const SECONDS_PER_ITEM = 4.3
 
 function firstLookSeconds(room: RoomDef) {
+  if (room.studySeconds) return room.studySeconds
   const raw = Object.keys(room.items).length * SECONDS_PER_ITEM
   return Math.min(180, Math.max(60, Math.round(raw / 10) * 10))
 }
-const SHIFT_MS = 1800
-/** The splash takes this long to fade fully in; the change happens only after. */
-const SHIFT_COVER_MS = 350
-const ATTEMPTS = 3
 
-/** `inspect` is the secret mode: walk a room, click anything, try its changes. */
-type Phase = 'title' | 'study' | 'shift' | 'hunt' | 'reveal' | 'end' | 'inspect'
+/**
+ * `inspect` is the secret mode: walk a room, click anything, try its changes.
+ * `multi` is the multiplayer menu and lobby; `wait` is a VS player who has
+ * finished hunting, waiting for the other to finish too.
+ */
+type Phase = 'title' | 'study' | 'shift' | 'hunt' | 'wait' | 'reveal' | 'end' | 'inspect' | 'multi'
 interface RoundResult {
   found: boolean
   points: number
@@ -69,14 +78,59 @@ function newHouse() {
   window.location.search = `?seed=${Math.random().toString(36).slice(2, 8)}`
 }
 
+/** Every change up to (not including) change `n`, worked out from the seed: the same in every browser. */
+function changesUpTo(seed: string, room: RoomDef, n: number) {
+  const past: Mutation[] = []
+  for (let r = 0; r < n; r++) past.push(generateMutation(`${seed}:${room.id}`, r, past, room.items))
+  return past
+}
+
+/**
+ * The game to join on load: from an invite link (?join=BKRT, tidied out of
+ * the address bar so leaving and refreshing doesn't rejoin), or the one this
+ * tab was in before a refresh.
+ */
+function joinCodeOnLoad() {
+  const params = new URLSearchParams(window.location.search)
+  const code = (params.get('join') ?? rememberedGame() ?? '').toUpperCase()
+  if (params.has('join')) {
+    params.delete('join')
+    window.history.replaceState(null, '', `${window.location.pathname}${params.size ? `?${params}` : ''}`)
+  }
+  return isCode(code) ? code : null
+}
+
+/**
+ * Whether the co-op levels are finished enough to play. Until then the normal
+ * rooms stand in, so co-op can be tried out while the market is being built.
+ */
+const COOP_LEVELS_READY = true
+const coopRooms = COOP_LEVELS_READY && COOP_ROOMS.length > 0 ? COOP_ROOMS : ROOMS
+
+/** A room by id, for multiplayer (the host picks it by id). */
+
+function findRoom(id: string | undefined) {
+  return ALL_ROOMS.find((r) => r.id === id)
+}
+
 function restartHouse() {
   leavingOnPurpose = true
   window.location.reload()
 }
 
 export default function App() {
-  const [seed] = useState(readSeed)
-  const [phase, setPhase] = useState<Phase>('title')
+  const [urlSeed] = useState(readSeed)
+  // An invite link (?join=BKRT), or a refresh part-way through a game, starts in multiplayer.
+  const [startCode] = useState(joinCodeOnLoad)
+  const [phase, setPhase] = useState<Phase>(startCode ? 'multi' : 'title')
+  // multiplayer: the connection to the match server and the game state it sends
+  const mp = useMatch((state) => followServer(state))
+  const match: MatchState | null = mp.state
+  /** In a multiplayer game that has started (not just sitting in the lobby). */
+  const online = match !== null && match.stage !== 'lobby'
+  const mpRoom = online ? findRoom(match.setup?.roomId) : undefined
+  const meOnline = match?.players.find((p) => p.id === mp.me.id)
+  const seed = online ? match.seed : urlSeed
   const [roomIndex, setRoomIndex] = useState(0)
   const [round, setRound] = useState(0)
   // Every change made to this room so far. They pile up: nothing gets put back.
@@ -117,6 +171,8 @@ export default function App() {
   /** The last whole second the clock ticked for, so each of the final five ticks once. */
   const lastTick = useRef(0)
   const [secretMenu, setSecretMenu] = useState(false)
+  /** Secret mode's room: any room (co-op ones too), or the item check world. */
+  const [secretRoom, setSecretRoom] = useState<RoomDef | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [hovered, setHovered] = useState<string | null>(null)
   const [previews, setPreviews] = useState<Record<string, Mutation>>({})
@@ -127,14 +183,18 @@ export default function App() {
   const [note, setNote] = useState<{ snap: Snapshot; text: string } | null>(null)
   // bumped by "Show me" to walk the player over to the change they missed
   const [showMe, setShowMe] = useState(0)
-  const { progress: loadPct } = useProgress()
+  const { progress: rawPct, active: fetching, total: fetchCount } = useProgress()
+  // A room built entirely in code (the market) fetches nothing, so the
+  // progress count never moves off 0 on a freshly opened page: nothing to
+  // fetch counts as done. (Ready still waits for the room's own warm-up.)
+  const loadPct = !fetching && fetchCount === 0 ? 100 : rawPct
   const loaded = loadPct >= 100
   // which rooms are open, and best scores, kept in this browser
   const [saved, setSaved] = useState(loadProgress)
   /** The room whose preview card is open on the menu, if any. */
   const [previewing, setPreview] = useState<number | null>(null)
 
-  const room = ROOMS[roomIndex]
+  const room = mpRoom ?? secretRoom ?? ROOMS[roomIndex]
   // the first look faces into the room; after each change you're put back facing a wall
   const firstLook = phase === 'title' || phase === 'study' || phase === 'inspect' || phase === 'end'
   const roomReady = loaded && readyRoom === room.id
@@ -150,6 +210,7 @@ export default function App() {
   const visible = useMemo(() => {
     switch (phase) {
       case 'title':
+      case 'multi':
         return EMPTY
       case 'study':
         return history.slice(0, round)
@@ -157,6 +218,7 @@ export default function App() {
         // keep the room exactly as it was until the splash hides it
         return history.slice(0, covered ? round + 1 : round)
       case 'hunt':
+      case 'wait':
         return history.slice(0, round + 1)
       case 'reveal':
         return history.slice(0, showBefore ? round : round + 1)
@@ -183,7 +245,8 @@ export default function App() {
   }
 
   function resume() {
-    if (pausedAt !== null && (phase === 'study' || phase === 'hunt')) setDeadline((d) => d + (Date.now() - pausedAt))
+    // online, the clock never stops for one player
+    if (!online && pausedAt !== null && (phase === 'study' || phase === 'hunt')) setDeadline((d) => d + (Date.now() - pausedAt))
     setPausedAt(null)
     lockPointer(pause)
   }
@@ -210,6 +273,7 @@ export default function App() {
     const t = Date.now()
     // the room remounts and loads again, even if it's the same one
     setReadyRoom(null)
+    setSecretRoom(null)
     setRoomIndex(index)
     setHistory([])
     setResults([])
@@ -245,6 +309,12 @@ export default function App() {
   }
 
   function endStudy() {
+    // online, the first look ends when everyone's seen enough (or the clock runs out)
+    if (online) {
+      if (!meOnline?.ready) sfx.click()
+      mp.send({ t: 'ready' })
+      return
+    }
     makeChange(0)
   }
 
@@ -255,6 +325,18 @@ export default function App() {
   }
 
   function finishRound(found: boolean, points: number) {
+    if (online && match.mode === 'vs') {
+      // VS: send the result in, then wait to see how the other player did
+      const huntStarted = mp.toLocal(match.huntStart + SHIFT_MS)
+      mp.send({
+        t: 'result',
+        round,
+        outcome: { found, points, misses: found ? ATTEMPTS - attemptsLeft : ATTEMPTS, ms: Math.max(0, Date.now() - huntStarted) },
+      })
+      setResults((r) => [...r.slice(0, round), { found, points }])
+      setPhase('wait')
+      return
+    }
     setResults((r) => [...r.slice(0, round), { found, points }])
     setPhase('reveal')
     setShowBefore(false)
@@ -262,6 +344,11 @@ export default function App() {
   }
 
   function next() {
+    if (online) {
+      if (!meOnline?.ready) sfx.click()
+      mp.send({ t: 'ready' })
+      return
+    }
     if (round + 1 >= room.changes) {
       setBestBefore(saved.best[room.id])
       sfx.fanfare(roomScore > 0 && roomScore > (saved.best[room.id] ?? -1))
@@ -281,6 +368,10 @@ export default function App() {
 
   /** Bank this room's score and walk into the next, completely different room. */
   function nextRoom() {
+    if (online) {
+      if (match.hostId === mp.me.id) mp.send({ t: 'lobby' })
+      return
+    }
     if (!nextRoomDef) return
     setBanked((b) => [...b, { label: room.label, score: roomScore }])
     startRoom(roomIndex + 1)
@@ -299,9 +390,9 @@ export default function App() {
     }
   }
 
-  function enterInspector(index: number) {
+  function enterInspector(r: RoomDef) {
     setSecretMenu(false)
-    setRoomIndex(index)
+    setSecretRoom(r)
     setHistory([])
     setResults([])
     setPreviews({})
@@ -336,13 +427,32 @@ export default function App() {
       flash('That’s just the room. Aim at an object.')
       return
     }
+    const name = item ? label(item) : decoy
+    const key = item ?? `decoy:${decoy}`
+    // co-op: a click puts your pin on it (or moves it there); the team's guess is the vote
+    if (online && match.mode === 'coop' && match.coop) {
+      if (match.coop.misses.some((m) => m.key === key)) {
+        sfx.nope()
+        flash(`The team already tried the ${name}.`)
+        return
+      }
+      if (match.coop.votes[mp.me.id]?.key === key) {
+        // clicking your own pick again takes the pin back out
+        mp.send({ t: 'vote', round, vote: null })
+        sfx.nope()
+        flash('Pin taken back')
+        return
+      }
+      mp.send({ t: 'vote', round, vote: { key, point, correct: item === current.target } })
+      sfx.click()
+      flash(`Your pin's on the ${name}`)
+      return
+    }
     if (item === current.target) {
       sfx.found()
       finishRound(true, attemptsLeft)
       return
     }
-    const name = item ? label(item) : decoy
-    const key = item ?? `decoy:${decoy}`
     if (tried.includes(key)) {
       sfx.nope()
       flash(`You already tried the ${name}.`)
@@ -370,6 +480,10 @@ export default function App() {
   /** The room is on screen: if this is its first look, the clock starts now rather than when it began loading. */
   function onRoomReady(id: string) {
     setReadyRoom(id)
+    if (online) {
+      mp.send({ t: 'loaded' })
+      return
+    }
     if (phase === 'study' && round === 0) {
       const t = Date.now()
       setDeadline(t + firstLookSeconds(room) * 1000)
@@ -377,9 +491,168 @@ export default function App() {
     }
   }
 
+  /** The last server step acted on (see followServer). */
+  const applied = useRef('')
+  /** Co-op: the last team guess already announced. */
+  const lastGuessAt = useRef(0)
+
+  /** A vote's key as words: an item's label, or a red herring's. */
+  function keyLabel(key: string) {
+    return key.startsWith('decoy:') ? key.slice('decoy:'.length) : label(key)
+  }
+
+  /** Leave the multiplayer game (or lobby) for the title screen. */
+  function leaveGame() {
+    applied.current = ''
+    mp.leave()
+    exitLock()
+    setPausedAt(null)
+    setShowBefore(false)
+    setPhase('title')
+  }
+
+  /**
+   * Online, the server says when each stage starts. This brings the game in
+   * line with whatever it last sent: into the room, each change, each reveal,
+   * the end. It also catches up a player who rejoins part-way through.
+   */
+  function followServer(s: MatchState) {
+    if (s.stage === 'lobby') {
+      applied.current = ''
+      if (phase !== 'multi') {
+        exitLock()
+        setPausedAt(null)
+        setPhase('multi')
+      }
+      return
+    }
+    const r = findRoom(s.setup?.roomId)
+    if (!r) return
+    const me = s.players.find((p) => p.id === mp.me.id)
+    // VS: your own results; co-op: the team's
+    const outcomes = s.mode === 'coop' ? (s.coop?.outcomes ?? []) : (me?.outcomes ?? [])
+    const myResults = outcomes.map((o) => (o ? { found: o.found, points: o.points } : { found: false, points: 0 }))
+    // co-op: a team guess just went in and it wasn't it (a right one ends the hunt instead)
+    const guess = s.mode === 'coop' && s.stage === 'hunt' ? s.coop?.lastGuess : null
+    if (guess && guess.at !== lastGuessAt.current) {
+      lastGuessAt.current = guess.at
+      if (!guess.correct) {
+        sfx.wrong()
+        flash(`The team went with the ${keyLabel(guess.key)}. Not it!`)
+      }
+    }
+    // Each step below happens once. Two messages can land before React has
+    // re-rendered, so the phase in this closure can't be trusted to say whether
+    // a step has already been taken; this key can.
+    const step = s.stage === 'loading' || s.stage === 'study' ? `${s.seed}:enter` : `${s.seed}:${s.stage}:${s.round}`
+    const first = applied.current !== step
+    applied.current = step
+    switch (s.stage) {
+      case 'loading':
+      case 'study':
+        if (first) {
+          setReadyRoom(null)
+          setHistory([])
+          setResults([])
+          setRound(0)
+          setMisses([])
+          setTried([])
+          setAttemptsLeft(ATTEMPTS)
+          setShowBefore(false)
+          setPausedAt(null)
+          setResetToken((k) => k + 1)
+          setPhase('study')
+        }
+        setDeadline(s.stage === 'study' ? mp.toLocal(s.deadline) : 0)
+        setNow(Date.now())
+        break
+      case 'hunt':
+        if (first) {
+          setHistory(changesUpTo(s.seed, r, s.round + 1))
+          setRound(s.round)
+          setMisses([])
+          setTried([])
+          setAttemptsLeft(ATTEMPTS)
+          setShowBefore(false)
+          setResults(myResults.slice(0, s.round))
+          // just started: play the splash; joining late: straight into the hunt
+          if (mp.serverNow() - s.huntStart < SHIFT_MS - 300) {
+            sfx.whoosh()
+            duckMusic(1.4)
+            setCovered(false)
+            setPhase('shift')
+          } else {
+            setCovered(true)
+            setResetToken((k) => k + 1)
+            setPhase(me?.done ? 'wait' : 'hunt')
+            setDeadline(mp.toLocal(s.deadline))
+            setNow(Date.now())
+          }
+        }
+        break
+      case 'reveal':
+        if (first) {
+          setHistory(changesUpTo(s.seed, r, s.round + 1))
+          setRound(s.round)
+          setResults(myResults)
+          setShowBefore(false)
+          setPhase('reveal')
+          // the results land for everyone at once, so this is the moment for the sound
+          if (outcomes[s.round]?.found) sfx.found()
+          else sfx.fail()
+        }
+        break
+      case 'end':
+        if (first) {
+          setHistory(changesUpTo(s.seed, r, s.setup!.changes))
+          setResults(myResults)
+          setShowBefore(false)
+          setPhase('end')
+          setResetToken((k) => k + 1)
+          sfx.fanfare(s.mode === 'coop' ? myResults.some((r) => r.found) : standings(s)[0]?.player.id === mp.me.id)
+          duckMusic(2)
+        }
+        break
+    }
+    // co-op: the team's tries and wrong guesses, after any reset above
+    if (s.mode === 'coop' && s.coop && s.stage === 'hunt') {
+      setAttemptsLeft(s.coop.attemptsLeft)
+      setMisses(s.coop.misses.map((m) => m.point))
+    }
+  }
+
+  // An invite link, or a refresh part-way through a game: connect straight away (the phase already started on `multi`).
+  const joinOnLoad = useEffectEvent(() => {
+    if (startCode) mp.join(startCode)
+  })
+  useEffect(() => joinOnLoad(), [])
+
+  // Host: pick the first room on arriving in a lobby, so Start works straight away.
+  const pickFirstRoom = useEffectEvent(() => {
+    if (match?.stage === 'lobby' && match.hostId === mp.me.id && !match.setup) {
+      const first = (match.mode === 'coop' ? coopRooms : ROOMS)[0]
+      if (first) pickOnlineRoom(first, false)
+    }
+  })
+  useEffect(() => pickFirstRoom(), [match?.stage, match?.hostId, match?.setup])
+
+  function pickOnlineRoom(r: RoomDef, click = true) {
+    if (click) sfx.click()
+    mp.send({
+      t: 'setup',
+      setup: {
+        roomId: r.id,
+        changes: r.changes,
+        studyMs: firstLookSeconds(r) * 1000,
+        // a team needs longer than one player: time to point things out and agree
+        huntMs: (r.huntSeconds ?? (match?.mode === 'coop' ? COOP_HUNT_SECONDS : HUNT_SECONDS)) * 1000,
+      },
+    })
+  }
+
   // Countdown for the first look and for each hunt (frozen while paused or loading).
   const tick = useEffectEvent(() => {
-    if (paused || !roomReady) return
+    if ((paused && !online) || !roomReady) return
     const t = Date.now()
     setNow(t)
     const left = Math.ceil((deadline - t) / 1000)
@@ -387,9 +660,11 @@ export default function App() {
       lastTick.current = left
       sfx.tick(left === 1)
     }
-    if (t < deadline) return
-    if (phase === 'study') endStudy()
-    else if (phase === 'hunt') timeUp()
+    if (t < deadline || !deadline) return
+    // online, the server ends the first look for everyone at once
+    if (phase === 'study') {
+      if (!online) endStudy()
+    } else if (phase === 'hunt' && !(online && match.mode === 'coop')) timeUp()
   })
   // Browsers keep quiet until the first click or key press, so start the sound on one.
   useEffect(() => {
@@ -405,10 +680,17 @@ export default function App() {
   useEffect(() => muffleMusic(paused), [paused])
 
   useEffect(() => {
-    if (phase !== 'study' && phase !== 'hunt') return
+    if (phase !== 'study' && phase !== 'hunt' && phase !== 'wait') return
     const id = setInterval(() => tick(), 250)
     return () => clearInterval(id)
   }, [phase])
+
+  const shiftDone = useEffectEvent(() => {
+    const t = Date.now()
+    setPhase(online && match.mode === 'vs' && meOnline?.done ? 'wait' : 'hunt')
+    setDeadline(online ? mp.toLocal(match.deadline) : t + HUNT_SECONDS * 1000)
+    setNow(t)
+  })
 
   // The splash between "before" and "after", then the hunt clock starts.
   useEffect(() => {
@@ -418,12 +700,7 @@ export default function App() {
       setCovered(true)
       setResetToken((k) => k + 1)
     }, SHIFT_COVER_MS)
-    const done = setTimeout(() => {
-      const t = Date.now()
-      setPhase('hunt')
-      setDeadline(t + HUNT_SECONDS * 1000)
-      setNow(t)
-    }, SHIFT_MS)
+    const done = setTimeout(() => shiftDone(), SHIFT_MS)
     return () => {
       clearTimeout(cover)
       clearTimeout(done)
@@ -447,6 +724,7 @@ export default function App() {
       if (e.code === 'ArrowRight') setPreview((saved.unlocked + previewing + 1) % saved.unlocked)
       if (e.code === 'ArrowLeft') setPreview((saved.unlocked + previewing - 1) % saved.unlocked)
     }
+    if (phase === 'multi' && e.code === 'Escape' && !match) setPhase('title')
     if (e.code === 'Enter') {
       if (paused) resume()
       else if (phase === 'title') {
@@ -553,7 +831,7 @@ export default function App() {
 
   // A stray Ctrl+W (or a mis-click on the tab's close button) mid-room would
   // lose the run, and browsers won't let a page block it. Ask first.
-  const midGame = phase !== 'title' && !(phase === 'end' && !nextRoomDef)
+  const midGame = online || (phase !== 'title' && phase !== 'multi' && !(phase === 'end' && !nextRoomDef))
   useEffect(() => {
     if (!midGame) return
     const guard = (e: BeforeUnloadEvent) => {
@@ -563,7 +841,11 @@ export default function App() {
     return () => window.removeEventListener('beforeunload', guard)
   }, [midGame])
 
-  const remaining = Math.max(0, deadline - (pausedAt ?? now))
+  // online the clock keeps going while you're paused
+  const remaining = Math.max(0, deadline - (online ? now : (pausedAt ?? now)))
+  /** VS: the other player (if there is one). */
+  const rival = online && match.mode === 'vs' ? match.players.find((p) => p.id !== mp.me.id) : undefined
+  const waitingFor = online ? match.players.filter((p) => p.connected && p.id !== mp.me.id && !p.ready) : []
 
   return (
     <div className="app">
@@ -571,32 +853,40 @@ export default function App() {
         <Canvas shadows camera={{ fov: 72, near: 0.03, far: 200, position: ROOMS[0].start.position }} dpr={[1, 2]}>
           <color attach="background" args={['#111111']} />
           {/* the menu shows no room, so nothing loads until one is picked */}
-          {phase !== 'title' && (
+          {phase !== 'title' && phase !== 'multi' && (
             <Suspense fallback={null}>
               <House key={room.id} room={room} mutations={visible} onReady={onRoomReady} />
             </Suspense>
           )}
           <CameraRig token={resetToken} idle={false} room={room} scatterSeed={firstLook ? undefined : `${seed}:${room.id}:${round}`} />
           <WalkView
-            enabled={phase !== 'title' && !paused}
+            enabled={phase !== 'title' && phase !== 'multi' && !paused}
             frozen={phase === 'shift' || !roomReady}
             bounds={room.bounds}
             layoutKey={`${room.id}:${phase}:${visible.length}`}
+            speed={room.id === checkWorld.id ? 3 : 1}
             onLockChange={onLockChange}
           />
-          <GuessPicker enabled={phase === 'hunt' || phase === 'inspect'} onPick={handleGuess} />
+          <GuessPicker enabled={phase === 'hunt' || (phase === 'inspect' && room.id !== checkWorld.id)} onPick={handleGuess} />
           {phase === 'inspect' && (
             <InspectorBoxes key={room.id} ids={Object.keys(room.items)} selected={selected} onHover={setHovered} />
           )}
           {phase === 'reveal' && current && <RevealMarker target={current.target} />}
           <SnapshotProbe token={noteToken} onSnapshot={(snap) => setNote({ snap, text: '' })} />
+          {online && match.mode === 'coop' && roomReady && phase !== 'title' && phase !== 'multi' && (
+            <>
+              <PoseSender send={(p, yaw) => mp.send({ t: 'pose', p, yaw })} />
+              <Teammates players={match.players} me={mp.me.id} poses={mp.poses} />
+              {phase === 'hunt' && match.coop && <VotePins votes={match.coop.votes} players={match.players} />}
+            </>
+          )}
           {phase === 'reveal' && current && <ShowMe target={current.target} token={showMe} bounds={room.bounds} />}
-          {(phase === 'hunt' || phase === 'reveal') && misses.map((p, i) => <MissMarker key={i} point={p} />)}
+          {(phase === 'hunt' || phase === 'wait' || phase === 'reveal') && misses.map((p, i) => <MissMarker key={i} point={p} />)}
         </Canvas>
       </div>
 
       <div className="comic-frame" aria-hidden="true" />
-      <RoomLoading show={phase !== 'title' && !roomReady} name={room.name} progress={loadPct} />
+      <RoomLoading show={phase !== 'title' && phase !== 'multi' && !roomReady} name={room.name} progress={loadPct} />
       {noMouse ? (
         <NoMouseNotice kind="device" onDismiss={() => setNoMouse(false)} />
       ) : (
@@ -649,7 +939,7 @@ export default function App() {
               <span className="sticker secret">Secret mode</span>
             </>
           )}
-          {phase !== 'title' && phase !== 'inspect' && (
+          {phase !== 'title' && phase !== 'inspect' && phase !== 'multi' && (
             <>
               <span className="sticker where">{room.label}</span>
               <span className="sticker room">
@@ -660,7 +950,7 @@ export default function App() {
                 {score}
                 <small> pts</small>
               </span>
-              {phase !== 'end' && saved.best[room.id] !== undefined && (
+              {!online && phase !== 'end' && saved.best[room.id] !== undefined && (
                 <span className="sticker best" title={`Your best in the ${room.label.toLowerCase()}`}>
                   <small>best </small>
                   {saved.best[room.id]}
@@ -668,10 +958,20 @@ export default function App() {
               )}
             </>
           )}
-          <span className="tag seed" title="Share this URL and others get the same changes">
-            house #{seed}
-          </span>
+          {match ? (
+            <span className="tag seed" title="The code friends use to join">
+              {match.mode === 'vs' ? 'VS' : 'Co-op'} · {match.code}
+              {mp.status === 'reconnecting' && ' · reconnecting…'}
+            </span>
+          ) : (
+            <span className="tag seed" title="Share this URL and others get the same changes">
+              house #{seed}
+            </span>
+          )}
           <SoundToggles sound={sound} onToggle={toggleSound} />
+          {phase !== 'title' && phase !== 'multi' && phase !== 'inspect' && (
+            <MenuButton online={online} onLeave={online ? leaveGame : toMenu} />
+          )}
         </header>
 
         {phase === 'title' && (
@@ -742,8 +1042,22 @@ export default function App() {
               <p className="level-hint">
                 Click a room for a look, or press <kbd>Enter</kbd> for the newest one.
               </p>
+
             </section>
-            <ControlsCard />
+            <div className="title-side">
+              <ControlsCard />
+              <button
+                type="button"
+                className="pop big mp-button"
+                onClick={() => {
+                  sfx.click()
+                  setPhase('multi')
+                }}
+              >
+                Multiplayer!
+                <small>VS or co-op</small>
+              </button>
+            </div>
             {previewing !== null && (
               <RoomPreview
                 room={ROOMS[previewing]}
@@ -757,7 +1071,31 @@ export default function App() {
           </div>
         )}
 
-        {phase === 'study' && (
+        {phase === 'multi' &&
+          (match?.stage === 'lobby' ? (
+            <Lobby
+              mp={mp}
+              state={match}
+              rooms={match.mode === 'coop' ? coopRooms : ROOMS}
+              note={match.mode === 'coop' && coopRooms === ROOMS ? 'The co-op level is still being built, so for now co-op uses the normal rooms.' : undefined}
+              selectedRoom={match.setup?.roomId}
+              onPickRoom={pickOnlineRoom}
+              onLeave={leaveGame}
+            />
+          ) : (
+            <MultiplayerMenu mp={mp} onBack={leaveGame} />
+          ))}
+
+        {phase === 'study' && online && match.stage === 'loading' && roomReady && (
+          <section className="study">
+            <div className="caption">
+              Waiting for {match.players.filter((p) => p.connected && !p.loaded).map((p) => p.name).join(' and ') || 'everyone'} to finish
+              loading…
+            </div>
+          </section>
+        )}
+
+        {phase === 'study' && !(online && match.stage === 'loading') && (
           <section className="study">
             <Burst tone="yellow" className="timer">
               {formatTime(remaining)}
@@ -765,10 +1103,16 @@ export default function App() {
             <div className="caption">
               {roomIndex === 0 ? 'Take it all in…' : `Welcome to ${room.name}…`}
             </div>
-            <button type="button" className="ready-cta" onClick={endStudy}>
-              <span className="ready-label">Seen enough?</span>
-              <span className="keycap">Enter ↵</span>
-            </button>
+            {online && meOnline?.ready ? (
+              <div className="caption small waiting">
+                Ready! Waiting for {waitingFor.map((p) => p.name).join(' and ') || 'everyone'}…
+              </div>
+            ) : (
+              <button type="button" className="ready-cta" onClick={endStudy}>
+                <span className="ready-label">Seen enough?</span>
+                <span className="keycap">Enter ↵</span>
+              </button>
+            )}
           </section>
         )}
 
@@ -780,7 +1124,7 @@ export default function App() {
           </div>
         )}
 
-        {phase === 'hunt' && (
+        {(phase === 'hunt' || phase === 'wait') && (
           <section className="study">
             <Burst tone={remaining < 10_000 ? 'red' : 'yellow'} className={remaining < 10_000 ? 'timer urgent' : 'timer'}>
               {formatTime(remaining)}
@@ -788,9 +1132,33 @@ export default function App() {
           </section>
         )}
 
+        {phase === 'wait' && (
+          <section className="hunt">
+            <div className="caption">
+              {results[round]?.found ? 'Locked in!' : 'Out of tries!'} Waiting for {rival?.name ?? 'the others'}…
+            </div>
+          </section>
+        )}
+
+        {phase === 'hunt' && online && match.mode === 'coop' && (
+          <CoopVoteBoard
+            state={match}
+            me={mp.me.id}
+            keyLabel={keyLabel}
+            settleIn={match.coop?.settleAt ? mp.toLocal(match.coop.settleAt) - now : null}
+          />
+        )}
+
         {phase === 'hunt' && (
           <section className="hunt">
-            <div className="caption">Something is different. Find it!</div>
+            <div className="caption">
+              {online && match.mode === 'coop' ? 'Something is different. Pin it!' : 'Something is different. Find it!'}
+            </div>
+            {rival && (
+              <div className={`rival-status${rival.done ? ' done' : ''}`} style={{ '--player': PLAYER_COLOURS[rival.colour] } as CSSProperties}>
+                {rival.name}: {!rival.connected ? 'left the game' : rival.done ? 'finished!' : 'still looking…'}
+              </div>
+            )}
             <div className="lives" aria-label={`${attemptsLeft} tries left`}>
               {Array.from({ length: ATTEMPTS }, (_, i) => (
                 <span key={i} className={i < attemptsLeft ? 'life' : 'life lost'} />
@@ -806,6 +1174,20 @@ export default function App() {
             </Burst>
             {results[round]?.found && <div className="points">+{results[round].points}</div>}
             <p className="reveal-line">{current.description}.</p>
+            {online && match.mode === 'coop' && match.coop?.outcomes[round] && (
+              <p className="coop-line">{outcomeLine(match.coop.outcomes[round]).replace('Found it', 'The team found it')}</p>
+            )}
+            {online && match.mode === 'vs' && (
+              <ul className="vs-results">
+                {match.players.map((p) => (
+                  <li key={p.id} style={{ '--player': PLAYER_COLOURS[p.colour] } as CSSProperties} className={p.outcomes[round]?.found ? 'found' : 'missed'}>
+                    <span className="vs-name">{p.id === mp.me.id ? 'You' : p.name}</span>
+                    <span className="vs-line">{outcomeLine(p.outcomes[round])}</span>
+                    <span className="vs-points">+{p.outcomes[round]?.points ?? 0}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
             <div className="row">
               <button type="button" className="pop ghost" onClick={() => setShowBefore((b) => !b)}>
                 {showBefore ? 'Before' : 'After'} <kbd>B</kbd>
@@ -815,14 +1197,73 @@ export default function App() {
                   Show me <kbd>T</kbd>
                 </button>
               )}
-              <button type="button" className="pop" onClick={next}>
-                {round + 1 >= room.changes ? 'Room done!' : 'Next change!'} <kbd>Enter</kbd>
-              </button>
+              {online && meOnline?.ready ? (
+                <span className="lobby-wait">Waiting for {waitingFor.map((p) => p.name).join(' and ') || 'everyone'}…</span>
+              ) : (
+                <button type="button" className="pop" onClick={next}>
+                  {online ? 'Ready!' : round + 1 >= room.changes ? 'Room done!' : 'Next change!'} <kbd>Enter</kbd>
+                </button>
+              )}
             </div>
           </section>
         )}
 
-        {phase === 'end' && (
+        {phase === 'end' && online && (
+          <section className={`panel end-panel${locked ? ' walking' : ''}`}>
+            <div className="caption">{room.label} done!</div>
+            <Burst tone="red" className="final vs-final">
+              {match.mode === 'coop' ? (
+                <>
+                  {score}
+                  <small>/{room.changes * ATTEMPTS}</small>
+                </>
+              ) : (() => {
+                const table = standings(match)
+                if (table.length > 1 && table[0].points === table[1].points && table[0].ms === table[1].ms) return 'Draw!'
+                return table[0]?.player.id === mp.me.id ? 'You win!' : `${table[0]?.player.name ?? 'Nobody'} wins!`
+              })()
+              }
+            </Burst>
+            {match.mode === 'coop' && (
+              <ol className="results">
+                {history.map((m, i) => (
+                  <li key={i} className={results[i]?.found ? 'found' : 'missed'}>
+                    {m.description}
+                  </li>
+                ))}
+              </ol>
+            )}
+            <ol className="vs-results standings" hidden={match.mode === 'coop'}>
+              {standings(match).map(({ player, points, ms }) => (
+                <li key={player.id} style={{ '--player': PLAYER_COLOURS[player.colour] } as CSSProperties}>
+                  <span className="vs-name">{player.id === mp.me.id ? 'You' : player.name}</span>
+                  <span className="vs-line">
+                    {player.outcomes.filter((o) => o?.found).length} of {room.changes} found · {(ms / 1000).toFixed(1)}s
+                  </span>
+                  <span className="vs-points">{points}</span>
+                </li>
+              ))}
+            </ol>
+            <p className="reveal-line">{showBefore ? 'This is the room when you walked in.' : 'This is the room now.'}</p>
+            <div className="row">
+              <button type="button" className="pop ghost" onClick={() => setShowBefore((b) => !b)}>
+                {showBefore ? 'Show now' : 'Show then'} <kbd>B</kbd>
+              </button>
+              <button type="button" className="pop ghost" onClick={leaveGame}>
+                Leave
+              </button>
+              {match.hostId === mp.me.id ? (
+                <button type="button" className="pop" onClick={nextRoom}>
+                  Back to the lobby <kbd>Enter</kbd>
+                </button>
+              ) : (
+                <span className="lobby-wait">Waiting for the host…</span>
+              )}
+            </div>
+          </section>
+        )}
+
+        {phase === 'end' && !online && (
           <section className={`panel end-panel${locked ? ' walking' : ''}`}>
             <div className="caption">{nextRoomDef ? `${room.label} done!` : 'The end…?'}</div>
             <Burst tone="red" className="final">
@@ -875,7 +1316,7 @@ export default function App() {
           </section>
         )}
 
-        {phase !== 'title' && phase !== 'shift' && !paused && (
+        {phase !== 'title' && phase !== 'multi' && phase !== 'shift' && !paused && (
           <div className="footer">
             <span className="caption small">
               {phase === 'inspect'
@@ -883,9 +1324,11 @@ export default function App() {
                   ? 'Aim at a box and click to inspect it · Esc to free the mouse'
                   : 'Click the room to walk around'
                 : locked
-                  ? phase === 'reveal' || phase === 'end'
+                  ? phase === 'wait'
+                    ? 'Walk about while you wait · Esc for the menu'
+                    : phase === 'reveal' || phase === 'end'
                     ? `Walk about and have a look · B ${phase === 'end' ? 'then / now' : 'before / after'}${phase === 'reveal' && !results[round]?.found ? ' · T show me' : ''} · Enter ${phase === 'end' ? 'next room' : 'next'} · Esc free the mouse`
-                    : `WASD walk · Space jump · C crouch${phase === 'hunt' ? ' · click what changed' : ''} · Esc pause`
+                    : `WASD walk · Space jump · C crouch${phase === 'hunt' ? (online && match.mode === 'coop' ? ' · click to pin your vote, again to take it back' : ' · click what changed') : ''} · Esc pause`
                   : 'Click the room to look around'}
             </span>
           </div>
@@ -912,7 +1355,11 @@ export default function App() {
                 />
               </>
             ) : (
-              <p>Walk around and click any boxed object to see every way it can change.</p>
+              <p>
+                {room.id === checkWorld.id
+                  ? 'Every changeable thing in every room, each with its variants lined up behind it (default first, with the yellow sign). Walk the rows; hold P to note a problem with whatever you’re looking at.'
+                  : 'Walk around and click any boxed object to see every way it can change.'}
+              </p>
             )}
             <div className="inspector-actions">
               <button type="button" className="pop ghost small" onClick={() => setPreviews({})}>
@@ -942,12 +1389,18 @@ export default function App() {
               Secret mode!
             </h2>
             <div className="caption">Pick a room to poke around in</div>
-            <div className="pause-actions">
-              {ROOMS.map((r, i) => (
-                <button key={r.id} type="button" className="pop big" onClick={() => enterInspector(i)}>
+            <div className="secret-grid">
+              {ALL_ROOMS.map((r) => (
+                <button key={r.id} type="button" className="pop" onClick={() => enterInspector(r)}>
                   {r.label}
                 </button>
               ))}
+            </div>
+            <div className="pause-actions">
+              <button type="button" className="pop big check-world-button" onClick={() => enterInspector(checkWorld)}>
+                Item check world
+                <small>every item and variant, in rows</small>
+              </button>
               <button type="button" className="pop ghost" onClick={() => setSecretMenu(false)}>
                 Never mind
               </button>
@@ -956,7 +1409,7 @@ export default function App() {
         </div>
       )}
 
-      {paused && playing && (
+      {paused && (playing || (online && phase === 'wait')) && (
         <div className="pause" role="dialog" aria-modal="true" aria-labelledby="pause-title">
           <div className="pause-rays" />
           <div className="pause-body">
@@ -969,17 +1422,29 @@ export default function App() {
                 ? `${formatTime(remaining)} left to look`
                 : `${formatTime(remaining)} and ${attemptsLeft} tries left`}
             </div>
+            {online && <div className="caption small">The clock keeps running in online games!</div>}
             <div className="pause-columns">
               <div className="pause-actions">
                 <button type="button" className="pop big" onClick={resume} autoFocus>
                   Back in! <kbd>Enter</kbd>
                 </button>
-                <button type="button" className="pop ghost" onClick={restartHouse}>
-                  Restart this house
-                </button>
-                <button type="button" className="pop ghost" onClick={newHouse}>
-                  New house
-                </button>
+                {online ? (
+                  <button type="button" className="pop ghost" onClick={leaveGame}>
+                    Leave the game
+                  </button>
+                ) : (
+                  <>
+                    <button type="button" className="pop ghost" onClick={restartHouse}>
+                      Restart this house
+                    </button>
+                    <button type="button" className="pop ghost" onClick={newHouse}>
+                      New house
+                    </button>
+                    <button type="button" className="pop ghost" onClick={toMenu}>
+                      Back to the menu
+                    </button>
+                  </>
+                )}
                 <SoundToggles sound={sound} onToggle={toggleSound} big />
               </div>
               <ControlsCard />
@@ -995,6 +1460,35 @@ export default function App() {
  * Music and sound-effect switches: in the top corner, and in the pause menu
  * (in a level the mouse is captured, so the corner ones can't be clicked).
  */
+/**
+ * Back to the title screen from anywhere in a room (or out of an online
+ * game). Leaving loses the run, so the first click asks and a second goes.
+ */
+function MenuButton({ online, onLeave }: { online: boolean; onLeave: () => void }) {
+  const [asking, setAsking] = useState(false)
+  useEffect(() => {
+    if (!asking) return
+    // changed your mind: it goes back to normal by itself
+    const id = setTimeout(() => setAsking(false), 3000)
+    return () => clearTimeout(id)
+  }, [asking])
+  return (
+    <button
+      type="button"
+      className={`menu-button${asking ? ' asking' : ''}`}
+      title={online ? 'Leave this game' : 'Back to the menu'}
+      onClick={(e) => {
+        // or Space (jump) would press it again
+        e.currentTarget.blur()
+        if (asking) onLeave()
+        else setAsking(true)
+      }}
+    >
+      {asking ? (online ? 'Leave the game? Click again' : 'Leave? Click again') : online ? 'Leave' : 'Menu'}
+    </button>
+  )
+}
+
 function SoundToggles({
   sound,
   onToggle,

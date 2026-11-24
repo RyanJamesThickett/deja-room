@@ -1700,3 +1700,506 @@ button.pop:disabled {
   padding: 0.15rem 0.4rem;
   font-size: 0.68rem;
 }
+
+/* ------------------------------------------------------------------------
+   Multiplayer: the mode choice, start / join, the lobby and VS results
+   ------------------------------------------------------------------------ */
+/* the title screen's right-hand column: controls, then the way into multiplayer */
+.title-side {
+  display: grid;
+  justify-items: center;
+  gap: 1.4rem;
+}
+.title-side .mp-button {
+  --r: -2deg;
+  display: grid;
+  justify-items: center;
+  gap: 0.15rem;
+  margin-top: 0;
+  background: var(--blue);
+}
+.title-side .mp-button small {
+  font: 800 0.75rem/1 var(--body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-shadow: none;
+}
+.mp-panel {
+  width: min(44rem, calc(100vw - 3rem));
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+.mp-panel > .caption {
+  margin-top: -3.4rem;
+  font-size: 1.7rem;
+  background: var(--blue);
+  color: #fff;
+  text-shadow: 2px 2px 0 var(--ink);
+  transform: rotate(-2deg);
+}
+.mp-title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font: 400 2rem/1.05 var(--display);
+  letter-spacing: 0.03em;
+}
+.mp-modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.1rem;
+  width: 100%;
+}
+.mp-mode {
+  display: grid;
+  gap: 0.35rem;
+  justify-items: start;
+  padding: 1rem 1.1rem 1.1rem;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  background: var(--yellow);
+  border: var(--outline);
+  box-shadow: 6px 6px 0 var(--ink);
+  cursor: pointer;
+  transform: rotate(-1deg);
+  transition:
+    transform 0.1s ease-out,
+    box-shadow 0.1s ease-out;
+}
+.mp-mode.coop {
+  background: var(--cyan);
+  transform: rotate(1deg);
+}
+.mp-mode:hover,
+.mp-mode:focus-visible {
+  transform: translate(-3px, -3px) rotate(0deg);
+  box-shadow: 9px 9px 0 var(--ink);
+}
+.mp-mode-title {
+  font: 400 3rem/0.9 var(--display);
+  letter-spacing: 0.03em;
+  color: #fff;
+  -webkit-text-stroke: 2px var(--ink);
+  paint-order: stroke fill;
+  text-shadow: 3px 3px 0 var(--ink);
+}
+.mp-mode-players {
+  font: 800 0.8rem/1 var(--body);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.5rem;
+  background: #fff;
+  border: 2px solid var(--ink);
+}
+.mp-mode-blurb {
+  font: 600 0.98rem/1.4 var(--body);
+}
+.mp-chip {
+  padding: 0.15rem 0.55rem 0.05rem;
+  font-size: 1.5rem;
+  color: #fff;
+  text-shadow: 2px 2px 0 var(--ink);
+  background: var(--pink);
+  border: var(--outline);
+  transform: rotate(-4deg);
+}
+.mp-chip.coop {
+  background: var(--blue);
+}
+.mp-start {
+  display: grid;
+  justify-items: center;
+  gap: 0.9rem;
+}
+.mp-start .pop.big {
+  margin-top: 0.4rem;
+}
+.mp-join {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font: 700 0.95rem/1 var(--body);
+}
+.mp-code-input {
+  width: 7.5rem;
+  padding: 0.35rem 0.5rem 0.2rem;
+  font: 400 2rem/1 var(--display);
+  letter-spacing: 0.3em;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: #fff;
+  border: var(--outline);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.mp-code-input:focus {
+  outline: 3px dashed var(--blue);
+  outline-offset: 3px;
+}
+.mp-error {
+  margin: 0;
+  padding: 0.4rem 0.8rem;
+  font: 800 0.95rem/1.3 var(--body);
+  color: #fff;
+  background: var(--red);
+  border: var(--outline);
+  transform: rotate(-1deg);
+}
+.mp-name {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0;
+  font: 600 0.95rem/1.2 var(--body);
+}
+.mp-name .pop.small {
+  font-size: 0.95rem;
+}
+.mp-footer {
+  justify-content: center;
+  align-items: center;
+}
+
+/* the lobby */
+.lobby-code {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.lobby-code-label {
+  font: 800 0.8rem/1 var(--body);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.lobby-letters {
+  display: flex;
+  gap: 0.35rem;
+}
+.lobby-letters span {
+  display: grid;
+  place-items: center;
+  width: 3.2rem;
+  height: 3.6rem;
+  font: 400 2.6rem/1 var(--display);
+  color: var(--ink);
+  background: #fff;
+  border: var(--outline);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.lobby-letters span:nth-child(odd) {
+  transform: rotate(-4deg);
+  background: var(--yellow);
+}
+.lobby-letters span:nth-child(even) {
+  transform: rotate(3deg);
+}
+.lobby-players {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lobby-players li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.7rem;
+  font: 700 0.95rem/1.2 var(--body);
+  text-align: left;
+  background: #fff;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.lobby-players .lobby-empty {
+  justify-content: center;
+  color: #6d6d6d;
+  background: transparent;
+  border-style: dashed;
+  box-shadow: none;
+}
+.lobby-dot {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  background: var(--player);
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+}
+.lobby-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lobby-tag {
+  padding: 0.1rem 0.4rem;
+  font: 800 0.65rem/1.2 var(--body);
+  text-transform: uppercase;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+}
+.lobby-tag.host {
+  background: var(--yellow);
+}
+.lobby-count {
+  margin: -0.4rem 0 0;
+  font: 700 0.8rem/1 var(--body);
+}
+.lobby-rooms {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: center;
+  width: 100%;
+}
+.lobby-rooms-label {
+  font: 800 0.8rem/1 var(--body);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.lobby-room-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem;
+}
+.lobby-room {
+  padding: 0.35rem 0.7rem 0.25rem;
+  font: 400 1.1rem/1 var(--display);
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  background: #fff;
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  cursor: pointer;
+}
+.lobby-room.picked {
+  color: #fff;
+  text-shadow: 1px 1px 0 var(--ink);
+  background: var(--pink);
+  transform: rotate(-2deg);
+}
+.lobby-wait {
+  font: 700 0.95rem/1.3 var(--body);
+}
+
+/* VS: how the other player is getting on, mid-hunt */
+.rival-status {
+  margin-top: 0.6rem;
+  padding: 0.3rem 0.7rem;
+  font: 800 0.85rem/1.2 var(--body);
+  background: #fff;
+  border: 2px solid var(--ink);
+  border-left: 0.6rem solid var(--player);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.rival-status.done {
+  background: var(--yellow);
+}
+.study .waiting {
+  margin-top: 0.6rem;
+}
+
+/* VS: both results side by side, and the final standings */
+.vs-results {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.vs-results li {
+  display: grid;
+  grid-template-columns: 7rem 1fr auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.35rem 0.6rem;
+  font: 700 0.92rem/1.2 var(--body);
+  background: #fff;
+  border: 2px solid var(--ink);
+  border-left: 0.7rem solid var(--player);
+}
+.vs-results li.missed {
+  background: #eee;
+}
+.vs-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 800;
+}
+.vs-points {
+  font: 400 1.5rem/1 var(--display);
+}
+.vs-results.standings li:first-child {
+  background: var(--yellow);
+}
+.burst.vs-final span {
+  font-size: 0.6em;
+}
+
+/* ------------------------------------------------------------------------
+   Co-op: the vote board, teammates' name tags, the team's result line
+   ------------------------------------------------------------------------ */
+.vote-board {
+  /* top left, under the logo: the timer has the top right */
+  position: absolute;
+  top: 6.2rem;
+  left: 28px;
+  width: 17rem;
+  padding: 0.7rem 0.8rem 0.8rem;
+  background: var(--dots), var(--paper);
+  border: var(--outline);
+  box-shadow: 5px 5px 0 var(--ink);
+  transform: rotate(-1deg);
+}
+.vote-board-title {
+  margin: -1.5rem 0 0.5rem;
+  display: inline-block;
+  padding: 0.25rem 0.6rem 0.15rem;
+  font: 400 1.15rem/1 var(--display);
+  letter-spacing: 0.05em;
+  color: #fff;
+  text-shadow: 1px 1px 0 var(--ink);
+  background: var(--blue);
+  border: var(--outline);
+  transform: rotate(-2deg);
+}
+.vote-board ul {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.vote-board li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.45rem;
+  font: 700 0.82rem/1.2 var(--body);
+}
+.vote-board li .vote-what {
+  max-width: 8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #6d6d6d;
+}
+.vote-board li.voted .vote-what {
+  color: var(--ink);
+  padding: 0.1rem 0.4rem;
+  background: #fff;
+  border: 2px solid var(--player);
+  border-radius: 999px;
+}
+.vote-who {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vote-breaker {
+  margin-left: 0.25rem;
+  color: var(--pink);
+}
+.vote-settle {
+  margin-top: 0.6rem;
+  padding: 0.35rem 0.5rem;
+  font: 800 0.88rem/1.25 var(--body);
+  text-align: center;
+  background: var(--yellow);
+  border: 2px solid var(--ink);
+  animation: settle-pulse 0.5s ease-in-out infinite alternate;
+}
+@keyframes settle-pulse {
+  to {
+    transform: scale(1.04);
+  }
+}
+.teammate-tag {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  font: 800 0.8rem/1.2 var(--body);
+  white-space: nowrap;
+  color: var(--ink);
+  background: #fff;
+  border: 2px solid var(--ink);
+  border-bottom: 4px solid var(--player);
+  border-radius: 6px;
+  pointer-events: none;
+  user-select: none;
+}
+.coop-line {
+  margin: 0.5rem 0 0;
+  font: 700 0.95rem/1.3 var(--body);
+}
+@media (prefers-reduced-motion: reduce) {
+  .vote-settle {
+    animation: none;
+  }
+}
+.lobby-note {
+  max-width: 30rem;
+  font: 600 0.85rem/1.35 var(--body);
+  color: #555;
+}
+.lobby-players li.away {
+  opacity: 0.55;
+  border-style: dashed;
+}
+
+/* the way home: in the top corner whenever you're in a room */
+.menu-button {
+  padding: 0.35rem 0.7rem 0.3rem;
+  font: 800 0.75rem/1 var(--body);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--ink);
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--paper);
+  cursor: pointer;
+  transform: rotate(1.5deg);
+}
+.menu-button:hover,
+.menu-button:focus-visible {
+  transform: rotate(1.5deg) translate(-1px, -1px);
+}
+.menu-button.asking {
+  color: #fff;
+  background: var(--red);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+/* secret menu: every room as a grid, then the item check world */
+.secret-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem 1rem;
+  max-width: 40rem;
+}
+.secret-grid .pop {
+  justify-content: center;
+}
+.check-world-button {
+  display: grid;
+  justify-items: center;
+  gap: 0.2rem;
+  background: var(--yellow);
+  color: var(--ink);
+  text-shadow: none;
+}
+.check-world-button small {
+  font: 800 0.75rem/1 var(--body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}

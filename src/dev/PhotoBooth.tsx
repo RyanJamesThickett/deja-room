@@ -1,7 +1,8 @@
 import { Canvas, useThree } from '@react-three/fiber'
 import { Suspense, useLayoutEffect, useState } from 'react'
 import type { Mutation, Vec3 } from '../game/mutations'
-import { ROOMS } from '../game/rooms'
+import { ALL_ROOMS } from '../game/rooms'
+import { checkWorld } from '../game/rooms/checkworld'
 import { CameraRig, House } from '../game/scene'
 import { overlapReport } from './overlaps'
 
@@ -21,7 +22,7 @@ import { overlapReport } from './overlaps'
  */
 
 /** Writes the overlap report into the page once the room is on the GPU. */
-function Overlaps({ room, ready, onReport }: { room: (typeof ROOMS)[number]; ready: boolean; onReport: (lines: string[]) => void }) {
+function Overlaps({ room, ready, onReport }: { room: (typeof ALL_ROOMS)[number]; ready: boolean; onReport: (lines: string[]) => void }) {
   const get = useThree((s) => s.get)
   useLayoutEffect(() => {
     if (!ready) return
@@ -54,7 +55,8 @@ function Aim({ from, to }: { from: Vec3; to: Vec3 }) {
 }
 
 export function PhotoBooth({ params }: { params: URLSearchParams }) {
-  const room = ROOMS.find((r) => r.id === params.get('room')) ?? ROOMS[0]
+  // the item check world too (&room=checkworld)
+  const room = [...ALL_ROOMS, checkWorld].find((r) => r.id === params.get('room')) ?? ALL_ROOMS[0]
   const n = (params.get('shot') ?? '').split(',').map(Number)
   const fromStart = params.get('shot') === 'start'
   const from: Vec3 = fromStart ? room.start.position : [n[0], n[1], n[2]]

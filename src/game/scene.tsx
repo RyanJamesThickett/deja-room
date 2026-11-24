@@ -250,8 +250,11 @@ export function WalkView({
   bounds,
   layoutKey,
   onLockChange,
+  speed = 1,
 }: {
   bounds: Bounds
+  /** Times the normal walking pace (the item check world is a long walk). */
+  speed?: number
   /** Off releases the mouse (title screen, pause menu). */
   enabled: boolean
   /** Keeps the mouse captured but stops walking (during the "something changed" splash). */
@@ -365,7 +368,7 @@ export function WalkView({
       const r = right.current.crossVectors(f, up.current)
       const low = eye.current < EYE_HEIGHT - 0.2
       const pace = low ? 0.5 : held.has('ShiftLeft') || held.has('ShiftRight') ? 1.6 : 1
-      const dist = pace * WALK_SPEED * step
+      const dist = pace * WALK_SPEED * speed * step
       const len = Math.hypot(ax, az)
       const mx = ((f.x * az + r.x * ax) / len) * dist
       const mz = ((f.z * az + r.z * ax) / len) * dist

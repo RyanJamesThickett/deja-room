@@ -42,4 +42,8 @@ function bugNotes(): Plugin {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), babel({ presets: [reactCompilerPreset()] }), bugNotes()],
+  server: {
+    // multiplayer: the match server from `pnpm mp` (wrangler dev), reached at /mp like the live one
+    proxy: { '/mp': { target: 'http://127.0.0.1:8799', ws: true } },
+  },
 })
