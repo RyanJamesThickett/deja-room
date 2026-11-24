@@ -100,7 +100,16 @@ function NameTag({ mp }: { mp: MatchConnection }) {
   )
 }
 
-/** Waiting to start: the code to share, who's here, and (for the host) which room. */
+/** A room's picture for the lobby (the same snapshots as the level menu's preview cards). */
+function previewOf(room: RoomDef) {
+  return `${import.meta.env.BASE_URL}previews/${room.id}.jpg`
+}
+
+/**
+ * Waiting to start. Left: the room you're about to play, big, with its
+ * blurb, and (for the host) the others to pick from. Right: the code to
+ * share, who's here, and the way in.
+ */
 export function Lobby({
   mp,
   state,
@@ -116,7 +125,7 @@ export function Lobby({
   selectedRoom: string | undefined
   onPickRoom: (room: RoomDef) => void
   onLeave: () => void
-  /** A line shown above the rooms, e.g. why they're not the usual ones. */
+  /** A line shown under the rooms, e.g. why they're not the usual ones. */
   note?: string
 }) {
   const [copied, setCopied] = useState(false)
@@ -125,77 +134,106 @@ export function Lobby({
   const enough = here.length >= MIN_PLAYERS[state.mode]
   const hostName = state.players.find((p) => p.id === state.hostId)?.name ?? 'the host'
   const picked = rooms.find((r) => r.id === selectedRoom)
+  // the timings the host's game sent with the pick
+  const setup = state.setup?.roomId === picked?.id ? state.setup : null
+  const empty = Math.max(0, MIN_PLAYERS[state.mode] - state.players.length)
   return (
     <section className="panel mp-panel lobby">
       <div className="caption">{MODES[state.mode].title} lobby</div>
-      <div className="lobby-code">
-        <span className="lobby-code-label">Room code</span>
-        <span className="lobby-letters" aria-label={`Room code ${[...state.code].join(' ')}`}>
-          {[...state.code].map((c, i) => (
-            <span key={i}>{c}</span>
-          ))}
-        </span>
-        <button
-          type="button"
-          className="pop ghost small"
-          onClick={() => {
-            void navigator.clipboard.writeText(inviteLink(state.code))
-            setCopied(true)
-          }}
-        >
-          {copied ? 'Link copied!' : 'Copy invite link'}
-        </button>
-      </div>
 
-      <ul className="lobby-players">
-        {state.players.map((p) => (
-          <li key={p.id} style={{ '--player': PLAYER_COLOURS[p.colour] } as CSSProperties} className={p.connected ? '' : 'away'}>
-            <span className="lobby-dot" />
-            <span className="lobby-name">{p.name}</span>
-            {p.id === mp.me.id && <span className="lobby-tag">you</span>}
-            {p.id === state.hostId && <span className="lobby-tag host">host</span>}
-            {!p.connected && <span className="lobby-tag">reconnecting…</span>}
-          </li>
-        ))}
-        {Array.from({ length: Math.max(0, MIN_PLAYERS[state.mode] - state.players.length) }, (_, i) => (
-          <li key={`empty${i}`} className="lobby-empty">
-            Waiting for someone to join…
-          </li>
-        ))}
-      </ul>
-      <p className="lobby-count">
-        {here.length} of {MAX_PLAYERS[state.mode]} players
-      </p>
-
-      <div className="lobby-rooms">
-        <span className="lobby-rooms-label">{host ? 'Pick a room' : 'Room'}</span>
-        {note && <span className="lobby-note">{note}</span>}
-        {host ? (
-          <div className="lobby-room-grid">
+      <div className="lobby-stage">
+        {picked ? (
+          <>
+            <figure className="lobby-photo" key={picked.id}>
+              <img src={previewOf(picked)} alt={`A look inside ${picked.name}`} />
+              <figcaption className="lobby-room-name">{picked.label}</figcaption>
+            </figure>
+            <p className="lobby-blurb">{picked.blurb}</p>
+            <p className="lobby-facts">
+              <span>{picked.changes} changes</span>
+              {setup && <span>{Math.round(setup.huntMs / 1000)}s to find each</span>}
+              {setup && <span>{Math.round(setup.studyMs / 1000)}s first look</span>}
+            </p>
+          </>
+        ) : (
+          <div className="lobby-photo empty">{host ? 'Pick a room below' : `Waiting for ${hostName} to pick a room…`}</div>
+        )}
+        {host && rooms.length > 1 && (
+          <div className="lobby-thumbs" role="radiogroup" aria-label="Pick a room">
             {rooms.map((r) => (
-              <button key={r.id} type="button" className={`lobby-room${r.id === selectedRoom ? ' picked' : ''}`} onClick={() => onPickRoom(r)}>
-                {r.label}
+              <button
+                key={r.id}
+                type="button"
+                role="radio"
+                aria-checked={r.id === selectedRoom}
+                className={`lobby-thumb${r.id === selectedRoom ? ' picked' : ''}`}
+                onClick={() => onPickRoom(r)}
+              >
+                <img src={previewOf(r)} alt="" loading="lazy" />
+                <span>{r.label}</span>
               </button>
             ))}
           </div>
-        ) : (
-          <span className="lobby-room picked">{picked?.label ?? 'Not picked yet'}</span>
         )}
+        {note && <p className="lobby-note">{note}</p>}
       </div>
 
-      <div className="row mp-footer">
-        <button type="button" className="pop ghost" onClick={onLeave}>
-          Leave
-        </button>
-        {host ? (
-          <button type="button" className="pop big" disabled={!enough || !picked} onClick={() => mp.send({ t: 'start' })}>
-            {!enough ? (state.mode === 'vs' ? 'Waiting for a second player…' : 'Waiting…') : picked ? 'Start!' : 'Pick a room first'}
+      <div className="lobby-side">
+        <div className="lobby-code">
+          <span className="lobby-label">Room code</span>
+          <span className="lobby-letters" aria-label={`Room code ${[...state.code].join(' ')}`}>
+            {[...state.code].map((c, i) => (
+              <span key={i}>{c}</span>
+            ))}
+          </span>
+          <button
+            type="button"
+            className="pop ghost small"
+            onClick={() => {
+              void navigator.clipboard.writeText(inviteLink(state.code))
+              setCopied(true)
+            }}
+          >
+            {copied ? 'Link copied!' : 'Copy invite link'}
           </button>
-        ) : (
-          <span className="lobby-wait">Waiting for {hostName} to start…</span>
-        )}
+        </div>
+
+        <div className="lobby-who">
+          <span className="lobby-label">
+            Players <small>{here.length} of {MAX_PLAYERS[state.mode]}</small>
+          </span>
+          <ul className="lobby-players">
+            {state.players.map((p) => (
+              <li key={p.id} style={{ '--player': PLAYER_COLOURS[p.colour] } as CSSProperties} className={p.connected ? '' : 'away'}>
+                <span className="lobby-dot" />
+                <span className="lobby-name">{p.name}</span>
+                {p.id === mp.me.id && <span className="lobby-tag">you</span>}
+                {p.id === state.hostId && <span className="lobby-tag host">host</span>}
+                {!p.connected && <span className="lobby-tag">back soon…</span>}
+              </li>
+            ))}
+            {Array.from({ length: empty }, (_, i) => (
+              <li key={`empty${i}`} className="lobby-empty">
+                Waiting for someone to join…
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="lobby-go">
+          {host ? (
+            <button type="button" className="pop big" disabled={!enough || !picked} onClick={() => mp.send({ t: 'start' })}>
+              {!enough ? (state.mode === 'vs' ? 'Need a second player' : 'Waiting…') : picked ? 'Start!' : 'Pick a room first'}
+            </button>
+          ) : (
+            <span className="lobby-wait">Waiting for {hostName} to start…</span>
+          )}
+          <button type="button" className="pop ghost small" onClick={onLeave}>
+            Leave
+          </button>
+        </div>
+        <NameTag mp={mp} />
       </div>
-      <NameTag mp={mp} />
     </section>
   )
 }

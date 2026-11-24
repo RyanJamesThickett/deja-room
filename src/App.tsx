@@ -1224,26 +1224,34 @@ export default function App() {
               })()
               }
             </Burst>
-            {match.mode === 'coop' && (
-              <ol className="results">
-                {history.map((m, i) => (
-                  <li key={i} className={results[i]?.found ? 'found' : 'missed'}>
-                    {m.description}
+            {match.mode === 'coop' ? (
+              <>
+                {/* co-op: one team, one score; every change and whether the team got it */}
+                <p className="coop-summary">
+                  The team found <strong>{results.filter((r) => r.found).length}</strong> of {room.changes}, for{' '}
+                  <strong>{score}</strong> {score === 1 ? 'point' : 'points'}.
+                </p>
+                <ol className="results compact">
+                  {history.map((m, i) => (
+                    <li key={i} className={results[i]?.found ? 'found' : 'missed'}>
+                      {m.description}
+                    </li>
+                  ))}
+                </ol>
+              </>
+            ) : (
+              <ol className="vs-results standings">
+                {standings(match).map(({ player, points, ms }) => (
+                  <li key={player.id} style={{ '--player': PLAYER_COLOURS[player.colour] } as CSSProperties}>
+                    <span className="vs-name">{player.id === mp.me.id ? 'You' : player.name}</span>
+                    <span className="vs-line">
+                      {player.outcomes.filter((o) => o?.found).length} of {room.changes} found · {(ms / 1000).toFixed(1)}s
+                    </span>
+                    <span className="vs-points">{points}</span>
                   </li>
                 ))}
               </ol>
             )}
-            <ol className="vs-results standings" hidden={match.mode === 'coop'}>
-              {standings(match).map(({ player, points, ms }) => (
-                <li key={player.id} style={{ '--player': PLAYER_COLOURS[player.colour] } as CSSProperties}>
-                  <span className="vs-name">{player.id === mp.me.id ? 'You' : player.name}</span>
-                  <span className="vs-line">
-                    {player.outcomes.filter((o) => o?.found).length} of {room.changes} found · {(ms / 1000).toFixed(1)}s
-                  </span>
-                  <span className="vs-points">{points}</span>
-                </li>
-              ))}
-            </ol>
             <p className="reveal-line">{showBefore ? 'This is the room when you walked in.' : 'This is the room now.'}</p>
             <div className="row">
               <button type="button" className="pop ghost" onClick={() => setShowBefore((b) => !b)}>

@@ -1864,46 +1864,185 @@ button.pop:disabled {
   align-items: center;
 }
 
-/* the lobby */
-.lobby-code {
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  flex-wrap: wrap;
-  justify-content: center;
+/* the lobby: the room you're about to play on the left, the people and the way in on the right */
+.mp-panel.lobby {
+  width: min(64rem, calc(100vw - 3rem));
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(15rem, 1fr);
+  align-items: start;
+  gap: 1.2rem 1.8rem;
+  padding: 1.6rem 1.8rem 1.5rem;
+  text-align: left;
+  transform: rotate(-0.5deg);
 }
-.lobby-code-label {
-  font: 800 0.8rem/1 var(--body);
+.mp-panel.lobby > .caption {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin-top: -3rem;
+}
+.lobby-stage {
+  display: grid;
+  gap: 0.7rem;
+  min-width: 0;
+}
+.lobby-photo {
+  position: relative;
+  margin: 0;
+  height: clamp(9rem, 30vh, 17rem);
+  overflow: hidden;
+  background: var(--ink);
+  border: var(--outline);
+  box-shadow: 6px 6px 0 var(--ink);
+  animation: panel-in 0.3s ease-out both;
+}
+.lobby-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.lobby-photo.empty {
+  display: grid;
+  place-items: center;
+  font: 700 1rem/1.3 var(--body);
+  color: var(--paper);
+  animation: none;
+}
+.lobby-room-name {
+  position: absolute;
+  left: 0.8rem;
+  bottom: 0.7rem;
+  padding: 0.3rem 0.8rem 0.15rem;
+  font: 400 2rem/1 var(--display);
+  letter-spacing: 0.04em;
+  color: #fff;
+  text-shadow: 2px 2px 0 var(--ink);
+  background: var(--pink);
+  border: var(--outline);
+  box-shadow: 4px 4px 0 var(--ink);
+  transform: rotate(-2deg);
+}
+.lobby-blurb {
+  margin: 0.2rem 0 0;
+  font: 600 1rem/1.45 var(--body);
+}
+.lobby-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0;
+}
+.lobby-facts span {
+  padding: 0.2rem 0.55rem;
+  font: 800 0.75rem/1.3 var(--body);
+  letter-spacing: 0.03em;
   text-transform: uppercase;
+  background: #fff;
+  border: 2px solid var(--ink);
+}
+.lobby-facts span:first-child {
+  background: var(--yellow);
+}
+/* the host's pick of rooms: small snapshots */
+.lobby-thumbs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.4rem, 1fr));
+  gap: 0.55rem;
+  margin-top: 0.3rem;
+}
+.lobby-thumb {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.25rem 0.25rem 0.3rem;
+  font: 400 0.95rem/1 var(--display);
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  text-align: center;
+  background: #fff;
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  cursor: pointer;
+  transition:
+    transform 0.1s ease-out,
+    box-shadow 0.1s ease-out;
+}
+.lobby-thumb img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: var(--ink);
+}
+.lobby-thumb span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lobby-thumb:hover,
+.lobby-thumb:focus-visible {
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.lobby-thumb.picked {
+  color: #fff;
+  text-shadow: 1px 1px 0 var(--ink);
+  background: var(--pink);
+  box-shadow: 4px 4px 0 var(--ink);
+  transform: translate(-2px, -2px);
+}
+.lobby-note {
+  margin: 0;
+  font: 600 0.85rem/1.35 var(--body);
+  color: #555;
+}
+
+.lobby-side {
+  display: grid;
+  gap: 1.2rem;
+  align-content: start;
+  min-width: 0;
+}
+.lobby-label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font: 800 0.75rem/1 var(--body);
   letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.lobby-label small {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: #6d6d6d;
+}
+.lobby-code {
+  display: grid;
+  justify-items: start;
+  gap: 0.55rem;
 }
 .lobby-letters {
   display: flex;
-  gap: 0.35rem;
+  gap: 0.3rem;
 }
 .lobby-letters span {
   display: grid;
   place-items: center;
-  width: 3.2rem;
-  height: 3.6rem;
-  font: 400 2.6rem/1 var(--display);
+  width: 2.9rem;
+  height: 3.3rem;
+  font: 400 2.4rem/1 var(--display);
   color: var(--ink);
-  background: #fff;
-  border: var(--outline);
-  box-shadow: 4px 4px 0 var(--ink);
-}
-.lobby-letters span:nth-child(odd) {
-  transform: rotate(-4deg);
   background: var(--yellow);
+  border: var(--outline);
+  box-shadow: 3px 3px 0 var(--ink);
 }
-.lobby-letters span:nth-child(even) {
-  transform: rotate(3deg);
+.lobby-who {
+  display: grid;
+  gap: 0.5rem;
 }
 .lobby-players {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.55rem;
-  width: 100%;
+  gap: 0.4rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1912,19 +2051,22 @@ button.pop:disabled {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.45rem 0.7rem;
-  font: 700 0.95rem/1.2 var(--body);
-  text-align: left;
+  padding: 0.4rem 0.65rem;
+  font: 700 0.92rem/1.2 var(--body);
   background: #fff;
   border: 2px solid var(--ink);
-  border-radius: 999px;
+  border-left: 0.55rem solid var(--player);
   box-shadow: 2px 2px 0 var(--ink);
+}
+.lobby-players li.away {
+  opacity: 0.55;
+  border-style: dashed;
 }
 .lobby-players .lobby-empty {
   justify-content: center;
   color: #6d6d6d;
   background: transparent;
-  border-style: dashed;
+  border: 2px dashed #9a9a9a;
   box-shadow: none;
 }
 .lobby-dot {
@@ -1935,7 +2077,11 @@ button.pop:disabled {
   border: 2px solid var(--ink);
   border-radius: 50%;
 }
+.lobby-players .lobby-dot {
+  display: none;
+}
 .lobby-name {
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1951,45 +2097,29 @@ button.pop:disabled {
 .lobby-tag.host {
   background: var(--yellow);
 }
-.lobby-count {
-  margin: -0.4rem 0 0;
-  font: 700 0.8rem/1 var(--body);
-}
-.lobby-rooms {
+.lobby-go {
   display: grid;
-  gap: 0.5rem;
-  justify-items: center;
-  width: 100%;
+  justify-items: stretch;
+  gap: 0.7rem;
 }
-.lobby-rooms-label {
-  font: 800 0.8rem/1 var(--body);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-.lobby-room-grid {
-  display: flex;
-  flex-wrap: wrap;
+.lobby-go .pop.big {
   justify-content: center;
-  gap: 0.45rem;
+  margin-top: 0;
 }
-.lobby-room {
-  padding: 0.35rem 0.7rem 0.25rem;
-  font: 400 1.1rem/1 var(--display);
-  letter-spacing: 0.04em;
-  color: var(--ink);
-  background: #fff;
-  border: 2px solid var(--ink);
-  box-shadow: 2px 2px 0 var(--ink);
-  cursor: pointer;
+.lobby-go .pop.small {
+  justify-self: start;
 }
-.lobby-room.picked {
-  color: #fff;
-  text-shadow: 1px 1px 0 var(--ink);
-  background: var(--pink);
-  transform: rotate(-2deg);
+.lobby-side .mp-name {
+  flex-wrap: wrap;
+  font-size: 0.88rem;
 }
 .lobby-wait {
   font: 700 0.95rem/1.3 var(--body);
+}
+@media (max-width: 900px) {
+  .mp-panel.lobby {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* VS: how the other player is getting on, mid-hunt */
@@ -2147,15 +2277,6 @@ button.pop:disabled {
     animation: none;
   }
 }
-.lobby-note {
-  max-width: 30rem;
-  font: 600 0.85rem/1.35 var(--body);
-  color: #555;
-}
-.lobby-players li.away {
-  opacity: 0.55;
-  border-style: dashed;
-}
 
 /* the way home: in the top corner whenever you're in a room */
 .menu-button {
@@ -2202,4 +2323,27 @@ button.pop:disabled {
   font: 800 0.75rem/1 var(--body);
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+/* co-op's end of level: a team summary, and a long list of changes in two columns */
+.coop-summary {
+  margin: 0.2rem 0 0;
+  font: 700 1.05rem/1.35 var(--body);
+}
+.coop-summary strong {
+  font: 400 1.4rem/1 var(--display);
+  letter-spacing: 0.03em;
+}
+.results.compact {
+  display: block;
+  columns: 2;
+  column-gap: 1.4rem;
+  font-size: 0.82rem;
+}
+.results.compact li {
+  break-inside: avoid;
+  margin-bottom: 0.3rem;
+}
+.end-panel:has(.results.compact) {
+  width: min(52rem, calc(100vw - 3rem));
 }
