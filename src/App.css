@@ -1,0 +1,1702 @@
+.app,
+.viewport {
+  position: fixed;
+  inset: 0;
+}
+
+/* ------------------------------------------------------------------------
+   Comic panel frame around the 3D view: paper gutter, ink line, halftone
+   creeping in from the corners.
+   ------------------------------------------------------------------------ */
+.comic-frame {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 10px var(--paper),
+    inset 0 0 0 15px var(--ink);
+}
+.comic-frame::before {
+  content: '';
+  position: absolute;
+  inset: 15px;
+  background: var(--dots);
+  -webkit-mask: radial-gradient(ellipse at center, transparent 58%, #000 100%);
+  mask: radial-gradient(ellipse at center, transparent 58%, #000 100%);
+}
+
+/* The HUD sits over the canvas and only catches clicks on its own controls. */
+.hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+}
+.hud button,
+.hud .panel {
+  pointer-events: auto;
+}
+
+/* ------------------------------------------------------------------------
+   Shared bits
+   ------------------------------------------------------------------------ */
+.misprint {
+  font-family: var(--display);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  -webkit-text-stroke: 3px var(--ink);
+  paint-order: stroke fill;
+  /* the print plates slipped a few millimetres: cyan left, magenta right */
+  text-shadow:
+    -5px 0 0 var(--cyan),
+    5px 3px 0 var(--pink),
+    9px 9px 0 var(--ink);
+}
+
+.caption {
+  display: inline-block;
+  font-family: var(--display);
+  font-size: 1.3rem;
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+  padding: 0.3rem 0.8rem 0.2rem;
+  background: var(--yellow);
+  border: var(--outline);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.caption.small {
+  font: 700 0.85rem/1.3 var(--body);
+  letter-spacing: 0;
+  background: var(--paper);
+  padding: 0.3rem 0.7rem;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.bubble {
+  position: relative;
+  background: #fff;
+  border: var(--outline);
+  border-radius: 1.6rem;
+  padding: 0.9rem 1.2rem;
+  box-shadow: 5px 5px 0 var(--ink);
+}
+.bubble::before,
+.bubble::after {
+  content: '';
+  position: absolute;
+  left: 2.2rem;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-color: transparent;
+}
+.bubble::before {
+  bottom: -25px;
+  border-width: 25px 24px 0 0;
+  border-top-color: var(--ink);
+}
+.bubble::after {
+  bottom: -18px;
+  left: calc(2.2rem + 4px);
+  border-width: 18px 16px 0 0;
+  border-top-color: #fff;
+}
+.bubble p {
+  margin: 0.25rem 0;
+}
+.bubble strong {
+  background: var(--yellow);
+  padding: 0 0.2em;
+}
+.bubble em {
+  color: var(--red);
+  font-weight: 800;
+}
+
+kbd {
+  font: 800 0.7rem/1 var(--body);
+  letter-spacing: 0.02em;
+  text-shadow: none;
+  color: var(--paper);
+  background: var(--ink);
+  border-radius: 4px;
+  padding: 0.22rem 0.4rem;
+  vertical-align: middle;
+}
+
+/* ------------------------------------------------------------------------
+   Buttons
+   ------------------------------------------------------------------------ */
+button.pop {
+  --r: -1.5deg;
+  font-family: var(--display);
+  font-size: 1.45rem;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 2px 2px 0 var(--ink);
+  background: var(--red);
+  border: var(--outline);
+  box-shadow: 5px 5px 0 var(--ink);
+  padding: 0.5rem 1.2rem 0.4rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  transform: rotate(var(--r));
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.08s ease;
+}
+button.pop:hover {
+  transform: rotate(var(--r)) translate(-2px, -2px);
+  box-shadow: 8px 8px 0 var(--ink);
+}
+button.pop:active {
+  transform: rotate(var(--r)) translate(4px, 4px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+button.pop:focus-visible {
+  outline: 3px dashed var(--blue);
+  outline-offset: 4px;
+}
+button.pop.big {
+  font-size: 2.1rem;
+  padding: 0.55rem 1.7rem 0.45rem;
+  margin-top: 1.6rem;
+}
+button.pop.small {
+  --r: 1deg;
+  font-size: 1.15rem;
+  padding: 0.35rem 0.85rem 0.3rem;
+  background: var(--blue);
+}
+button.pop.ghost {
+  --r: 1.5deg;
+  background: #fff;
+  color: var(--ink);
+  text-shadow: none;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-top: 1.1rem;
+}
+
+/* ------------------------------------------------------------------------
+   Starbursts
+   ------------------------------------------------------------------------ */
+.burst {
+  --size: 10rem;
+  --star: polygon(50% 0%, 56.8% 11.6%, 67.1% 3%, 69.5% 16.2%, 82.1% 11.7%, 79.9% 24.9%, 93.3% 25%, 86.6% 36.7%, 99.2% 41.3%, 89% 50%, 99.2% 58.7%, 86.6% 63.3%, 93.3% 75%, 79.9% 75.1%, 82.1% 88.3%, 69.5% 83.8%, 67.1% 97%, 56.8% 88.4%, 50% 100%, 43.2% 88.4%, 32.9% 97%, 30.5% 83.8%, 17.9% 88.3%, 20.1% 75.1%, 6.7% 75%, 13.4% 63.3%, 0.8% 58.7%, 11% 50%, 0.8% 41.3%, 13.4% 36.7%, 6.7% 25%, 20.1% 24.9%, 17.9% 11.7%, 30.5% 16.2%, 32.9% 3%, 43.2% 11.6%);
+  --fill: var(--yellow);
+  width: var(--size);
+  height: var(--size);
+  /* clip-path eats box-shadow, so the hard shadow lives on the wrapper */
+  filter: drop-shadow(6px 6px 0 var(--ink));
+  animation: burst-in 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+.burst.red {
+  --fill: var(--red);
+}
+.burst.blue {
+  --fill: var(--blue);
+}
+.burst-shape {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--ink);
+  clip-path: var(--star);
+}
+.burst-shape::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  background: var(--dots-light), var(--fill);
+  clip-path: var(--star);
+}
+.burst-shape span {
+  position: relative;
+  z-index: 1;
+  /* one centred line: "13" and a small "/15" sit side by side on a shared baseline */
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  align-items: baseline;
+  justify-content: center;
+  height: 100%;
+  font-family: var(--display);
+  font-size: 2.4rem;
+  line-height: 0.9;
+  text-align: center;
+  color: #fff;
+  -webkit-text-stroke: 2px var(--ink);
+  paint-order: stroke fill;
+  text-shadow: 3px 3px 0 var(--ink);
+  transform: rotate(-6deg);
+}
+.burst-shape small {
+  font-size: 0.5em;
+}
+
+@keyframes burst-in {
+  from {
+    transform: scale(0) rotate(-40deg);
+  }
+  to {
+    transform: scale(1) rotate(0);
+  }
+}
+
+/* ------------------------------------------------------------------------
+   Top bar
+   ------------------------------------------------------------------------ */
+.topbar {
+  position: absolute;
+  top: 26px;
+  left: 28px;
+  right: 28px;
+  display: flex;
+  gap: 0.8rem;
+  align-items: flex-start;
+}
+.sticker {
+  font-family: var(--display);
+  font-size: 1.35rem;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  padding: 0.35rem 0.8rem 0.25rem;
+  border: var(--outline);
+  box-shadow: 4px 4px 0 var(--ink);
+  white-space: nowrap;
+}
+.sticker small {
+  font-size: 0.7em;
+  opacity: 0.85;
+}
+.sticker.brand {
+  background: var(--yellow);
+  transform: rotate(-2deg);
+}
+.sticker.brand em {
+  font-style: normal;
+  color: var(--red);
+  /* the brand's last words are, naturally, a few pixels to the left */
+  display: inline-block;
+  margin-left: 0.3em;
+  transform: translateX(-3px);
+}
+.sticker.room {
+  background: var(--blue);
+  color: #fff;
+  text-shadow: 2px 2px 0 var(--ink);
+  transform: rotate(1.5deg);
+}
+.sticker.brand {
+  pointer-events: auto;
+  user-select: none;
+}
+.sticker.secret {
+  background: var(--pink);
+  color: #fff;
+  text-shadow: 2px 2px 0 var(--ink);
+  transform: rotate(2deg);
+}
+.sticker.where {
+  background: #fff;
+  transform: rotate(-1.5deg);
+}
+.sticker.score {
+  background: var(--pink);
+  color: #fff;
+  text-shadow: 2px 2px 0 var(--ink);
+  transform: rotate(-1deg);
+}
+.tag.seed {
+  margin-left: auto;
+  font: 700 0.8rem/1 var(--body);
+  padding: 0.4rem 0.65rem;
+  background: var(--paper);
+  border: 2px dashed var(--ink);
+  transform: rotate(2deg);
+}
+
+/* ------------------------------------------------------------------------
+   Panels
+   ------------------------------------------------------------------------ */
+.panel {
+  position: relative;
+  width: min(36rem, calc(100vw - 3rem));
+  padding: 2.2rem 2.2rem 2rem;
+  background: var(--dots), var(--paper);
+  border: 4px solid var(--ink);
+  box-shadow: 10px 10px 0 var(--ink);
+  transform: rotate(-1.2deg);
+  animation: panel-in 0.4s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(40px) rotate(4deg) scale(0.9);
+  }
+}
+
+/* Title card: everything centred, the logo is a big sticker slapped over the top edge */
+.title-panel {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  padding-top: 0;
+}
+.logo-sticker {
+  position: relative;
+  margin: -3.8rem 0 1.6rem;
+  padding: 1.9rem 2.2rem 1.1rem;
+  background: var(--dots-light), var(--red);
+  border: 4px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: 8px 8px 0 var(--ink);
+  transform: rotate(-3deg);
+  animation: sticker-in 0.5s 0.1s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+@keyframes sticker-in {
+  from {
+    transform: scale(0.3) rotate(-20deg);
+  }
+}
+.presents {
+  position: absolute;
+  top: -0.95rem;
+  left: 50%;
+  translate: -50% 0;
+  white-space: nowrap;
+  font: 800 0.78rem/1 var(--body);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: var(--ink);
+  padding: 0.45rem 0.8rem 0.4rem;
+  transform: rotate(4deg);
+}
+.title-panel h1 {
+  margin: 0;
+  font-size: clamp(3rem, 8vw, 4.8rem);
+  line-height: 1.05;
+  color: var(--yellow);
+  white-space: nowrap;
+}
+.title-panel h1 .room-word {
+  color: #fff;
+}
+.title-panel .bubble {
+  text-align: left;
+}
+.title-panel .bubble::before {
+  left: calc(50% - 12px);
+}
+.title-panel .bubble::after {
+  left: calc(50% - 8px);
+}
+.title-layout {
+  display: flex;
+  align-items: center;
+  gap: 2.4rem;
+}
+
+/* Controls: a narrow side card of identical pills, key on the left, action on the right */
+.controls-card {
+  position: relative;
+  width: 15.5rem;
+  padding: 1.9rem 1rem 1.1rem;
+  background: var(--dots), var(--paper);
+  border: 4px solid var(--ink);
+  box-shadow: 8px 8px 0 var(--ink);
+  transform: rotate(2deg);
+  animation: panel-in 0.4s 0.12s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.controls-card > .caption {
+  position: absolute;
+  top: -1.25rem;
+  left: 50%;
+  translate: -50% 0;
+  transform: rotate(-3deg);
+}
+.controls-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.controls-list li {
+  display: grid;
+  grid-template-columns: 4.4rem 1fr;
+  align-items: center;
+  gap: 0.65rem;
+  height: 2.3rem;
+  padding: 0 0.8rem 0 0.3rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-align: left;
+  background: #fff;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.controls-list li:nth-child(4n + 1) {
+  background: #bdf0ff;
+}
+.controls-list li:nth-child(4n + 2) {
+  background: #ffd0e8;
+}
+.controls-list li:nth-child(4n + 3) {
+  background: #fff3a8;
+}
+.controls-list kbd {
+  display: block;
+  text-align: center;
+  padding: 0.38rem 0;
+  border-radius: 999px;
+}
+/* reveal + end: a panel at the bottom with a starburst bursting off its corner */
+.reveal-panel,
+.end-panel {
+  align-self: end;
+  margin-bottom: 6rem;
+  padding-left: 9.5rem;
+  min-height: 9rem;
+}
+.reveal-panel .burst,
+.end-panel .burst {
+  --size: 11rem;
+  position: absolute;
+  top: -4.5rem;
+  left: -2.5rem;
+}
+.reveal-line {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+.points {
+  position: absolute;
+  top: -1.4rem;
+  right: -1.2rem;
+  font-family: var(--display);
+  font-size: 2.2rem;
+  line-height: 1;
+  color: #fff;
+  -webkit-text-stroke: 2px var(--ink);
+  paint-order: stroke fill;
+  background: var(--pink);
+  border: var(--outline);
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 0.3rem 0.7rem 0.15rem;
+  transform: rotate(8deg);
+  animation: burst-in 0.45s 0.15s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+.end-panel > .caption {
+  margin-bottom: 0.7rem;
+  transform: rotate(-2deg);
+}
+.results {
+  list-style: none;
+  margin: 0.9rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+.results li {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.results li::before {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  font-size: 0.8rem;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+}
+.results li.found::before {
+  content: '✓';
+  background: var(--yellow);
+}
+.results li.missed::before {
+  content: '✕';
+  color: #fff;
+  background: var(--red);
+}
+.results li.missed {
+  opacity: 0.7;
+}
+
+/* ------------------------------------------------------------------------
+   Study: timer burst in the top-right corner, out of the way of the room
+   ------------------------------------------------------------------------ */
+.study {
+  position: absolute;
+  top: 5rem;
+  right: 2.2rem;
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+}
+.study .burst {
+  --size: 9.5rem;
+}
+.study .burst-shape span {
+  font-size: 2.5rem;
+  font-variant-numeric: tabular-nums;
+  animation: wobble 2s ease-in-out infinite;
+}
+.study .caption {
+  transform: rotate(2deg);
+}
+/* last ten seconds of a hunt: the timer shakes */
+.study .burst.urgent .burst-shape span {
+  animation: urgent 0.35s ease-in-out infinite;
+}
+@keyframes urgent {
+  0%,
+  100% {
+    transform: rotate(-8deg) scale(1);
+  }
+  50% {
+    transform: rotate(6deg) scale(1.12);
+  }
+}
+/* "Seen enough? [Enter]": a big sticker with a keycap that keeps pressing itself */
+.ready-cta {
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+  margin-top: 0.4rem;
+  padding: 0.7rem 1.1rem 0.9rem;
+  font: inherit;
+  color: #fff;
+  background: var(--dots-light), var(--red);
+  border: var(--outline);
+  box-shadow: 6px 6px 0 var(--ink);
+  cursor: pointer;
+  transform: rotate(-3deg);
+  animation: ready-nudge 2.4s ease-in-out infinite;
+}
+.ready-label {
+  font-family: var(--display);
+  font-size: 1.7rem;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  text-shadow: 2px 2px 0 var(--ink);
+}
+.keycap {
+  font: 800 1.15rem/1 var(--body);
+  color: var(--ink);
+  background: #fff;
+  padding: 0.45rem 1rem 0.4rem;
+  border: 3px solid var(--ink);
+  border-bottom-width: 8px;
+  border-radius: 9px;
+  animation: key-press 2.4s ease-in-out infinite;
+}
+@keyframes ready-nudge {
+  0%,
+  70%,
+  100% {
+    transform: rotate(-3deg) scale(1);
+  }
+  78% {
+    transform: rotate(2deg) scale(1.08);
+  }
+  86% {
+    transform: rotate(-4deg) scale(1.02);
+  }
+}
+@keyframes key-press {
+  0%,
+  72%,
+  100% {
+    transform: translateY(0);
+    border-bottom-width: 8px;
+  }
+  78%,
+  84% {
+    transform: translateY(5px);
+    border-bottom-width: 3px;
+  }
+}
+@keyframes wobble {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+/* ------------------------------------------------------------------------
+   Shift: the full-screen "HUH?!" splash between before and after
+   ------------------------------------------------------------------------ */
+.shift {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--yellow);
+  animation: shift 1.8s ease-in-out both;
+}
+.shift .rays {
+  position: absolute;
+  inset: -60%;
+  background: repeating-conic-gradient(from 0deg, var(--red) 0deg 9deg, var(--yellow) 9deg 18deg);
+  animation: spin 9s linear infinite;
+}
+.shift::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--dots);
+  -webkit-mask: radial-gradient(circle at center, transparent 20%, #000 75%);
+  mask: radial-gradient(circle at center, transparent 20%, #000 75%);
+}
+.shift-word {
+  position: relative;
+  z-index: 1;
+  font-size: clamp(5rem, 18vw, 12rem);
+  line-height: 1;
+  color: #fff;
+  -webkit-text-stroke: 6px var(--ink);
+  text-shadow:
+    -9px 0 0 var(--cyan),
+    9px 5px 0 var(--pink),
+    16px 16px 0 var(--ink);
+  animation: smash 0.5s 0.2s cubic-bezier(0.2, 1.8, 0.4, 1) both;
+}
+.shift > .caption {
+  position: absolute;
+  z-index: 1;
+  bottom: 18%;
+  font-size: 1.8rem;
+  transform: rotate(-2deg);
+}
+@keyframes shift {
+  0% {
+    opacity: 0;
+  }
+  15%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes smash {
+  from {
+    transform: scale(0.1) rotate(-25deg);
+  }
+  to {
+    transform: scale(1) rotate(-6deg);
+  }
+}
+
+/* ------------------------------------------------------------------------
+   Hunt
+   ------------------------------------------------------------------------ */
+.hunt {
+  position: absolute;
+  top: 5.2rem;
+  display: grid;
+  justify-items: center;
+  gap: 0.8rem;
+}
+.hunt .caption {
+  font-size: 1.7rem;
+  background: var(--red);
+  color: #fff;
+  text-shadow: 2px 2px 0 var(--ink);
+  transform: rotate(-1.5deg);
+  animation: panel-in 0.4s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.lives {
+  display: flex;
+  gap: 0.5rem;
+}
+.life {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: var(--outline);
+  background: var(--yellow);
+  box-shadow: 3px 3px 0 var(--ink);
+  transition:
+    transform 0.2s,
+    background 0.2s;
+}
+.life.lost {
+  background: var(--ink);
+  transform: scale(0.75);
+  box-shadow: none;
+}
+
+/* ------------------------------------------------------------------------
+   Footer, crosshair, toast
+   ------------------------------------------------------------------------ */
+.footer {
+  position: absolute;
+  left: 2rem;
+  bottom: 2rem;
+  display: flex;
+  gap: 0.9rem;
+  align-items: center;
+}
+
+.crosshair {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 3px solid var(--ink);
+  background: radial-gradient(circle, var(--red) 0 3px, transparent 3.5px), rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 0 2px #fff;
+}
+
+.bubble.toast {
+  position: absolute;
+  bottom: 8rem;
+  font-weight: 800;
+  animation: toast 1.8s ease both;
+}
+@keyframes toast {
+  0% {
+    opacity: 0;
+    transform: scale(0.6) rotate(-6deg);
+  }
+  12% {
+    opacity: 1;
+    transform: scale(1.05) rotate(-2deg);
+  }
+  20%,
+  82% {
+    opacity: 1;
+    transform: scale(1) rotate(-2deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1) rotate(-2deg);
+  }
+}
+
+/* ------------------------------------------------------------------------
+   Small screens + reduced motion
+   ------------------------------------------------------------------------ */
+@media (max-width: 760px) {
+  .title-layout,
+  .pause-columns {
+    flex-direction: column;
+  }
+  /* the game needs a mouse and keyboard anyway */
+  .controls-card {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    top: 22px;
+    left: 22px;
+    right: 22px;
+    gap: 0.5rem;
+  }
+  .sticker {
+    font-size: 1.05rem;
+  }
+  .sticker.brand,
+  .tag.seed {
+    display: none;
+  }
+  .panel {
+    padding: 1.8rem 1.3rem 1.4rem;
+  }
+  .reveal-panel,
+  .end-panel {
+    padding-left: 1.3rem;
+    padding-top: 4.5rem;
+    margin-bottom: 5.5rem;
+  }
+  .reveal-panel .burst,
+  .end-panel .burst {
+    --size: 8rem;
+    top: -4rem;
+    left: -0.8rem;
+  }
+  .burst-shape span {
+    font-size: 1.8rem;
+  }
+  .study {
+    top: 4.2rem;
+    right: 1.4rem;
+  }
+  .study .burst {
+    --size: 7rem;
+  }
+  .ready-label {
+    font-size: 1.3rem;
+  }
+  .study .burst-shape span {
+    font-size: 1.8rem;
+  }
+  .footer {
+    left: 1.4rem;
+    bottom: 1.4rem;
+  }
+  .footer .caption.small {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  /* without the fade, the splash must stay solid so it still hides the change */
+  .shift {
+    animation-name: none !important;
+  }
+}
+
+/* ------------------------------------------------------------------------
+   Loading state on the start button
+   ------------------------------------------------------------------------ */
+button.pop:disabled {
+  cursor: progress;
+  background: #8d8d8d;
+  transform: rotate(var(--r));
+  box-shadow: 5px 5px 0 var(--ink);
+}
+
+/* ------------------------------------------------------------------------
+   Pause: full-screen blue sunburst, covers everything
+   ------------------------------------------------------------------------ */
+.pause {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--blue);
+  animation: pause-in 0.25s ease-out both;
+}
+.pause-rays {
+  position: absolute;
+  inset: -60%;
+  background: repeating-conic-gradient(from 0deg, var(--blue) 0deg 8deg, #4a8bff 8deg 16deg);
+  animation: spin 40s linear infinite;
+}
+.pause::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--dots);
+  -webkit-mask: radial-gradient(circle at center, transparent 25%, #000 80%);
+  mask: radial-gradient(circle at center, transparent 25%, #000 80%);
+}
+.pause-body {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 1.3rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+.pause h2 {
+  margin: 0;
+  font-size: clamp(5rem, 16vw, 10rem);
+  line-height: 0.9;
+  color: var(--yellow);
+  transform: rotate(-4deg);
+  animation: smash 0.45s cubic-bezier(0.2, 1.8, 0.4, 1) both;
+}
+.pause .caption {
+  transform: rotate(1.5deg);
+}
+.pause-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+}
+.pause-actions .pop.big {
+  margin-top: 0.4rem;
+}
+.pause-columns {
+  display: flex;
+  align-items: center;
+  gap: 2.6rem;
+  margin-top: 0.6rem;
+}
+@keyframes pause-in {
+  from {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+}
+
+
+/* ------------------------------------------------------------------------
+   Secret mode: room picker and inspector panel
+   ------------------------------------------------------------------------ */
+.secret-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--pink);
+  animation: pause-in 0.25s ease-out both;
+}
+.secret-menu .pause-rays {
+  background: repeating-conic-gradient(from 0deg, var(--pink) 0deg 8deg, #ff6fbd 8deg 16deg);
+}
+.secret-menu h2 {
+  margin: 0;
+  font-size: clamp(4rem, 13vw, 8rem);
+  line-height: 0.9;
+  color: var(--yellow);
+  transform: rotate(-4deg);
+  animation: smash 0.45s cubic-bezier(0.2, 1.8, 0.4, 1) both;
+}
+
+.inspector {
+  position: absolute;
+  top: 6.5rem;
+  right: 1.6rem;
+  bottom: 5rem;
+  width: min(21rem, calc(100vw - 3rem));
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1.1rem;
+  background: var(--dots), var(--paper);
+  border: 4px solid var(--ink);
+  box-shadow: 8px 8px 0 var(--ink);
+  pointer-events: auto;
+  overflow: auto;
+}
+.inspector > .caption {
+  align-self: flex-start;
+  transform: rotate(-2deg);
+}
+.inspector h3 {
+  margin: 0.2rem 0 0;
+  font: 400 2rem/1 var(--display);
+  letter-spacing: 0.04em;
+}
+.inspector p {
+  margin: 0.4rem 0 0;
+  font-weight: 700;
+}
+.inspector-options {
+  display: grid;
+  gap: 0.45rem;
+}
+.inspector-options .opt {
+  font: 700 0.86rem/1.25 var(--body);
+  text-align: left;
+  color: var(--ink);
+  background: #fff;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  box-shadow: 2px 2px 0 var(--ink);
+  padding: 0.45rem 0.7rem;
+  cursor: pointer;
+}
+.inspector-options .opt:hover {
+  background: #fff3a8;
+}
+.inspector-options .opt.on {
+  background: var(--yellow);
+  box-shadow: inset 0 0 0 2px var(--ink), 2px 2px 0 var(--ink);
+}
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
+}
+.swatch {
+  width: 1.7rem;
+  height: 1.7rem;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  box-shadow: 2px 2px 0 var(--ink);
+  cursor: pointer;
+  padding: 0;
+}
+.swatch.on {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+.inspector-actions {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding-top: 0.8rem;
+}
+.aim-label {
+  position: absolute;
+  top: calc(50% + 1.4rem);
+  font: 400 1.3rem/1 var(--display);
+  letter-spacing: 0.05em;
+  padding: 0.3rem 0.7rem 0.2rem;
+  background: var(--yellow);
+  border: var(--outline);
+  box-shadow: 3px 3px 0 var(--ink);
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* ------------------------------------------------------------------------
+   Room loading cover. Only transform and opacity animate here, so the
+   browser's compositor keeps it moving while the page is busy loading.
+   ------------------------------------------------------------------------ */
+.room-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 18;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--cyan);
+  transition:
+    opacity 0.45s ease-out,
+    visibility 0s linear 0s;
+}
+.room-loading.gone {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.45s ease-out,
+    visibility 0s linear 0.45s;
+}
+.room-loading-rays {
+  position: absolute;
+  inset: -60%;
+  background: repeating-conic-gradient(from 0deg, var(--cyan) 0deg 9deg, #7fe6ff 9deg 18deg);
+  will-change: transform;
+  animation: spin 14s linear infinite;
+}
+.room-loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--dots);
+  -webkit-mask: radial-gradient(circle at center, transparent 25%, #000 80%);
+  mask: radial-gradient(circle at center, transparent 25%, #000 80%);
+}
+.room-loading.gone .room-loading-rays,
+.room-loading.gone .room-loading-dots i,
+.room-loading.gone .room-loading-card {
+  animation-play-state: paused;
+}
+.room-loading-card {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  padding: 1.4rem 2.4rem 1.2rem;
+  background: var(--paper);
+  border: var(--outline);
+  box-shadow: var(--shadow);
+  transform: rotate(-2deg);
+  will-change: transform;
+  animation: room-loading-wobble 2.4s ease-in-out infinite;
+}
+.room-loading-kicker {
+  font: 700 0.9rem/1 var(--body);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.room-loading-card strong {
+  font-size: clamp(2.6rem, 8vw, 4.5rem);
+  line-height: 1;
+  color: var(--yellow);
+}
+.room-loading-card small {
+  font: 700 0.95rem/1.2 var(--body);
+}
+.room-loading-dots {
+  display: flex;
+  gap: 0.5rem;
+}
+.room-loading-dots i {
+  width: 0.9rem;
+  height: 0.9rem;
+  border: var(--outline);
+  border-radius: 50%;
+  background: var(--pink);
+  will-change: transform;
+  animation: room-loading-hop 0.9s ease-in-out infinite;
+}
+.room-loading-dots i:nth-child(2) {
+  background: var(--yellow);
+  animation-delay: 0.15s;
+}
+.room-loading-dots i:nth-child(3) {
+  background: var(--blue);
+  animation-delay: 0.3s;
+}
+@keyframes room-loading-hop {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-0.7rem);
+  }
+}
+@keyframes room-loading-wobble {
+  0%,
+  100% {
+    transform: rotate(-2deg) scale(1);
+  }
+  50% {
+    transform: rotate(1.5deg) scale(1.03);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .room-loading-rays,
+  .room-loading-card,
+  .room-loading-dots i {
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------------------------------
+   Level menu on the title card: one sticker per room, locked ones greyed
+   ------------------------------------------------------------------------ */
+.level-grid {
+  display: grid;
+  /* three rows of three: wide enough that every name fits on one line */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* every card the same size, whatever the room's name */
+  grid-auto-rows: 1fr;
+  gap: 0.8rem;
+  width: 100%;
+  margin: 1.2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.level-grid li {
+  display: flex;
+}
+.level-card {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 0.15rem;
+  justify-items: start;
+  align-items: start;
+  width: 100%;
+  min-height: 5.2rem;
+  padding: 0.6rem 0.75rem 0.55rem;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  background: var(--yellow);
+  border: var(--outline);
+  box-shadow: 4px 4px 0 var(--ink);
+  cursor: pointer;
+  transition:
+    transform 0.12s ease-out,
+    box-shadow 0.12s ease-out;
+}
+.level-card:not(.locked):hover,
+.level-card:focus-visible {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+.level-card.latest {
+  background: var(--pink);
+  color: #fff;
+}
+.level-grid li {
+  position: relative;
+}
+.level-card.locked {
+  cursor: not-allowed;
+  color: #6d6d6d;
+  background: repeating-linear-gradient(-45deg, #d9d9d9 0 10px, #c9c9c9 10px 20px);
+  box-shadow: 3px 3px 0 #6d6d6d;
+  border-color: #6d6d6d;
+}
+.level-number {
+  font: 400 1.6rem/1 var(--display);
+}
+.level-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 400 1.25rem/1.05 var(--display);
+  letter-spacing: 0.03em;
+}
+.level-best {
+  white-space: nowrap;
+  font: 700 0.75rem/1.2 var(--body);
+}
+/* best score: a stamp in the card's corner, and a bar of how much of the room it is */
+.level-card {
+  position: relative;
+}
+.level-score {
+  position: absolute;
+  top: -0.7rem;
+  right: -0.6rem;
+  padding: 0.25rem 0.5rem 0.15rem;
+  font: 400 1.45rem/1 var(--display);
+  letter-spacing: 0.03em;
+  color: #fff;
+  -webkit-text-stroke: 1.5px var(--ink);
+  paint-order: stroke fill;
+  background: var(--blue);
+  border: var(--outline);
+  box-shadow: 3px 3px 0 var(--ink);
+  transform: rotate(6deg);
+}
+.level-score small {
+  font-size: 0.6em;
+}
+.level-meter {
+  align-self: end;
+  width: 100%;
+  height: 0.55rem;
+  background: #fff;
+  border: 2px solid var(--ink);
+}
+.level-meter i {
+  display: block;
+  height: 100%;
+  background: var(--blue);
+}
+.level-card.latest .level-meter i {
+  background: var(--yellow);
+}
+.level-total {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 1.1rem 0 0;
+  font: 700 0.85rem/1.3 var(--body);
+}
+.sticker.best {
+  background: #fff;
+  color: var(--ink);
+  transform: rotate(1.5deg);
+}
+.sticker.best small {
+  font-family: var(--body);
+  font-weight: 800;
+  font-size: 0.6em;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.new-best {
+  background: var(--yellow);
+  color: var(--ink);
+  -webkit-text-stroke: 0;
+  font-size: 1.6rem;
+}
+.best-to-beat {
+  position: absolute;
+  top: -1.1rem;
+  right: -0.8rem;
+  padding: 0.3rem 0.6rem;
+  font: 800 0.85rem/1 var(--body);
+  background: #fff;
+  border: var(--outline);
+  box-shadow: 3px 3px 0 var(--ink);
+  transform: rotate(4deg);
+}
+.level-hint {
+  margin: 1rem 0 0;
+  font: 700 0.85rem/1.3 var(--body);
+}
+@media (max-width: 760px) {
+  .level-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Shorter screens: tighten the title card so the logo never gets cut off */
+@media (max-height: 820px) {
+  .title-panel .logo-sticker {
+    margin-top: -2.6rem;
+    margin-bottom: 1rem;
+    padding: 1.4rem 1.8rem 0.8rem;
+  }
+  .title-panel h1 {
+    font-size: clamp(2.6rem, 6vw, 3.8rem);
+  }
+  .title-panel .title-intro {
+    margin: 0;
+    font-size: 0.92rem;
+  }
+  .level-grid {
+    margin-top: 0.9rem;
+    gap: 0.6rem;
+  }
+  .level-card {
+    min-height: 4.4rem;
+    padding: 0.45rem 0.7rem 0.45rem;
+  }
+  .level-number {
+    font-size: 1.3rem;
+  }
+  .level-hint {
+    margin-top: 0.7rem;
+  }
+}
+
+/* How-to-play blurb on the title card: a plain caption box, not a speech bubble */
+.title-intro {
+  max-width: 34rem;
+  padding: 0.8rem 1.1rem;
+  text-align: left;
+  font: 600 1rem/1.45 var(--body);
+  background: #fff;
+  border: var(--outline);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.title-intro p {
+  margin: 0;
+}
+
+/* Locked level cards say how to open them on hover or keyboard focus */
+.level-card.locked::after {
+  content: attr(data-hint);
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: calc(100% + 0.5rem);
+  translate: -50% 0;
+  width: max-content;
+  max-width: 14rem;
+  padding: 0.4rem 0.65rem;
+  font: 700 0.8rem/1.25 var(--body);
+  color: var(--paper);
+  background: var(--ink);
+  border-radius: 6px;
+  box-shadow: 3px 3px 0 var(--pink);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease-out;
+}
+.level-card.locked:hover::after,
+.level-card.locked:focus-visible::after {
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------------------
+   Bug notes (hold P): a sticky note over everything, even the pause screen
+   ------------------------------------------------------------------------ */
+.note-panel {
+  position: fixed;
+  z-index: 40;
+  left: 50%;
+  bottom: 2rem;
+  translate: -50% 0;
+  width: min(34rem, calc(100vw - 2rem));
+  padding: 1rem 1.1rem 1rem;
+  background: var(--yellow);
+  border: var(--outline);
+  box-shadow: var(--shadow);
+  transform: rotate(-1deg);
+}
+.note-head {
+  display: grid;
+  gap: 0.15rem;
+  margin-bottom: 0.6rem;
+}
+.note-head strong {
+  font: 400 1.6rem/1 var(--display);
+  letter-spacing: 0.03em;
+}
+.note-head span {
+  font: 700 0.85rem/1.3 var(--body);
+}
+.note-panel textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 5.5rem;
+  padding: 0.6rem 0.7rem;
+  font: 600 1rem/1.4 var(--body);
+  color: var(--ink);
+  background: #fff;
+  border: var(--outline);
+  resize: vertical;
+}
+.note-panel .row {
+  margin-top: 0.7rem;
+}
+
+/* While walking about after a change or at the end of a room, the panel
+   shrinks out of the way; free the mouse (Esc) to see it all and click it. */
+.reveal-panel.walking,
+.end-panel.walking {
+  transform: scale(0.72);
+  transform-origin: bottom center;
+  margin-bottom: 3.2rem;
+  opacity: 0.92;
+}
+.end-panel.walking .results,
+.reveal-panel.walking .row,
+.end-panel.walking .row {
+  display: none;
+}
+
+/* ------------------------------------------------------------------------
+   Room preview: picking a room on the menu pops up a snapshot of it, a
+   line about it and your best, before you commit to going in
+   ------------------------------------------------------------------------ */
+.preview-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  pointer-events: auto;
+  background: var(--dots-light), rgba(17, 17, 17, 0.72);
+}
+.preview-card {
+  width: min(44rem, calc(100vw - 3rem));
+  padding: 1.2rem 1.2rem 1.6rem;
+  transform: rotate(0.8deg);
+}
+.preview-photo {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--ink);
+  border: var(--outline);
+  box-shadow: 5px 5px 0 var(--ink);
+}
+.preview-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* a strip of tape holding the photo on */
+.preview-photo::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  top: -0.5rem;
+  left: 50%;
+  width: 6.5rem;
+  height: 1.6rem;
+  translate: -50% 0;
+  rotate: -3deg;
+  background: rgba(255, 246, 220, 0.75);
+  border: 1px solid rgba(17, 17, 17, 0.25);
+}
+.preview-body {
+  padding: 1rem 0.4rem 0;
+  text-align: left;
+}
+.preview-body h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  font: 400 2.4rem/1 var(--display);
+  letter-spacing: 0.03em;
+}
+.preview-number {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  font-size: 1.7rem;
+  color: #fff;
+  background: var(--red);
+  border: var(--outline);
+  border-radius: 50%;
+  box-shadow: 3px 3px 0 var(--ink);
+  transform: rotate(-6deg);
+}
+.preview-blurb {
+  margin: 0.6rem 0 0;
+  font: 600 1.05rem/1.45 var(--body);
+}
+.preview-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin: 0.9rem 0 0;
+}
+.preview-facts .sticker {
+  font-size: 1.15rem;
+}
+.preview-card .row {
+  justify-content: flex-end;
+  margin-top: 1.1rem;
+}
+@media (max-height: 820px) {
+  .preview-card {
+    width: min(38rem, calc(100vw - 3rem));
+  }
+  .preview-body h2 {
+    font-size: 2rem;
+  }
+  .preview-blurb {
+    font-size: 0.95rem;
+  }
+}
+
+/* ------------------------------------------------------------------------
+   Music and sound-effect switches in the top corner
+   ------------------------------------------------------------------------ */
+.sound-toggles {
+  display: flex;
+  gap: 0.45rem;
+  transform: rotate(-1.5deg);
+}
+.sound-toggle {
+  padding: 0.35rem 0.6rem 0.3rem;
+  font: 800 0.75rem/1 var(--body);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--yellow);
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  cursor: pointer;
+}
+.sound-toggle:hover,
+.sound-toggle:focus-visible {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.sound-toggle.off {
+  color: #6d6d6d;
+  background: #e2e2e2;
+  text-decoration: line-through 2px;
+}
+
+/* ------------------------------------------------------------------------
+   Phones and tablets: a card over everything saying it needs a computer
+   ------------------------------------------------------------------------ */
+.no-mouse {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem 16px;
+  overflow-y: auto;
+  background: var(--dots-light), var(--blue);
+}
+.no-mouse-card {
+  position: relative;
+  width: min(26rem, 100%);
+  padding: 2.4rem 1.4rem 1.5rem;
+  text-align: center;
+  background: var(--dots), var(--paper);
+  border: 4px solid var(--ink);
+  box-shadow: 8px 8px 0 var(--ink);
+  transform: rotate(-1.5deg);
+}
+.no-mouse-burst {
+  position: absolute;
+  top: -1.6rem;
+  left: 50%;
+  translate: -50% 0;
+  padding: 0.35rem 1rem 0.2rem;
+  font: 400 1.7rem/1 var(--display);
+  letter-spacing: 0.04em;
+  color: #fff;
+  text-shadow: 2px 2px 0 var(--ink);
+  background: var(--red);
+  border: var(--outline);
+  box-shadow: 4px 4px 0 var(--ink);
+  transform: rotate(4deg);
+}
+.no-mouse-card h2 {
+  margin: 0;
+  font: 400 2.3rem/1 var(--display);
+  letter-spacing: 0.03em;
+}
+.no-mouse-card p {
+  margin: 0.9rem 0 0;
+  font: 700 1.05rem/1.45 var(--body);
+}
+.no-mouse-card .no-mouse-small {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.no-mouse-card .pop {
+  margin-top: 1.3rem;
+}
+.sound-toggles.big {
+  gap: 0.7rem;
+  margin-top: 0.3rem;
+  transform: rotate(1deg);
+}
+.sound-toggles.big .sound-toggle {
+  padding: 0.5rem 0.9rem 0.45rem;
+  font-size: 0.9rem;
+  border-width: 3px;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+/* the less important keys: one line of small print under the main three */
+.controls-more {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem 0.7rem;
+  margin: 0.8rem 0 0;
+  font: 700 0.78rem/1.2 var(--body);
+}
+.controls-more span {
+  white-space: nowrap;
+}
+.controls-more kbd {
+  padding: 0.15rem 0.4rem;
+  font-size: 0.68rem;
+}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 68 68">
+  <!-- Déjà Room: a comic starburst with an eye in it, pink print-offset shadow behind -->
+  <polygon transform="translate(3 3)" fill="#ff3fa4" points="32,1 38,13 51,7 49,21 63,24 52,33 61,45 47,46 46,60 35,52 25,62 22,48 8,52 13,39 1,31 14,24 10,10 24,13" />
+  <polygon fill="#ffde21" stroke="#111" stroke-width="3" stroke-linejoin="round" points="32,1 38,13 51,7 49,21 63,24 52,33 61,45 47,46 46,60 35,52 25,62 22,48 8,52 13,39 1,31 14,24 10,10 24,13" />
+  <path d="M12 32 Q32 14 52 32 Q32 50 12 32 Z" fill="#fff" stroke="#111" stroke-width="3" stroke-linejoin="round" />
+  <circle cx="32" cy="32" r="9" fill="#16d0ff" stroke="#111" stroke-width="2.5" />
+  <circle cx="32" cy="32" r="4.2" fill="#111" />
+  <circle cx="34.6" cy="29.4" r="1.8" fill="#fff" />
+</svg>

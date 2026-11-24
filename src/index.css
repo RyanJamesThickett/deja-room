@@ -1,0 +1,37 @@
+:root {
+  /* pop-art print palette */
+  --ink: #111111;
+  --paper: #fff6dc;
+  --yellow: #ffde21;
+  --red: #ff3131;
+  --blue: #1f6bff;
+  --cyan: #16d0ff;
+  --pink: #ff3fa4;
+
+  --display: 'Bangers', 'Impact', sans-serif;
+  --body: 'Bricolage Grotesque', 'Trebuchet MS', sans-serif;
+
+  /* Ben-Day dots */
+  --dots: radial-gradient(circle at center, rgba(17, 17, 17, 0.22) 1.3px, transparent 1.8px) 0 0 / 9px 9px;
+  --dots-light: radial-gradient(circle at center, rgba(255, 255, 255, 0.35) 1.5px, transparent 2px) 0 0 / 10px 10px;
+  --outline: 3px solid var(--ink);
+  --shadow: 6px 6px 0 var(--ink);
+
+  color-scheme: light;
+  font: 500 16px/1.45 var(--body);
+  color: var(--ink);
+  background: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
