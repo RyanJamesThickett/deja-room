@@ -1,89 +1,467 @@
 {
   "asset": {
-    "generator": "Khronos glTF Blender I/O v1.6.16",
+    "generator": "glTF-Transform v4.5.1",
     "version": "2.0"
   },
-  "scene": 0,
-  "scenes": [
+  "accessors": [
     {
-      "name": "Scene",
-      "nodes": [
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 65724,
+      "normalized": false,
+      "byteOffset": 0,
+      "bufferView": 0
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 1440,
+      "normalized": false,
+      "byteOffset": 131448,
+      "bufferView": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 12255,
+      "max": [
+        23950,
+        32767,
+        15669
+      ],
+      "min": [
+        -23950,
+        -28643,
+        -15421
+      ],
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 1
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 12255,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 2
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5123,
+      "count": 12255,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 3
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 12255,
+      "max": [
+        236,
+        420,
+        220
+      ],
+      "min": [
+        -280,
+        -444,
+        -240
+      ],
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 4
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 12255,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 5
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 337,
+      "max": [
+        18586,
+        -28503,
+        15837
+      ],
+      "min": [
+        -16414,
+        -31875,
+        -15837
+      ],
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 6
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 337,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 7
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5123,
+      "count": 337,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 8
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 337,
+      "max": [
+        0,
+        0,
         0
-      ]
+      ],
+      "min": [
+        0,
+        0,
+        0
+      ],
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 9
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 337,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 10
     }
   ],
-  "nodes": [
+  "bufferViews": [
     {
-      "mesh": 0,
-      "name": "horse_statue_01"
-    }
-  ],
-  "materials": [
-    {
-      "doubleSided": true,
-      "name": "horse_statue_01",
-      "normalTexture": {
-        "index": 0
-      },
-      "pbrMetallicRoughness": {
-        "baseColorTexture": {
-          "index": 1
-        },
-        "metallicFactor": 0,
-        "metallicRoughnessTexture": {
-          "index": 2
+      "buffer": 1,
+      "byteOffset": 0,
+      "byteLength": 134328,
+      "target": 34963,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 0,
+          "byteLength": 25607,
+          "mode": "TRIANGLES",
+          "byteStride": 2,
+          "count": 67164
         }
       }
     },
     {
-      "doubleSided": true,
-      "name": "horse_statue_01_base",
-      "normalTexture": {
-        "index": 3
-      },
-      "pbrMetallicRoughness": {
-        "baseColorTexture": {
-          "index": 4
-        },
-        "metallicFactor": 0,
-        "metallicRoughnessTexture": {
-          "index": 5
+      "buffer": 1,
+      "byteOffset": 134328,
+      "byteLength": 98040,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 25608,
+          "byteLength": 53634,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 12255
         }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 232368,
+      "byteLength": 98040,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 79244,
+          "byteLength": 74017,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 12255
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 330408,
+      "byteLength": 49020,
+      "target": 34962,
+      "byteStride": 4,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 153264,
+          "byteLength": 35485,
+          "mode": "ATTRIBUTES",
+          "byteStride": 4,
+          "count": 12255
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 379428,
+      "byteLength": 98040,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 188752,
+          "byteLength": 4341,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 12255
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 477468,
+      "byteLength": 98040,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 193096,
+          "byteLength": 3143,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 12255
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 575508,
+      "byteLength": 2696,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 196240,
+          "byteLength": 1608,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 337
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 578204,
+      "byteLength": 2696,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 197848,
+          "byteLength": 2090,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 337
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 580900,
+      "byteLength": 1348,
+      "target": 34962,
+      "byteStride": 4,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 199940,
+          "byteLength": 1094,
+          "mode": "ATTRIBUTES",
+          "byteStride": 4,
+          "count": 337
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 582248,
+      "byteLength": 2696,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 201036,
+          "byteLength": 81,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 337
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 584944,
+      "byteLength": 2696,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 201120,
+          "byteLength": 81,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 337
+        }
+      }
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 1
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 0
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 2
+        }
+      }
+    }
+  ],
+  "images": [
+    {
+      "name": "horse_statue_01_nor_gl",
+      "mimeType": "image/webp",
+      "uri": "textures/horse_statue_01_nor_gl_1k.webp"
+    },
+    {
+      "name": "horse_statue_01_diff",
+      "mimeType": "image/webp",
+      "uri": "textures/horse_statue_01_diff_1k.webp"
+    },
+    {
+      "name": "horse_statue_01_arm",
+      "mimeType": "image/webp",
+      "uri": "textures/horse_statue_01_arm_1k.webp"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "horse_statue_01.bin",
+      "byteLength": 201204
+    },
+    {
+      "byteLength": 587640,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "fallback": true
+        }
+      }
+    }
+  ],
+  "materials": [
+    {
+      "name": "horse_statue_01",
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 0
+        },
+        "metallicRoughnessTexture": {
+          "index": 2
+        }
+      },
+      "normalTexture": {
+        "index": 1
+      }
+    },
+    {
+      "name": "horse_statue_01_base",
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 0
+        },
+        "metallicRoughnessTexture": {
+          "index": 2
+        }
+      },
+      "normalTexture": {
+        "index": 1
       }
     }
   ],
   "meshes": [
     {
+      "name": "Plane",
       "extras": {
         "targetNames": [
           "hooves"
         ]
       },
-      "name": "Plane",
       "primitives": [
         {
           "attributes": {
-            "POSITION": 0,
-            "NORMAL": 1,
-            "TEXCOORD_0": 2
+            "POSITION": 2,
+            "NORMAL": 3,
+            "TEXCOORD_0": 4
           },
-          "indices": 3,
+          "mode": 4,
           "material": 0,
+          "indices": 0,
           "targets": [
             {
-              "POSITION": 4,
-              "NORMAL": 5
+              "POSITION": 5,
+              "NORMAL": 6
             }
           ]
         },
         {
           "attributes": {
-            "POSITION": 6,
-            "NORMAL": 7,
-            "TEXCOORD_0": 8
+            "POSITION": 7,
+            "NORMAL": 8,
+            "TEXCOORD_0": 9
           },
-          "indices": 9,
+          "mode": 4,
           "material": 1,
+          "indices": 1,
           "targets": [
             {
               "POSITION": 10,
@@ -97,235 +475,39 @@
       ]
     }
   ],
-  "textures": [
+  "nodes": [
     {
-      "sampler": 0,
-      "source": 0
-    },
-    {
-      "sampler": 0,
-      "source": 1
-    },
-    {
-      "sampler": 0,
-      "source": 2
-    },
-    {
-      "sampler": 0,
-      "source": 0
-    },
-    {
-      "sampler": 0,
-      "source": 1
-    },
-    {
-      "sampler": 0,
-      "source": 2
+      "name": "horse_statue_01",
+      "translation": [
+        -0.0036628618836402893,
+        0.10849151760339737,
+        -0.000014744699001312256
+      ],
+      "scale": [
+        0.11150569468736649,
+        0.11150569468736649,
+        0.11150569468736649
+      ],
+      "mesh": 0
     }
   ],
-  "images": [
+  "scenes": [
     {
-      "mimeType": "image/jpeg",
-      "name": "horse_statue_01_nor_gl",
-      "uri": "textures/horse_statue_01_nor_gl_1k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "horse_statue_01_diff",
-      "uri": "textures/horse_statue_01_diff_1k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "horse_statue_01_arm",
-      "uri": "textures/horse_statue_01_arm_1k.jpg"
-    }
-  ],
-  "accessors": [
-    {
-      "bufferView": 0,
-      "componentType": 5126,
-      "count": 12255,
-      "max": [
-        0.07783335447311401,
-        0.21999721229076385,
-        0.053308602422475815
-      ],
-      "min": [
-        -0.08515907824039459,
-        0.011014513671398163,
-        -0.05248892307281494
-      ],
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 1,
-      "componentType": 5126,
-      "count": 12255,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 2,
-      "componentType": 5126,
-      "count": 12255,
-      "type": "VEC2"
-    },
-    {
-      "bufferView": 3,
-      "componentType": 5123,
-      "count": 65724,
-      "type": "SCALAR"
-    },
-    {
-      "bufferView": 4,
-      "componentType": 5126,
-      "count": 12255,
-      "max": [
-        0.0008086264133453369,
-        0.001424551010131836,
-        0.0007443949580192566
-      ],
-      "min": [
-        -0.0009574741125106812,
-        -0.001507088541984558,
-        -0.0008131870999932289
-      ],
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 5,
-      "componentType": 5126,
-      "count": 12255,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 6,
-      "componentType": 5126,
-      "count": 337,
-      "max": [
-        0.05958269536495209,
-        0.011499738320708275,
-        0.053880687803030014
-      ],
-      "min": [
-        -0.059524279087781906,
-        0.00001830275505199097,
-        -0.05391017720103264
-      ],
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 7,
-      "componentType": 5126,
-      "count": 337,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 8,
-      "componentType": 5126,
-      "count": 337,
-      "type": "VEC2"
-    },
-    {
-      "bufferView": 9,
-      "componentType": 5123,
-      "count": 1440,
-      "type": "SCALAR"
-    },
-    {
-      "bufferView": 10,
-      "componentType": 5126,
-      "count": 337,
-      "max": [
-        0,
-        0,
+      "name": "Scene",
+      "nodes": [
         0
-      ],
-      "min": [
-        0,
-        0,
-        0
-      ],
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 11,
-      "componentType": 5126,
-      "count": 337,
-      "type": "VEC3"
+      ]
     }
   ],
-  "bufferViews": [
-    {
-      "buffer": 0,
-      "byteLength": 147060,
-      "byteOffset": 0
-    },
-    {
-      "buffer": 0,
-      "byteLength": 147060,
-      "byteOffset": 147060
-    },
-    {
-      "buffer": 0,
-      "byteLength": 98040,
-      "byteOffset": 294120
-    },
-    {
-      "buffer": 0,
-      "byteLength": 131448,
-      "byteOffset": 392160
-    },
-    {
-      "buffer": 0,
-      "byteLength": 147060,
-      "byteOffset": 523608
-    },
-    {
-      "buffer": 0,
-      "byteLength": 147060,
-      "byteOffset": 670668
-    },
-    {
-      "buffer": 0,
-      "byteLength": 4044,
-      "byteOffset": 817728
-    },
-    {
-      "buffer": 0,
-      "byteLength": 4044,
-      "byteOffset": 821772
-    },
-    {
-      "buffer": 0,
-      "byteLength": 2696,
-      "byteOffset": 825816
-    },
-    {
-      "buffer": 0,
-      "byteLength": 2880,
-      "byteOffset": 828512
-    },
-    {
-      "buffer": 0,
-      "byteLength": 4044,
-      "byteOffset": 831392
-    },
-    {
-      "buffer": 0,
-      "byteLength": 4044,
-      "byteOffset": 835436
-    }
+  "scene": 0,
+  "extensionsUsed": [
+    "EXT_meshopt_compression",
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
   ],
-  "samplers": [
-    {
-      "magFilter": 9729,
-      "minFilter": 9987
-    }
-  ],
-  "buffers": [
-    {
-      "byteLength": 839480,
-      "uri": "horse_statue_01.bin"
-    }
+  "extensionsRequired": [
+    "EXT_meshopt_compression",
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
   ]
 }

@@ -1,53 +1,309 @@
 {
   "asset": {
-    "generator": "Khronos glTF Blender I/O v5.1.18",
+    "generator": "glTF-Transform v4.5.1",
     "version": "2.0"
   },
-  "scene": 0,
-  "scenes": [
+  "accessors": [
     {
-      "name": "Scene",
-      "nodes": [
-        0
-      ]
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 1152,
+      "normalized": false,
+      "byteOffset": 0,
+      "bufferView": 0
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 46440,
+      "normalized": false,
+      "byteOffset": 2304,
+      "bufferView": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 388,
+      "max": [
+        9353,
+        12445,
+        2048
+      ],
+      "min": [
+        -8092,
+        -5004,
+        1792
+      ],
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 1
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 388,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 2
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5123,
+      "count": 388,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 3
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 12393,
+      "max": [
+        22410,
+        32767,
+        12589
+      ],
+      "min": [
+        -22410,
+        -32767,
+        -12589
+      ],
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 4
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 12393,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 5
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5123,
+      "count": 12393,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 6
     }
   ],
-  "nodes": [
+  "bufferViews": [
     {
-      "mesh": 0,
-      "name": "vintage_telephone_wall_clock"
-    }
-  ],
-  "materials": [
-    {
-      "alphaMode": "BLEND",
-      "doubleSided": true,
-      "name": "vintage_telephone_wall_clock_glass",
-      "normalTexture": {
-        "index": 0
-      },
-      "pbrMetallicRoughness": {
-        "baseColorTexture": {
-          "index": 1
-        },
-        "metallicRoughnessTexture": {
-          "index": 2
+      "buffer": 1,
+      "byteOffset": 0,
+      "byteLength": 95184,
+      "target": 34963,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 0,
+          "byteLength": 17518,
+          "mode": "TRIANGLES",
+          "byteStride": 2,
+          "count": 47592
         }
       }
     },
     {
+      "buffer": 1,
+      "byteOffset": 95184,
+      "byteLength": 3104,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 17520,
+          "byteLength": 1408,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 388
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 98288,
+      "byteLength": 3104,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 18928,
+          "byteLength": 637,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 388
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 101392,
+      "byteLength": 1552,
+      "target": 34962,
+      "byteStride": 4,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 19568,
+          "byteLength": 1210,
+          "mode": "ATTRIBUTES",
+          "byteStride": 4,
+          "count": 388
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 102944,
+      "byteLength": 99144,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 20780,
+          "byteLength": 47750,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 12393
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 202088,
+      "byteLength": 99144,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 68532,
+          "byteLength": 52148,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 12393
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 301232,
+      "byteLength": 49572,
+      "target": 34962,
+      "byteStride": 4,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 120680,
+          "byteLength": 32661,
+          "mode": "ATTRIBUTES",
+          "byteStride": 4,
+          "count": 12393
+        }
+      }
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 1
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 0
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 2
+        }
+      }
+    }
+  ],
+  "images": [
+    {
+      "name": "vintage_telephone_wall_clock_nor_gl",
+      "mimeType": "image/webp",
+      "uri": "textures/vintage_telephone_wall_clock_nor_gl_1k.webp"
+    },
+    {
+      "name": "vintage_telephone_wall_clock_diff-vintage_telephone_wall_clock_alpha",
+      "mimeType": "image/webp",
+      "uri": "textures/vintage_telephone_wall_clock_diff_1k.webp"
+    },
+    {
+      "name": "vintage_telephone_wall_clock_metal-vintage_telephone_wall_clock_rough",
+      "mimeType": "image/webp",
+      "uri": "textures/vintage_telephone_wall_clock_arm_1k.webp"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "vintage_telephone_wall_clock.bin",
+      "byteLength": 153344
+    },
+    {
+      "byteLength": 350804,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "fallback": true
+        }
+      }
+    }
+  ],
+  "materials": [
+    {
+      "name": "vintage_telephone_wall_clock_glass",
+      "alphaMode": "BLEND",
       "doubleSided": true,
-      "name": "vintage_telephone_wall_clock",
-      "normalTexture": {
-        "index": 3
-      },
       "pbrMetallicRoughness": {
         "baseColorTexture": {
-          "index": 4
+          "index": 0
         },
         "metallicRoughnessTexture": {
-          "index": 5
+          "index": 2
         }
+      },
+      "normalTexture": {
+        "index": 1
+      }
+    },
+    {
+      "name": "vintage_telephone_wall_clock",
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0
+        },
+        "metallicRoughnessTexture": {
+          "index": 2
+        }
+      },
+      "normalTexture": {
+        "index": 1
       }
     }
   ],
@@ -57,203 +313,60 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 0,
-            "NORMAL": 1,
-            "TEXCOORD_0": 2
+            "POSITION": 2,
+            "NORMAL": 3,
+            "TEXCOORD_0": 4
           },
-          "indices": 3,
-          "material": 0
+          "mode": 4,
+          "material": 0,
+          "indices": 0
         },
         {
           "attributes": {
-            "POSITION": 4,
-            "NORMAL": 5,
-            "TEXCOORD_0": 6
+            "POSITION": 5,
+            "NORMAL": 6,
+            "TEXCOORD_0": 7
           },
-          "indices": 7,
-          "material": 1
+          "mode": 4,
+          "material": 1,
+          "indices": 1
         }
       ]
     }
   ],
-  "textures": [
+  "nodes": [
     {
-      "sampler": 0,
-      "source": 0
-    },
-    {
-      "sampler": 0,
-      "source": 1
-    },
-    {
-      "sampler": 0,
-      "source": 2
-    },
-    {
-      "sampler": 0,
-      "source": 0
-    },
-    {
-      "sampler": 0,
-      "source": 3
-    },
-    {
-      "sampler": 0,
-      "source": 2
-    }
-  ],
-  "images": [
-    {
-      "mimeType": "image/jpeg",
-      "name": "vintage_telephone_wall_clock_nor_gl",
-      "uri": "textures/vintage_telephone_wall_clock_nor_gl_1k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "vintage_telephone_wall_clock_diff-vintage_telephone_wall_clock_alpha",
-      "uri": "textures/vintage_telephone_wall_clock_diff_1k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "vintage_telephone_wall_clock_metal-vintage_telephone_wall_clock_rough",
-      "uri": "textures/vintage_telephone_wall_clock_arm_1k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "vintage_telephone_wall_clock_diff",
-      "uri": "textures/vintage_telephone_wall_clock_diff_1k.jpg"
-    }
-  ],
-  "accessors": [
-    {
-      "bufferView": 0,
-      "componentType": 5126,
-      "count": 388,
-      "max": [
-        0.06692959368228912,
-        0.2722152769565582,
-        0.1119602769613266
+      "name": "vintage_telephone_wall_clock",
+      "translation": [
+        -0.00460437685251236,
+        0.17703551799058914,
+        0.09628146514296532
       ],
-      "min": [
-        -0.06651589274406433,
-        0.13876977562904358,
-        0.10997440665960312
+      "scale": [
+        0.25061606615781784,
+        0.25061606615781784,
+        0.25061606615781784
       ],
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 1,
-      "componentType": 5126,
-      "count": 388,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 2,
-      "componentType": 5126,
-      "count": 388,
-      "type": "VEC2"
-    },
-    {
-      "bufferView": 3,
-      "componentType": 5123,
-      "count": 1152,
-      "type": "SCALAR"
-    },
-    {
-      "bufferView": 4,
-      "componentType": 5126,
-      "count": 12393,
-      "max": [
-        0.16679838299751282,
-        0.427651584148407,
-        0.19256296753883362
-      ],
-      "min": [
-        -0.17600713670253754,
-        -0.0735805481672287,
-        -3.725290298461914e-8
-      ],
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 5,
-      "componentType": 5126,
-      "count": 12393,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 6,
-      "componentType": 5126,
-      "count": 12393,
-      "type": "VEC2"
-    },
-    {
-      "bufferView": 7,
-      "componentType": 5123,
-      "count": 46440,
-      "type": "SCALAR"
+      "mesh": 0
     }
   ],
-  "bufferViews": [
+  "scenes": [
     {
-      "buffer": 0,
-      "byteLength": 4656,
-      "byteOffset": 0,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteLength": 4656,
-      "byteOffset": 4656,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteLength": 3104,
-      "byteOffset": 9312,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteLength": 2304,
-      "byteOffset": 12416,
-      "target": 34963
-    },
-    {
-      "buffer": 0,
-      "byteLength": 148716,
-      "byteOffset": 14720,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteLength": 148716,
-      "byteOffset": 163436,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteLength": 99144,
-      "byteOffset": 312152,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteLength": 92880,
-      "byteOffset": 411296,
-      "target": 34963
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
     }
   ],
-  "samplers": [
-    {
-      "magFilter": 9729,
-      "minFilter": 9987
-    }
+  "scene": 0,
+  "extensionsUsed": [
+    "EXT_meshopt_compression",
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
   ],
-  "buffers": [
-    {
-      "byteLength": 504176,
-      "uri": "vintage_telephone_wall_clock.bin"
-    }
+  "extensionsRequired": [
+    "EXT_meshopt_compression",
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
   ]
 }

@@ -1,37 +1,225 @@
 {
   "asset": {
-    "generator": "Khronos glTF Blender I/O v1.6.16",
+    "generator": "glTF-Transform v4.5.1",
     "version": "2.0"
   },
-  "scene": 0,
-  "scenes": [
+  "accessors": [
     {
-      "name": "Scene",
-      "nodes": [
-        0
-      ]
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 5754,
+      "normalized": false,
+      "byteOffset": 0,
+      "bufferView": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 1976,
+      "max": [
+        32767,
+        24951,
+        25711
+      ],
+      "min": [
+        -32767,
+        -24951,
+        -25711
+      ],
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 1
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 1976,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 2
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5123,
+      "count": 1976,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 3
+    },
+    {
+      "type": "VEC4",
+      "componentType": 5121,
+      "count": 1976,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 4
     }
   ],
-  "nodes": [
+  "bufferViews": [
     {
-      "mesh": 0,
-      "name": "Television_01"
+      "buffer": 1,
+      "byteOffset": 0,
+      "byteLength": 11508,
+      "target": 34963,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 0,
+          "byteLength": 2071,
+          "mode": "TRIANGLES",
+          "byteStride": 2,
+          "count": 5754
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 11508,
+      "byteLength": 15808,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 2072,
+          "byteLength": 8597,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 1976
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 27316,
+      "byteLength": 15808,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 10672,
+          "byteLength": 7743,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 1976
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 43124,
+      "byteLength": 7904,
+      "target": 34962,
+      "byteStride": 4,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 18416,
+          "byteLength": 6195,
+          "mode": "ATTRIBUTES",
+          "byteStride": 4,
+          "count": 1976
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 51028,
+      "byteLength": 7904,
+      "target": 34962,
+      "byteStride": 4,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 24612,
+          "byteLength": 157,
+          "mode": "ATTRIBUTES",
+          "byteStride": 4,
+          "count": 1976
+        }
+      }
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 1
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 0
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 2
+        }
+      }
+    }
+  ],
+  "images": [
+    {
+      "name": "Television_01_nor_gl",
+      "mimeType": "image/webp",
+      "uri": "textures/Television_01_nor_gl_1k.webp"
+    },
+    {
+      "name": "Television_01_diff",
+      "mimeType": "image/webp",
+      "uri": "textures/Television_01_diff_1k.webp"
+    },
+    {
+      "name": "Television_01_metallic-Television_01_roughness",
+      "mimeType": "image/webp",
+      "uri": "textures/Television_01_arm_1k.webp"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "Television_01.bin",
+      "byteLength": 24772
+    },
+    {
+      "byteLength": 58932,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "fallback": true
+        }
+      }
     }
   ],
   "materials": [
     {
-      "doubleSided": true,
       "name": "Television_01",
-      "normalTexture": {
-        "index": 0
-      },
+      "doubleSided": true,
       "pbrMetallicRoughness": {
         "baseColorTexture": {
-          "index": 1
+          "index": 0
         },
         "metallicRoughnessTexture": {
           "index": 2
         }
+      },
+      "normalTexture": {
+        "index": 1
       }
     }
   ],
@@ -41,128 +229,51 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 0,
-            "NORMAL": 1,
-            "TEXCOORD_0": 2,
-            "COLOR_0": 3
+            "POSITION": 1,
+            "NORMAL": 2,
+            "TEXCOORD_0": 3,
+            "COLOR_0": 4
           },
-          "indices": 4,
-          "material": 0
+          "mode": 4,
+          "material": 0,
+          "indices": 0
         }
       ]
     }
   ],
-  "textures": [
+  "nodes": [
     {
-      "sampler": 0,
-      "source": 0
-    },
-    {
-      "sampler": 0,
-      "source": 1
-    },
-    {
-      "sampler": 0,
-      "source": 2
-    }
-  ],
-  "images": [
-    {
-      "mimeType": "image/jpeg",
-      "name": "Television_01_nor_gl",
-      "uri": "textures/Television_01_nor_gl_1k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "Television_01_diff",
-      "uri": "textures/Television_01_diff_1k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "Television_01_metallic-Television_01_roughness",
-      "uri": "textures/Television_01_arm_1k.jpg"
-    }
-  ],
-  "accessors": [
-    {
-      "bufferView": 0,
-      "componentType": 5126,
-      "count": 1976,
-      "max": [
+      "name": "Television_01",
+      "translation": [
+        0,
+        0.2284089577224222,
+        -0.02296118438243866
+      ],
+      "scale": [
         0.29999998211860657,
-        0.4568334221839905,
-        0.21244415640830994
+        0.29999998211860657,
+        0.29999998211860657
       ],
-      "min": [
-        -0.29999998211860657,
-        -0.000015506739146076143,
-        -0.25836652517318726
-      ],
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 1,
-      "componentType": 5126,
-      "count": 1976,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 2,
-      "componentType": 5126,
-      "count": 1976,
-      "type": "VEC2"
-    },
-    {
-      "bufferView": 3,
-      "componentType": 5123,
-      "count": 1976,
-      "normalized": true,
-      "type": "VEC4"
-    },
-    {
-      "bufferView": 4,
-      "componentType": 5123,
-      "count": 5754,
-      "type": "SCALAR"
+      "mesh": 0
     }
   ],
-  "bufferViews": [
+  "scenes": [
     {
-      "buffer": 0,
-      "byteLength": 23712,
-      "byteOffset": 0
-    },
-    {
-      "buffer": 0,
-      "byteLength": 23712,
-      "byteOffset": 23712
-    },
-    {
-      "buffer": 0,
-      "byteLength": 15808,
-      "byteOffset": 47424
-    },
-    {
-      "buffer": 0,
-      "byteLength": 15808,
-      "byteOffset": 63232
-    },
-    {
-      "buffer": 0,
-      "byteLength": 11508,
-      "byteOffset": 79040
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
     }
   ],
-  "samplers": [
-    {
-      "magFilter": 9729,
-      "minFilter": 9987
-    }
+  "scene": 0,
+  "extensionsUsed": [
+    "EXT_meshopt_compression",
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
   ],
-  "buffers": [
-    {
-      "byteLength": 90548,
-      "uri": "Television_01.bin"
-    }
+  "extensionsRequired": [
+    "EXT_meshopt_compression",
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
   ]
 }

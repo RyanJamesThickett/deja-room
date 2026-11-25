@@ -1,7 +1,7 @@
 import { EYE_HEIGHT } from '../../layout'
+import { lazyScene } from '../lazyScene'
 import type { RoomDef } from '../types'
 import { GYM_BOUNDS } from './bounds'
-import { GymRoom } from './GymRoom'
 import { GYM_ITEMS } from './items'
 
 export const gym: RoomDef = {
@@ -15,5 +15,5 @@ export const gym: RoomDef = {
   bounds: GYM_BOUNDS,
   // just inside the front door, reception on your right, looking across to the mirror wall
   start: { position: [2.4, EYE_HEIGHT, 2.6], target: [-1.2, 1.1, -2.2] },
-  Scene: GymRoom,
+  ...lazyScene(() => import('./GymRoom').then((m) => m.GymRoom)),
 }

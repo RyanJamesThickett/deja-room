@@ -1,54 +1,349 @@
 {
   "asset": {
-    "generator": "Khronos glTF Blender I/O v1.7.33",
+    "generator": "glTF-Transform v4.5.1",
     "version": "2.0"
   },
-  "scene": 0,
-  "scenes": [
+  "accessors": [
     {
-      "name": "Scene",
-      "nodes": [
-        0
-      ]
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 14058,
+      "normalized": false,
+      "byteOffset": 0,
+      "bufferView": 0
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 7210,
+      "normalized": false,
+      "byteOffset": 0,
+      "bufferView": 1
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 26877,
+      "normalized": false,
+      "byteOffset": 28116,
+      "bufferView": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 7210,
+      "max": [
+        32751,
+        9997,
+        32731
+      ],
+      "min": [
+        -32695,
+        -10085,
+        -32767
+      ],
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 2
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 7210,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 3
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 17825,
+      "max": [
+        24498,
+        10085,
+        32767
+      ],
+      "min": [
+        -32751,
+        -6416,
+        -24454
+      ],
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 4
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 17825,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 5
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5123,
+      "count": 17825,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 6
     }
   ],
-  "nodes": [
+  "bufferViews": [
     {
-      "mesh": 0,
-      "name": "modern_coffee_table_02"
-    }
-  ],
-  "materials": [
-    {
-      "doubleSided": true,
-      "name": "modern_coffee_table_02_base",
-      "normalTexture": {
-        "index": 0
-      },
-      "pbrMetallicRoughness": {
-        "baseColorTexture": {
-          "index": 1
-        },
-        "metallicFactor": 0,
-        "metallicRoughnessTexture": {
-          "index": 2
+      "buffer": 1,
+      "byteOffset": 0,
+      "byteLength": 81870,
+      "target": 34963,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 0,
+          "byteLength": 13788,
+          "mode": "TRIANGLES",
+          "byteStride": 2,
+          "count": 40935
         }
       }
     },
     {
+      "buffer": 1,
+      "byteOffset": 81872,
+      "byteLength": 57680,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 13788,
+          "byteLength": 35582,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 7210
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 139552,
+      "byteLength": 57680,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 49372,
+          "byteLength": 24358,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 7210
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 197232,
+      "byteLength": 57680,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 73732,
+          "byteLength": 23325,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 7210
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 254912,
+      "byteLength": 142600,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 97060,
+          "byteLength": 71045,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 17825
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 397512,
+      "byteLength": 142600,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 168108,
+          "byteLength": 83577,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 17825
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 540112,
+      "byteLength": 71300,
+      "target": 34962,
+      "byteStride": 4,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 251688,
+          "byteLength": 51946,
+          "mode": "ATTRIBUTES",
+          "byteStride": 4,
+          "count": 17825
+        }
+      }
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 1
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 0
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 2
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 4
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 3
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 5
+        }
+      }
+    }
+  ],
+  "images": [
+    {
+      "name": "modern_coffee_table_02_base_nor_gl.png",
+      "mimeType": "image/webp",
+      "uri": "textures/modern_coffee_table_02_base_nor_gl_2k.webp"
+    },
+    {
+      "name": "modern_coffee_table_02_base_diff",
+      "mimeType": "image/webp",
+      "uri": "textures/modern_coffee_table_02_base_diff_2k.webp"
+    },
+    {
+      "name": "modern_coffee_table_02_base_rough",
+      "mimeType": "image/webp",
+      "uri": "textures/modern_coffee_table_02_base_rough_2k.webp"
+    },
+    {
+      "name": "modern_coffee_table_02_wood_nor_gl",
+      "mimeType": "image/webp",
+      "uri": "textures/modern_coffee_table_02_wood_nor_gl_2k.webp"
+    },
+    {
+      "name": "modern_coffee_table_02_wood_diff",
+      "mimeType": "image/webp",
+      "uri": "textures/modern_coffee_table_02_wood_diff_2k.webp"
+    },
+    {
+      "name": "modern_coffee_table_02_wood_rough",
+      "mimeType": "image/webp",
+      "uri": "textures/modern_coffee_table_02_wood_rough_2k.webp"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "modern_coffee_table_02.bin",
+      "byteLength": 303636
+    },
+    {
+      "byteLength": 611412,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "fallback": true
+        }
+      }
+    }
+  ],
+  "materials": [
+    {
+      "name": "modern_coffee_table_02_base",
       "doubleSided": true,
-      "name": "modern_coffee_table_02_wood",
-      "normalTexture": {
-        "index": 3
-      },
       "pbrMetallicRoughness": {
-        "baseColorTexture": {
-          "index": 4
-        },
         "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 0
+        },
+        "metallicRoughnessTexture": {
+          "index": 2
+        }
+      },
+      "normalTexture": {
+        "index": 1
+      }
+    },
+    {
+      "name": "modern_coffee_table_02_wood",
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 3
+        },
         "metallicRoughnessTexture": {
           "index": 5
         }
+      },
+      "normalTexture": {
+        "index": 4
       }
     }
   ],
@@ -58,205 +353,60 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 0,
-            "NORMAL": 1,
-            "TEXCOORD_0": 2
+            "TEXCOORD_0": 1,
+            "POSITION": 3,
+            "NORMAL": 4
           },
-          "indices": 3,
-          "material": 0
+          "mode": 4,
+          "material": 0,
+          "indices": 0
         },
         {
           "attributes": {
-            "POSITION": 4,
-            "NORMAL": 5,
-            "TEXCOORD_0": 6
+            "POSITION": 5,
+            "NORMAL": 6,
+            "TEXCOORD_0": 7
           },
-          "indices": 7,
-          "material": 1
+          "mode": 4,
+          "material": 1,
+          "indices": 2
         }
       ]
     }
   ],
-  "textures": [
+  "nodes": [
     {
-      "sampler": 0,
-      "source": 0
-    },
-    {
-      "sampler": 0,
-      "source": 1
-    },
-    {
-      "sampler": 0,
-      "source": 2
-    },
-    {
-      "sampler": 0,
-      "source": 3
-    },
-    {
-      "sampler": 0,
-      "source": 4
-    },
-    {
-      "sampler": 0,
-      "source": 5
-    }
-  ],
-  "images": [
-    {
-      "mimeType": "image/jpeg",
-      "name": "modern_coffee_table_02_base_nor_gl.png",
-      "uri": "textures/modern_coffee_table_02_base_nor_gl_2k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "modern_coffee_table_02_base_diff",
-      "uri": "textures/modern_coffee_table_02_base_diff_2k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "modern_coffee_table_02_base_rough",
-      "uri": "textures/modern_coffee_table_02_base_rough_2k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "modern_coffee_table_02_wood_nor_gl",
-      "uri": "textures/modern_coffee_table_02_wood_nor_gl_2k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "modern_coffee_table_02_wood_diff",
-      "uri": "textures/modern_coffee_table_02_wood_diff_2k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "modern_coffee_table_02_wood_rough",
-      "uri": "textures/modern_coffee_table_02_wood_rough_2k.jpg"
-    }
-  ],
-  "accessors": [
-    {
-      "bufferView": 0,
-      "componentType": 5126,
-      "count": 7210,
-      "max": [
-        0.6005420684814453,
-        0.3674314022064209,
-        0.6017131805419922
+      "name": "modern_coffee_table_02",
+      "translation": [
+        0.0009863972663879395,
+        0.18442724645137787,
+        0.0025074779987335205
       ],
-      "min": [
-        -0.597504734992981,
-        -0.00019758939743041992,
-        -0.5973209142684937
+      "scale": [
+        0.5998283922672272,
+        0.5998283922672272,
+        0.5998283922672272
       ],
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 1,
-      "componentType": 5126,
-      "count": 7210,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 2,
-      "componentType": 5126,
-      "count": 7210,
-      "type": "VEC2"
-    },
-    {
-      "bufferView": 3,
-      "componentType": 5123,
-      "count": 14058,
-      "type": "SCALAR"
-    },
-    {
-      "bufferView": 4,
-      "componentType": 5126,
-      "count": 17825,
-      "max": [
-        0.4494684934616089,
-        0.36905208230018616,
-        0.6023358702659607
-      ],
-      "min": [
-        -0.5985692739486694,
-        0.0669964849948883,
-        -0.4451645016670227
-      ],
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 5,
-      "componentType": 5126,
-      "count": 17825,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 6,
-      "componentType": 5126,
-      "count": 17825,
-      "type": "VEC2"
-    },
-    {
-      "bufferView": 7,
-      "componentType": 5123,
-      "count": 26877,
-      "type": "SCALAR"
+      "mesh": 0
     }
   ],
-  "bufferViews": [
+  "scenes": [
     {
-      "buffer": 0,
-      "byteLength": 86520,
-      "byteOffset": 0
-    },
-    {
-      "buffer": 0,
-      "byteLength": 86520,
-      "byteOffset": 86520
-    },
-    {
-      "buffer": 0,
-      "byteLength": 57680,
-      "byteOffset": 173040
-    },
-    {
-      "buffer": 0,
-      "byteLength": 28116,
-      "byteOffset": 230720
-    },
-    {
-      "buffer": 0,
-      "byteLength": 213900,
-      "byteOffset": 258836
-    },
-    {
-      "buffer": 0,
-      "byteLength": 213900,
-      "byteOffset": 472736
-    },
-    {
-      "buffer": 0,
-      "byteLength": 142600,
-      "byteOffset": 686636
-    },
-    {
-      "buffer": 0,
-      "byteLength": 53754,
-      "byteOffset": 829236
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
     }
   ],
-  "samplers": [
-    {
-      "magFilter": 9729,
-      "minFilter": 9987
-    }
+  "scene": 0,
+  "extensionsUsed": [
+    "EXT_meshopt_compression",
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
   ],
-  "buffers": [
-    {
-      "byteLength": 882992,
-      "uri": "modern_coffee_table_02.bin"
-    }
+  "extensionsRequired": [
+    "EXT_meshopt_compression",
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
   ]
 }

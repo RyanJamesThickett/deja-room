@@ -1,8 +1,8 @@
 import { EYE_HEIGHT } from '../../layout'
+import { lazyScene } from '../lazyScene'
 import type { RoomDef } from '../types'
 import { MARKET_BOUNDS } from './bounds'
 import { MARKET_ITEMS } from './items'
-import { MarketRoom } from './MarketRoom'
 
 export const market: RoomDef = {
   id: 'market',
@@ -17,5 +17,5 @@ export const market: RoomDef = {
   bounds: MARKET_BOUNDS,
   // at the east end of the square, looking along it past the fountain to the food van
   start: { position: [13.2, EYE_HEIGHT, 0.8], target: [0, 1.5, 0] },
-  Scene: MarketRoom,
+  ...lazyScene(() => import('./MarketRoom').then((m) => m.MarketRoom)),
 }

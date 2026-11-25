@@ -1,7 +1,7 @@
 # Cloudflare Pages response headers.
 # The 3D models, textures and HDRI never change between deploys of the same
 # file name, so let browsers keep them for a week instead of re-downloading
-# ~70MB every visit.
+# ~20MB every visit.
 /models/*
   Cache-Control: public, max-age=604800
 /textures/*

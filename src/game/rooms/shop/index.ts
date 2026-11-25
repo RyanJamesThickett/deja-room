@@ -1,8 +1,8 @@
 import { EYE_HEIGHT } from '../../layout'
+import { lazyScene } from '../lazyScene'
 import type { RoomDef } from '../types'
 import { SHOP_BOUNDS } from './bounds'
 import { SHOP_ITEMS } from './items'
-import { ShopRoom } from './ShopRoom'
 
 export const cornerShop: RoomDef = {
   id: 'shop',
@@ -15,5 +15,5 @@ export const cornerShop: RoomDef = {
   bounds: SHOP_BOUNDS,
   // just inside the shop door, the counter on your right, looking down the aisles
   start: { position: [1.6, EYE_HEIGHT, 2.9], target: [-0.6, 1.1, -1.6] },
-  Scene: ShopRoom,
+  ...lazyScene(() => import('./ShopRoom').then((m) => m.ShopRoom)),
 }

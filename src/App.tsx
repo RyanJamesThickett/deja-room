@@ -480,6 +480,9 @@ export default function App() {
   /** The room is on screen: if this is its first look, the clock starts now rather than when it began loading. */
   function onRoomReady(id: string) {
     setReadyRoom(id)
+    // fetch the next room's code while this one is being played
+    const at = ROOMS.indexOf(room)
+    if (at >= 0) ROOMS[at + 1]?.preload?.()
     if (online) {
       mp.send({ t: 'loaded' })
       return
@@ -678,6 +681,11 @@ export default function App() {
   // Fade the music out while a room loads (the browser's too busy to keep time) and muffle it while paused.
   useEffect(() => hushMusic(phase !== 'title' && !roomReady), [phase, roomReady])
   useEffect(() => muffleMusic(paused), [paused])
+  // Each room's code is its own download. Start it as soon as the room is
+  // likely to be played (its preview card is open, or it's been picked in a
+  // lobby) so entering it doesn't wait.
+  const upNext = previewing !== null ? ROOMS[previewing] : findRoom(match?.setup?.roomId)
+  useEffect(() => upNext?.preload?.(), [upNext])
 
   useEffect(() => {
     if (phase !== 'study' && phase !== 'hunt' && phase !== 'wait') return

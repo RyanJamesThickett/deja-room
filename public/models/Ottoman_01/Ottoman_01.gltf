@@ -1,37 +1,200 @@
 {
   "asset": {
-    "generator": "Khronos glTF Blender I/O v1.6.16",
+    "generator": "glTF-Transform v4.5.1",
     "version": "2.0"
   },
-  "scene": 0,
-  "scenes": [
+  "accessors": [
     {
-      "name": "Scene",
-      "nodes": [
-        0
-      ]
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 12720,
+      "normalized": false,
+      "byteOffset": 0,
+      "bufferView": 0
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 2805,
+      "normalized": false,
+      "byteOffset": 0,
+      "bufferView": 1
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 2805,
+      "max": [
+        32767,
+        23126,
+        23010
+      ],
+      "min": [
+        -32767,
+        -23126,
+        -23010
+      ],
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 2
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 2805,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 3
     }
   ],
-  "nodes": [
+  "bufferViews": [
     {
-      "mesh": 0,
-      "name": "Ottoman_01"
+      "buffer": 1,
+      "byteOffset": 0,
+      "byteLength": 25440,
+      "target": 34963,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 0,
+          "byteLength": 4819,
+          "mode": "TRIANGLES",
+          "byteStride": 2,
+          "count": 12720
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 25440,
+      "byteLength": 22440,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 4820,
+          "byteLength": 14834,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 2805
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 47880,
+      "byteLength": 22440,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 19656,
+          "byteLength": 14498,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 2805
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 70320,
+      "byteLength": 22440,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 34156,
+          "byteLength": 14392,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 2805
+        }
+      }
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 1
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 0
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 2
+        }
+      }
+    }
+  ],
+  "images": [
+    {
+      "name": "Ottoman_01_nor_gl",
+      "mimeType": "image/webp",
+      "uri": "textures/Ottoman_01_nor_gl_1k.webp"
+    },
+    {
+      "name": "Ottoman_01_diff",
+      "mimeType": "image/webp",
+      "uri": "textures/Ottoman_01_diff_1k.webp"
+    },
+    {
+      "name": "Ottoman_01_metallic-Ottoman_01_roughness",
+      "mimeType": "image/webp",
+      "uri": "textures/Ottoman_01_arm_1k.webp"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "Ottoman_01.bin",
+      "byteLength": 48548
+    },
+    {
+      "byteLength": 92760,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "fallback": true
+        }
+      }
     }
   ],
   "materials": [
     {
-      "doubleSided": true,
       "name": "Ottoman_01",
-      "normalTexture": {
-        "index": 0
-      },
+      "doubleSided": true,
       "pbrMetallicRoughness": {
         "baseColorTexture": {
-          "index": 1
+          "index": 0
         },
         "metallicRoughnessTexture": {
           "index": 2
         }
+      },
+      "normalTexture": {
+        "index": 1
       }
     }
   ],
@@ -41,115 +204,50 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 0,
-            "NORMAL": 1,
-            "TEXCOORD_0": 2
+            "TEXCOORD_0": 1,
+            "POSITION": 2,
+            "NORMAL": 3
           },
-          "indices": 3,
-          "material": 0
+          "mode": 4,
+          "material": 0,
+          "indices": 0
         }
       ]
     }
   ],
-  "textures": [
+  "nodes": [
     {
-      "sampler": 0,
-      "source": 0
-    },
-    {
-      "sampler": 0,
-      "source": 1
-    },
-    {
-      "sampler": 0,
-      "source": 2
-    }
-  ],
-  "images": [
-    {
-      "mimeType": "image/jpeg",
-      "name": "Ottoman_01_nor_gl",
-      "uri": "textures/Ottoman_01_nor_gl_1k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "Ottoman_01_diff",
-      "uri": "textures/Ottoman_01_diff_1k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "Ottoman_01_metallic-Ottoman_01_roughness",
-      "uri": "textures/Ottoman_01_arm_1k.jpg"
-    }
-  ],
-  "accessors": [
-    {
-      "bufferView": 0,
-      "componentType": 5126,
-      "count": 2805,
-      "max": [
-        0.44435855746269226,
-        0.6242908239364624,
-        0.31149476766586304
+      "name": "Ottoman_01",
+      "translation": [
+        0.0020796656608581543,
+        0.31212886415778485,
+        0.0009205341339111328
       ],
-      "min": [
-        -0.44019922614097595,
-        -0.00003309562089270912,
-        -0.30965369939804077
+      "scale": [
+        0.4422788918018341,
+        0.4422788918018341,
+        0.4422788918018341
       ],
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 1,
-      "componentType": 5126,
-      "count": 2805,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 2,
-      "componentType": 5126,
-      "count": 2805,
-      "type": "VEC2"
-    },
-    {
-      "bufferView": 3,
-      "componentType": 5123,
-      "count": 12720,
-      "type": "SCALAR"
+      "mesh": 0
     }
   ],
-  "bufferViews": [
+  "scenes": [
     {
-      "buffer": 0,
-      "byteLength": 33660,
-      "byteOffset": 0
-    },
-    {
-      "buffer": 0,
-      "byteLength": 33660,
-      "byteOffset": 33660
-    },
-    {
-      "buffer": 0,
-      "byteLength": 22440,
-      "byteOffset": 67320
-    },
-    {
-      "buffer": 0,
-      "byteLength": 25440,
-      "byteOffset": 89760
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
     }
   ],
-  "samplers": [
-    {
-      "magFilter": 9729,
-      "minFilter": 9987
-    }
+  "scene": 0,
+  "extensionsUsed": [
+    "EXT_meshopt_compression",
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
   ],
-  "buffers": [
-    {
-      "byteLength": 115200,
-      "uri": "Ottoman_01.bin"
-    }
+  "extensionsRequired": [
+    "EXT_meshopt_compression",
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
   ]
 }

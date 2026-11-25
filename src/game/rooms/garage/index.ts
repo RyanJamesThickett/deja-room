@@ -1,7 +1,7 @@
 import { EYE_HEIGHT } from '../../layout'
+import { lazyScene } from '../lazyScene'
 import type { RoomDef } from '../types'
 import { GARAGE_BOUNDS, WORKSHOP_SHIFT } from './bounds'
-import { GarageRoom } from './GarageRoom'
 import { GARAGE_ITEMS } from './items'
 
 /** Room space from workshop space (see bounds.ts). */
@@ -18,5 +18,5 @@ export const garage: RoomDef = {
   bounds: GARAGE_BOUNDS,
   // just out of the office door, looking across the yellow car's open bonnet to the lift
   start: { position: [X(4.75), EYE_HEIGHT, -1.6], target: [X(-1.2), 1.1, 0.1] },
-  Scene: GarageRoom,
+  ...lazyScene(() => import('./GarageRoom').then((m) => m.GarageRoom)),
 }

@@ -1,37 +1,200 @@
 {
   "asset": {
-    "generator": "Khronos glTF Blender I/O v5.1.20",
+    "generator": "glTF-Transform v4.5.1",
     "version": "2.0"
   },
-  "scene": 0,
-  "scenes": [
+  "accessors": [
     {
-      "name": "Scene",
-      "nodes": [
-        0
-      ]
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 56700,
+      "normalized": false,
+      "byteOffset": 0,
+      "bufferView": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 13175,
+      "max": [
+        6128,
+        32767,
+        8985
+      ],
+      "min": [
+        -6128,
+        -32767,
+        -8985
+      ],
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 1
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 13175,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 2
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5123,
+      "count": 13175,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 3
     }
   ],
-  "nodes": [
+  "bufferViews": [
     {
-      "mesh": 0,
-      "name": "old_gas_mask"
+      "buffer": 1,
+      "byteOffset": 0,
+      "byteLength": 113400,
+      "target": 34963,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 0,
+          "byteLength": 21046,
+          "mode": "TRIANGLES",
+          "byteStride": 2,
+          "count": 56700
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 113400,
+      "byteLength": 105400,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 21048,
+          "byteLength": 53244,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 13175
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 218800,
+      "byteLength": 105400,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 74292,
+          "byteLength": 73083,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 13175
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 324200,
+      "byteLength": 52700,
+      "target": 34962,
+      "byteStride": 4,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 147376,
+          "byteLength": 35049,
+          "mode": "ATTRIBUTES",
+          "byteStride": 4,
+          "count": 13175
+        }
+      }
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 1
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 0
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 2
+        }
+      }
+    }
+  ],
+  "images": [
+    {
+      "name": "old_gas_mask_nor_gl",
+      "mimeType": "image/webp",
+      "uri": "textures/old_gas_mask_nor_gl_1k.webp"
+    },
+    {
+      "name": "old_gas_mask_diff",
+      "mimeType": "image/webp",
+      "uri": "textures/old_gas_mask_diff_1k.webp"
+    },
+    {
+      "name": "old_gas_mask_metal-old_gas_mask_rough",
+      "mimeType": "image/webp",
+      "uri": "textures/old_gas_mask_arm_1k.webp"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "old_gas_mask.bin",
+      "byteLength": 182428
+    },
+    {
+      "byteLength": 376900,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "fallback": true
+        }
+      }
     }
   ],
   "materials": [
     {
-      "doubleSided": true,
       "name": "old_gas_mask",
-      "normalTexture": {
-        "index": 0
-      },
+      "doubleSided": true,
       "pbrMetallicRoughness": {
         "baseColorTexture": {
-          "index": 1
+          "index": 0
         },
         "metallicRoughnessTexture": {
           "index": 2
         }
+      },
+      "normalTexture": {
+        "index": 1
       }
     }
   ],
@@ -41,119 +204,50 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 0,
-            "NORMAL": 1,
-            "TEXCOORD_0": 2
+            "POSITION": 1,
+            "NORMAL": 2,
+            "TEXCOORD_0": 3
           },
-          "indices": 3,
-          "material": 0
+          "mode": 4,
+          "material": 0,
+          "indices": 0
         }
       ]
     }
   ],
-  "textures": [
+  "nodes": [
     {
-      "sampler": 0,
-      "source": 0
-    },
-    {
-      "sampler": 0,
-      "source": 1
-    },
-    {
-      "sampler": 0,
-      "source": 2
-    }
-  ],
-  "images": [
-    {
-      "mimeType": "image/jpeg",
-      "name": "old_gas_mask_nor_gl",
-      "uri": "textures/old_gas_mask_nor_gl_1k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "old_gas_mask_diff",
-      "uri": "textures/old_gas_mask_diff_1k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "old_gas_mask_metal-old_gas_mask_rough",
-      "uri": "textures/old_gas_mask_arm_1k.jpg"
-    }
-  ],
-  "accessors": [
-    {
-      "bufferView": 0,
-      "componentType": 5126,
-      "count": 13175,
-      "max": [
-        0.10526277124881744,
-        0.12097719311714172,
-        0.18641869723796844
+      "name": "old_gas_mask",
+      "translation": [
+        0,
+        -0.44185517728328705,
+        0.03205506131052971
       ],
-      "min": [
-        -0.10526277124881744,
-        -1.0046875476837158,
-        -0.12230857461690903
+      "scale": [
+        0.5628323704004288,
+        0.5628323704004288,
+        0.5628323704004288
       ],
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 1,
-      "componentType": 5126,
-      "count": 13175,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 2,
-      "componentType": 5126,
-      "count": 13175,
-      "type": "VEC2"
-    },
-    {
-      "bufferView": 3,
-      "componentType": 5123,
-      "count": 56700,
-      "type": "SCALAR"
+      "mesh": 0
     }
   ],
-  "bufferViews": [
+  "scenes": [
     {
-      "buffer": 0,
-      "byteLength": 158100,
-      "byteOffset": 0,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteLength": 158100,
-      "byteOffset": 158100,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteLength": 105400,
-      "byteOffset": 316200,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteLength": 113400,
-      "byteOffset": 421600,
-      "target": 34963
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
     }
   ],
-  "samplers": [
-    {
-      "magFilter": 9729,
-      "minFilter": 9987
-    }
+  "scene": 0,
+  "extensionsUsed": [
+    "EXT_meshopt_compression",
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
   ],
-  "buffers": [
-    {
-      "byteLength": 535000,
-      "uri": "old_gas_mask.bin"
-    }
+  "extensionsRequired": [
+    "EXT_meshopt_compression",
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
   ]
 }

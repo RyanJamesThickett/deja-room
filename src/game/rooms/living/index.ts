@@ -1,8 +1,8 @@
 import { EYE_HEIGHT } from '../../layout'
+import { lazyScene } from '../lazyScene'
 import type { RoomDef } from '../types'
 import { LIVING_BOUNDS } from './bounds'
 import { LIVING_ITEMS } from './items'
-import { LivingRoom } from './LivingRoom'
 
 export const livingRoom: RoomDef = {
   id: 'living',
@@ -15,5 +15,5 @@ export const livingRoom: RoomDef = {
   bounds: LIVING_BOUNDS,
   // just inside the door, looking across the room
   start: { position: [2.6, EYE_HEIGHT, -1.3], target: [-1.2, 1.05, 0.6] },
-  Scene: LivingRoom,
+  ...lazyScene(() => import('./LivingRoom').then((m) => m.LivingRoom)),
 }

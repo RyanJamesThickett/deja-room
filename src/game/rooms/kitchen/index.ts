@@ -1,7 +1,7 @@
 import { EYE_HEIGHT } from '../../layout'
+import { lazyScene } from '../lazyScene'
 import type { RoomDef } from '../types'
 import { KITCHEN_BOUNDS } from './bounds'
-import { KitchenRoom } from './KitchenRoom'
 import { KITCHEN_ITEMS } from './items'
 
 export const kitchen: RoomDef = {
@@ -15,5 +15,5 @@ export const kitchen: RoomDef = {
   bounds: KITCHEN_BOUNDS,
   // just in through the swing door from the dining room, the pass on your left, looking across the line to the prep tables
   start: { position: [2.6, EYE_HEIGHT, 2.7], target: [-1.4, 1.1, -0.9] },
-  Scene: KitchenRoom,
+  ...lazyScene(() => import('./KitchenRoom').then((m) => m.KitchenRoom)),
 }

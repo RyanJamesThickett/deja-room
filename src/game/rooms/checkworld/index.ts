@@ -1,6 +1,6 @@
 import { EYE_HEIGHT } from '../../layout'
+import { lazyScene } from '../lazyScene'
 import type { RoomDef } from '../types'
-import { CheckWorldScene } from './CheckWorld'
 import { CHECK_BOUNDS } from './floor'
 import { START_Z } from './layout'
 
@@ -19,5 +19,5 @@ export const checkWorld: RoomDef = {
   bounds: CHECK_BOUNDS,
   // just in front of the first room's banner, looking down the rows
   start: { position: [0, EYE_HEIGHT, START_Z + 8], target: [0, 1.2, START_Z - 12] },
-  Scene: CheckWorldScene,
+  ...lazyScene(() => import('./CheckWorld').then((m) => m.CheckWorldScene)),
 }

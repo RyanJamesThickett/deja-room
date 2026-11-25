@@ -1,49 +1,576 @@
 {
   "asset": {
-    "generator": "Khronos glTF Blender I/O v3.5.30",
+    "generator": "glTF-Transform v4.5.1",
     "version": "2.0"
   },
-  "scene": 0,
-  "scenes": [
+  "accessors": [
     {
-      "name": "Scene",
-      "nodes": [
-        0,
-        1,
-        2,
-        3,
-        4
+      "type": "SCALAR",
+      "componentType": 5126,
+      "count": 90,
+      "max": [
+        3.75
+      ],
+      "min": [
+        0.0416666679084301
+      ],
+      "normalized": false,
+      "byteOffset": 0,
+      "bufferView": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 90,
+      "normalized": false,
+      "byteOffset": 0,
+      "bufferView": 1
+    },
+    {
+      "type": "VEC4",
+      "componentType": 5126,
+      "count": 90,
+      "normalized": false,
+      "byteOffset": 0,
+      "bufferView": 2
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 90,
+      "normalized": false,
+      "byteOffset": 1080,
+      "bufferView": 1
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 90,
+      "normalized": false,
+      "byteOffset": 2160,
+      "bufferView": 1
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 90,
+      "normalized": false,
+      "byteOffset": 3240,
+      "bufferView": 1
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 55200,
+      "normalized": false,
+      "byteOffset": 0,
+      "bufferView": 3
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 9864,
+      "normalized": false,
+      "byteOffset": 110400,
+      "bufferView": 3
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 9864,
+      "normalized": false,
+      "byteOffset": 130128,
+      "bufferView": 3
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 17383,
+      "max": [
+        32767,
+        9133,
+        6984
+      ],
+      "min": [
+        -32767,
+        -9133,
+        -6984
+      ],
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 4
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5123,
+      "count": 17383,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 5
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 17383,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 6
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 7076,
+      "max": [
+        32767,
+        13117,
+        9705
+      ],
+      "min": [
+        -32767,
+        -13117,
+        -9705
+      ],
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 7
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5123,
+      "count": 7076,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 8
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 7076,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 9
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 7076,
+      "max": [
+        32767,
+        13121,
+        9705
+      ],
+      "min": [
+        -32767,
+        -13121,
+        -9705
+      ],
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 10
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5123,
+      "count": 7076,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 11
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 7076,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 12
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 1,
+      "byteOffset": 0,
+      "byteLength": 360,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 0,
+          "byteLength": 301,
+          "mode": "ATTRIBUTES",
+          "byteStride": 4,
+          "count": 90
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 360,
+      "byteLength": 4320,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 304,
+          "byteLength": 203,
+          "mode": "ATTRIBUTES",
+          "byteStride": 12,
+          "count": 360
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 4680,
+      "byteLength": 1440,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 508,
+          "byteLength": 65,
+          "mode": "ATTRIBUTES",
+          "byteStride": 16,
+          "count": 90
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 6120,
+      "byteLength": 149856,
+      "target": 34963,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 576,
+          "byteLength": 26719,
+          "mode": "TRIANGLES",
+          "byteStride": 2,
+          "count": 74928
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 155976,
+      "byteLength": 139064,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 27296,
+          "byteLength": 65054,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 17383
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 295040,
+      "byteLength": 69532,
+      "target": 34962,
+      "byteStride": 4,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 92352,
+          "byteLength": 43270,
+          "mode": "ATTRIBUTES",
+          "byteStride": 4,
+          "count": 17383
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 364572,
+      "byteLength": 139064,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 135624,
+          "byteLength": 71703,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 17383
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 503636,
+      "byteLength": 56608,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 207328,
+          "byteLength": 29578,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 7076
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 560244,
+      "byteLength": 28304,
+      "target": 34962,
+      "byteStride": 4,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 236908,
+          "byteLength": 21250,
+          "mode": "ATTRIBUTES",
+          "byteStride": 4,
+          "count": 7076
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 588548,
+      "byteLength": 56608,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 258160,
+          "byteLength": 18937,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 7076
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 645156,
+      "byteLength": 56608,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 277100,
+          "byteLength": 29614,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 7076
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 701764,
+      "byteLength": 28304,
+      "target": 34962,
+      "byteStride": 4,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 306716,
+          "byteLength": 21352,
+          "mode": "ATTRIBUTES",
+          "byteStride": 4,
+          "count": 7076
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 730068,
+      "byteLength": 56608,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 328068,
+          "byteLength": 18911,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 7076
+        }
+      }
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 1
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 0
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 2
+        }
+      }
+    }
+  ],
+  "images": [
+    {
+      "name": "modern_wooden_cabinet_nor_gl",
+      "mimeType": "image/webp",
+      "uri": "textures/modern_wooden_cabinet_nor_gl_2k.webp"
+    },
+    {
+      "name": "modern_wooden_cabinet_diff",
+      "mimeType": "image/webp",
+      "uri": "textures/modern_wooden_cabinet_diff_2k.webp"
+    },
+    {
+      "name": "modern_wooden_cabinet_rough",
+      "mimeType": "image/webp",
+      "uri": "textures/modern_wooden_cabinet_arm_2k.webp"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "modern_wooden_cabinet.bin",
+      "byteLength": 346980
+    },
+    {
+      "byteLength": 786676,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "fallback": true
+        }
+      }
+    }
+  ],
+  "materials": [
+    {
+      "name": "modern_wooden_cabinet",
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 0
+        },
+        "metallicRoughnessTexture": {
+          "index": 2
+        }
+      },
+      "normalTexture": {
+        "index": 1
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "modern_wooden_cabinet_body",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 9,
+            "TEXCOORD_0": 10,
+            "NORMAL": 11
+          },
+          "mode": 4,
+          "material": 0,
+          "indices": 6
+        }
+      ]
+    },
+    {
+      "name": "modern_wooden_cabinet_door_l",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 12,
+            "TEXCOORD_0": 13,
+            "NORMAL": 14
+          },
+          "mode": 4,
+          "material": 0,
+          "indices": 7
+        }
+      ]
+    },
+    {
+      "name": "modern_wooden_cabinet_door_r",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 15,
+            "TEXCOORD_0": 16,
+            "NORMAL": 17
+          },
+          "mode": 4,
+          "material": 0,
+          "indices": 8
+        }
       ]
     }
   ],
   "nodes": [
     {
-      "mesh": 0,
-      "name": "modern_wooden_cabinet_body"
-    },
-    {
-      "mesh": 1,
-      "name": "modern_wooden_cabinet_door_l",
-      "translation": [
-        -1.189986228942871,
-        0.1639975905418396,
-        0.22995403409004211
+      "name": "modern_wooden_cabinet_body",
+      "children": [
+        5
       ]
     },
     {
-      "mesh": 2,
+      "name": "modern_wooden_cabinet_door_l",
+      "translation": [
+        -0.6051279697567225,
+        0.4021568584897709,
+        0.06395708350464702
+      ],
+      "scale": [
+        0.5948583278805017,
+        0.5948583278805017,
+        0.5948583278805017
+      ],
+      "mesh": 1
+    },
+    {
       "name": "modern_wooden_cabinet_door_r",
+      "translation": [
+        0.6053201933391392,
+        0.402156858489771,
+        0.06384765356779099
+      ],
       "rotation": [
         0,
         1,
         0,
         0
       ],
-      "translation": [
-        1.1899865865707397,
-        0.1639975905418396,
-        0.22995403409004211
-      ]
+      "scale": [
+        0.5946665783412755,
+        0.5946665783412755,
+        0.5946665783412755
+      ],
+      "mesh": 2
     },
     {
       "name": "modern_wooden_cabinet_path_l",
@@ -60,10 +587,41 @@
         0.1639975905418396,
         0.22995403409004211
       ]
+    },
+    {
+      "translation": [
+        5.960464477539063e-8,
+        0.3400880768895149,
+        -0.01000000536441803
+      ],
+      "scale": [
+        1.2200002074241638,
+        1.2200002074241638,
+        1.2200002074241638
+      ],
+      "mesh": 0
     }
   ],
   "animations": [
     {
+      "name": "modern_wooden_cabinet_body",
+      "samplers": [
+        {
+          "input": 0,
+          "output": 1,
+          "interpolation": "LINEAR"
+        },
+        {
+          "input": 0,
+          "output": 2,
+          "interpolation": "LINEAR"
+        },
+        {
+          "input": 0,
+          "output": 3,
+          "interpolation": "LINEAR"
+        }
+      ],
       "channels": [
         {
           "sampler": 0,
@@ -85,71 +643,71 @@
             "node": 0,
             "path": "scale"
           }
-        }
-      ],
-      "name": "modern_wooden_cabinet_body",
-      "samplers": [
-        {
-          "input": 12,
-          "interpolation": "LINEAR",
-          "output": 13
-        },
-        {
-          "input": 12,
-          "interpolation": "LINEAR",
-          "output": 14
-        },
-        {
-          "input": 12,
-          "interpolation": "LINEAR",
-          "output": 15
         }
       ]
     },
     {
-      "channels": [
-        {
-          "sampler": 0,
-          "target": {
-            "node": 3,
-            "path": "translation"
-          }
-        },
-        {
-          "sampler": 1,
-          "target": {
-            "node": 3,
-            "path": "rotation"
-          }
-        },
-        {
-          "sampler": 2,
-          "target": {
-            "node": 3,
-            "path": "scale"
-          }
-        }
-      ],
       "name": "modern_wooden_cabinet_path_l",
       "samplers": [
         {
-          "input": 12,
-          "interpolation": "LINEAR",
-          "output": 16
+          "input": 0,
+          "output": 4,
+          "interpolation": "LINEAR"
         },
         {
-          "input": 12,
-          "interpolation": "LINEAR",
-          "output": 17
+          "input": 0,
+          "output": 2,
+          "interpolation": "LINEAR"
         },
         {
-          "input": 12,
-          "interpolation": "LINEAR",
-          "output": 18
+          "input": 0,
+          "output": 3,
+          "interpolation": "LINEAR"
+        }
+      ],
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 3,
+            "path": "translation"
+          }
+        },
+        {
+          "sampler": 1,
+          "target": {
+            "node": 3,
+            "path": "rotation"
+          }
+        },
+        {
+          "sampler": 2,
+          "target": {
+            "node": 3,
+            "path": "scale"
+          }
         }
       ]
     },
     {
+      "name": "modern_wooden_cabinet_path_r",
+      "samplers": [
+        {
+          "input": 0,
+          "output": 5,
+          "interpolation": "LINEAR"
+        },
+        {
+          "input": 0,
+          "output": 2,
+          "interpolation": "LINEAR"
+        },
+        {
+          "input": 0,
+          "output": 3,
+          "interpolation": "LINEAR"
+        }
+      ],
       "channels": [
         {
           "sampler": 0,
@@ -172,424 +730,30 @@
             "path": "scale"
           }
         }
-      ],
-      "name": "modern_wooden_cabinet_path_r",
-      "samplers": [
-        {
-          "input": 12,
-          "interpolation": "LINEAR",
-          "output": 19
-        },
-        {
-          "input": 12,
-          "interpolation": "LINEAR",
-          "output": 20
-        },
-        {
-          "input": 12,
-          "interpolation": "LINEAR",
-          "output": 21
-        }
       ]
     }
   ],
-  "materials": [
+  "scenes": [
     {
-      "doubleSided": true,
-      "name": "modern_wooden_cabinet",
-      "normalTexture": {
-        "index": 0
-      },
-      "pbrMetallicRoughness": {
-        "baseColorTexture": {
-          "index": 1
-        },
-        "metallicFactor": 0,
-        "metallicRoughnessTexture": {
-          "index": 2
-        }
-      }
-    }
-  ],
-  "meshes": [
-    {
-      "name": "modern_wooden_cabinet_body",
-      "primitives": [
-        {
-          "attributes": {
-            "POSITION": 0,
-            "TEXCOORD_0": 1,
-            "NORMAL": 2
-          },
-          "indices": 3,
-          "material": 0
-        }
-      ]
-    },
-    {
-      "name": "modern_wooden_cabinet_door_l",
-      "primitives": [
-        {
-          "attributes": {
-            "POSITION": 4,
-            "TEXCOORD_0": 5,
-            "NORMAL": 6
-          },
-          "indices": 7,
-          "material": 0
-        }
-      ]
-    },
-    {
-      "name": "modern_wooden_cabinet_door_r",
-      "primitives": [
-        {
-          "attributes": {
-            "POSITION": 8,
-            "TEXCOORD_0": 9,
-            "NORMAL": 10
-          },
-          "indices": 11,
-          "material": 0
-        }
+      "name": "Scene",
+      "nodes": [
+        0,
+        1,
+        2,
+        3,
+        4
       ]
     }
   ],
-  "textures": [
-    {
-      "sampler": 0,
-      "source": 0
-    },
-    {
-      "sampler": 0,
-      "source": 1
-    },
-    {
-      "sampler": 0,
-      "source": 2
-    }
+  "scene": 0,
+  "extensionsUsed": [
+    "EXT_meshopt_compression",
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
   ],
-  "images": [
-    {
-      "mimeType": "image/jpeg",
-      "name": "modern_wooden_cabinet_nor_gl",
-      "uri": "textures/modern_wooden_cabinet_nor_gl_2k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "modern_wooden_cabinet_diff",
-      "uri": "textures/modern_wooden_cabinet_diff_2k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "modern_wooden_cabinet_rough",
-      "uri": "textures/modern_wooden_cabinet_arm_2k.jpg"
-    }
-  ],
-  "accessors": [
-    {
-      "bufferView": 0,
-      "componentType": 5126,
-      "count": 17383,
-      "max": [
-        1.2200002670288086,
-        0.680159330368042,
-        0.25
-      ],
-      "min": [
-        -1.220000147819519,
-        0.000016823410987854004,
-        -0.27000001072883606
-      ],
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 1,
-      "componentType": 5126,
-      "count": 17383,
-      "type": "VEC2"
-    },
-    {
-      "bufferView": 2,
-      "componentType": 5126,
-      "count": 17383,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 3,
-      "componentType": 5123,
-      "count": 55200,
-      "type": "SCALAR"
-    },
-    {
-      "bufferView": 4,
-      "componentType": 5126,
-      "count": 7076,
-      "max": [
-        1.1797165870666504,
-        0.4763185381889343,
-        0.010218984447419643
-      ],
-      "min": [
-        -0.010000068694353104,
-        -2.2930717324953775e-9,
-        -0.34221288561820984
-      ],
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 5,
-      "componentType": 5126,
-      "count": 7076,
-      "type": "VEC2"
-    },
-    {
-      "bufferView": 6,
-      "componentType": 5126,
-      "count": 7076,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 7,
-      "componentType": 5123,
-      "count": 9864,
-      "type": "SCALAR"
-    },
-    {
-      "bufferView": 8,
-      "componentType": 5126,
-      "count": 7076,
-      "max": [
-        1.179332971572876,
-        0.4763185381889343,
-        0.3422127664089203
-      ],
-      "min": [
-        -0.01000018510967493,
-        -2.2930715104507726e-9,
-        -0.01000000536441803
-      ],
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 9,
-      "componentType": 5126,
-      "count": 7076,
-      "type": "VEC2"
-    },
-    {
-      "bufferView": 10,
-      "componentType": 5126,
-      "count": 7076,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 11,
-      "componentType": 5123,
-      "count": 9864,
-      "type": "SCALAR"
-    },
-    {
-      "bufferView": 12,
-      "componentType": 5126,
-      "count": 90,
-      "max": [
-        3.75
-      ],
-      "min": [
-        0.041666666666666664
-      ],
-      "type": "SCALAR"
-    },
-    {
-      "bufferView": 13,
-      "componentType": 5126,
-      "count": 90,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 14,
-      "componentType": 5126,
-      "count": 90,
-      "type": "VEC4"
-    },
-    {
-      "bufferView": 15,
-      "componentType": 5126,
-      "count": 90,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 16,
-      "componentType": 5126,
-      "count": 90,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 17,
-      "componentType": 5126,
-      "count": 90,
-      "type": "VEC4"
-    },
-    {
-      "bufferView": 18,
-      "componentType": 5126,
-      "count": 90,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 19,
-      "componentType": 5126,
-      "count": 90,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 20,
-      "componentType": 5126,
-      "count": 90,
-      "type": "VEC4"
-    },
-    {
-      "bufferView": 21,
-      "componentType": 5126,
-      "count": 90,
-      "type": "VEC3"
-    }
-  ],
-  "bufferViews": [
-    {
-      "buffer": 0,
-      "byteLength": 208596,
-      "byteOffset": 0,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteLength": 139064,
-      "byteOffset": 208596,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteLength": 208596,
-      "byteOffset": 347660,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteLength": 110400,
-      "byteOffset": 556256,
-      "target": 34963
-    },
-    {
-      "buffer": 0,
-      "byteLength": 84912,
-      "byteOffset": 666656,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteLength": 56608,
-      "byteOffset": 751568,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteLength": 84912,
-      "byteOffset": 808176,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteLength": 19728,
-      "byteOffset": 893088,
-      "target": 34963
-    },
-    {
-      "buffer": 0,
-      "byteLength": 84912,
-      "byteOffset": 912816,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteLength": 56608,
-      "byteOffset": 997728,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteLength": 84912,
-      "byteOffset": 1054336,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteLength": 19728,
-      "byteOffset": 1139248,
-      "target": 34963
-    },
-    {
-      "buffer": 0,
-      "byteLength": 360,
-      "byteOffset": 1158976
-    },
-    {
-      "buffer": 0,
-      "byteLength": 1080,
-      "byteOffset": 1159336
-    },
-    {
-      "buffer": 0,
-      "byteLength": 1440,
-      "byteOffset": 1160416
-    },
-    {
-      "buffer": 0,
-      "byteLength": 1080,
-      "byteOffset": 1161856
-    },
-    {
-      "buffer": 0,
-      "byteLength": 1080,
-      "byteOffset": 1162936
-    },
-    {
-      "buffer": 0,
-      "byteLength": 1440,
-      "byteOffset": 1164016
-    },
-    {
-      "buffer": 0,
-      "byteLength": 1080,
-      "byteOffset": 1165456
-    },
-    {
-      "buffer": 0,
-      "byteLength": 1080,
-      "byteOffset": 1166536
-    },
-    {
-      "buffer": 0,
-      "byteLength": 1440,
-      "byteOffset": 1167616
-    },
-    {
-      "buffer": 0,
-      "byteLength": 1080,
-      "byteOffset": 1169056
-    }
-  ],
-  "samplers": [
-    {
-      "magFilter": 9729,
-      "minFilter": 9987
-    }
-  ],
-  "buffers": [
-    {
-      "byteLength": 1170136,
-      "uri": "modern_wooden_cabinet.bin"
-    }
+  "extensionsRequired": [
+    "EXT_meshopt_compression",
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
   ]
 }

@@ -62,7 +62,7 @@ export type SurfaceId =
   | 'oak_veneer_01'
   | 'quatrefoil_jacquard_fabric'
 
-const surfaceUrls = (id: SurfaceId) => ['diffuse', 'nor_gl', 'rough'].map((m) => `/textures/${id}/${m}.jpg`)
+const surfaceUrls = (id: SurfaceId) => ['diffuse', 'nor_gl', 'rough'].map((m) => `/textures/${id}/${m}.webp`)
 
 export interface Surface {
   map: Texture

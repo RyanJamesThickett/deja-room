@@ -1,43 +1,201 @@
 {
   "asset": {
-    "generator": "Khronos glTF Blender I/O v1.6.16",
+    "generator": "glTF-Transform v4.5.1",
     "version": "2.0"
   },
-  "scene": 0,
-  "scenes": [
+  "accessors": [
     {
-      "name": "Scene",
-      "nodes": [
-        0
-      ]
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 52368,
+      "normalized": false,
+      "byteOffset": 0,
+      "bufferView": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 9746,
+      "max": [
+        17294,
+        32767,
+        19070
+      ],
+      "min": [
+        -17294,
+        -32767,
+        -19070
+      ],
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 1
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 9746,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 2
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5123,
+      "count": 9746,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 3
     }
   ],
-  "nodes": [
+  "bufferViews": [
     {
-      "mesh": 0,
-      "name": "marble_bust_01",
-      "translation": [
-        0,
-        0.028335653245449066,
-        0
-      ]
+      "buffer": 1,
+      "byteOffset": 0,
+      "byteLength": 104736,
+      "target": 34963,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 0,
+          "byteLength": 19658,
+          "mode": "TRIANGLES",
+          "byteStride": 2,
+          "count": 52368
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 104736,
+      "byteLength": 77968,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 19660,
+          "byteLength": 43166,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 9746
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 182704,
+      "byteLength": 77968,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 62828,
+          "byteLength": 56538,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 9746
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 260672,
+      "byteLength": 38984,
+      "target": 34962,
+      "byteStride": 4,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 119368,
+          "byteLength": 27840,
+          "mode": "ATTRIBUTES",
+          "byteStride": 4,
+          "count": 9746
+        }
+      }
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 1
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 0
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 2
+        }
+      }
+    }
+  ],
+  "images": [
+    {
+      "name": "marble_bust_01_nor_gl",
+      "mimeType": "image/webp",
+      "uri": "textures/marble_bust_01_nor_gl_1k.webp"
+    },
+    {
+      "name": "marble_bust_01_diff",
+      "mimeType": "image/webp",
+      "uri": "textures/marble_bust_01_diff_1k.webp"
+    },
+    {
+      "name": "marble_bust_01_arm",
+      "mimeType": "image/webp",
+      "uri": "textures/marble_bust_01_rough_1k.webp"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "marble_bust_01.bin",
+      "byteLength": 147208
+    },
+    {
+      "byteLength": 299656,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "fallback": true
+        }
+      }
     }
   ],
   "materials": [
     {
-      "doubleSided": true,
       "name": "marble_bust_01",
-      "normalTexture": {
-        "index": 0
-      },
+      "doubleSided": true,
       "pbrMetallicRoughness": {
-        "baseColorTexture": {
-          "index": 1
-        },
         "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 0
+        },
         "metallicRoughnessTexture": {
           "index": 2
         }
+      },
+      "normalTexture": {
+        "index": 1
       }
     }
   ],
@@ -47,115 +205,50 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 0,
-            "NORMAL": 1,
-            "TEXCOORD_0": 2
+            "POSITION": 1,
+            "NORMAL": 2,
+            "TEXCOORD_0": 3
           },
-          "indices": 3,
-          "material": 0
+          "mode": 4,
+          "material": 0,
+          "indices": 0
         }
       ]
     }
   ],
-  "textures": [
+  "nodes": [
     {
-      "sampler": 0,
-      "source": 0
-    },
-    {
-      "sampler": 0,
-      "source": 1
-    },
-    {
-      "sampler": 0,
-      "source": 2
-    }
-  ],
-  "images": [
-    {
-      "mimeType": "image/jpeg",
-      "name": "marble_bust_01_nor_gl",
-      "uri": "textures/marble_bust_01_nor_gl_1k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "marble_bust_01_diff",
-      "uri": "textures/marble_bust_01_diff_1k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "marble_bust_01_arm",
-      "uri": "textures/marble_bust_01_rough_1k.jpg"
-    }
-  ],
-  "accessors": [
-    {
-      "bufferView": 0,
-      "componentType": 5126,
-      "count": 9746,
-      "max": [
-        0.14886942505836487,
-        0.48668384552001953,
-        0.1551172435283661
+      "name": "marble_bust_01",
+      "translation": [
+        0.012994617223739624,
+        0.25754789635539055,
+        0.0052604079246521
       ],
-      "min": [
-        -0.12288019061088562,
-        -0.028259359300136566,
-        -0.1445964276790619
+      "scale": [
+        0.25747160241007805,
+        0.25747160241007805,
+        0.25747160241007805
       ],
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 1,
-      "componentType": 5126,
-      "count": 9746,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 2,
-      "componentType": 5126,
-      "count": 9746,
-      "type": "VEC2"
-    },
-    {
-      "bufferView": 3,
-      "componentType": 5123,
-      "count": 52368,
-      "type": "SCALAR"
+      "mesh": 0
     }
   ],
-  "bufferViews": [
+  "scenes": [
     {
-      "buffer": 0,
-      "byteLength": 116952,
-      "byteOffset": 0
-    },
-    {
-      "buffer": 0,
-      "byteLength": 116952,
-      "byteOffset": 116952
-    },
-    {
-      "buffer": 0,
-      "byteLength": 77968,
-      "byteOffset": 233904
-    },
-    {
-      "buffer": 0,
-      "byteLength": 104736,
-      "byteOffset": 311872
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
     }
   ],
-  "samplers": [
-    {
-      "magFilter": 9729,
-      "minFilter": 9987
-    }
+  "scene": 0,
+  "extensionsUsed": [
+    "EXT_meshopt_compression",
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
   ],
-  "buffers": [
-    {
-      "byteLength": 416608,
-      "uri": "marble_bust_01.bin"
-    }
+  "extensionsRequired": [
+    "EXT_meshopt_compression",
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
   ]
 }

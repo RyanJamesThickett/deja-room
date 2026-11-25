@@ -1,37 +1,200 @@
 {
   "asset": {
-    "generator": "Khronos glTF Blender I/O v1.6.16",
+    "generator": "glTF-Transform v4.5.1",
     "version": "2.0"
   },
-  "scene": 0,
-  "scenes": [
+  "accessors": [
     {
-      "name": "Scene",
-      "nodes": [
-        0
-      ]
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 12303,
+      "normalized": false,
+      "byteOffset": 0,
+      "bufferView": 0
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 2708,
+      "normalized": false,
+      "byteOffset": 0,
+      "bufferView": 1
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 2708,
+      "max": [
+        32767,
+        16610,
+        13721
+      ],
+      "min": [
+        -32767,
+        -16610,
+        -13721
+      ],
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 2
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 2708,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 3
     }
   ],
-  "nodes": [
+  "bufferViews": [
     {
-      "mesh": 0,
-      "name": "Sofa_01"
+      "buffer": 1,
+      "byteOffset": 0,
+      "byteLength": 24606,
+      "target": 34963,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 0,
+          "byteLength": 4648,
+          "mode": "TRIANGLES",
+          "byteStride": 2,
+          "count": 12303
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 24608,
+      "byteLength": 21664,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 4648,
+          "byteLength": 15836,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 2708
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 46272,
+      "byteLength": 21664,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 20484,
+          "byteLength": 12917,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 2708
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 67936,
+      "byteLength": 21664,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 33404,
+          "byteLength": 15668,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 2708
+        }
+      }
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 1
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 0
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 2
+        }
+      }
+    }
+  ],
+  "images": [
+    {
+      "name": "Sofa_01_nor_gl",
+      "mimeType": "image/webp",
+      "uri": "textures/Sofa_01_nor_gl_2k.webp"
+    },
+    {
+      "name": "Sofa_01_diff",
+      "mimeType": "image/webp",
+      "uri": "textures/Sofa_01_diff_2k.webp"
+    },
+    {
+      "name": "Sofa_01_metallic-Sofa_01_roughness",
+      "mimeType": "image/webp",
+      "uri": "textures/Sofa_01_arm_2k.webp"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "Sofa_01.bin",
+      "byteLength": 49072
+    },
+    {
+      "byteLength": 89600,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "fallback": true
+        }
+      }
     }
   ],
   "materials": [
     {
-      "doubleSided": true,
       "name": "Sofa_01",
-      "normalTexture": {
-        "index": 0
-      },
+      "doubleSided": true,
       "pbrMetallicRoughness": {
         "baseColorTexture": {
-          "index": 1
+          "index": 0
         },
         "metallicRoughnessTexture": {
           "index": 2
         }
+      },
+      "normalTexture": {
+        "index": 1
       }
     }
   ],
@@ -41,115 +204,50 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 0,
-            "NORMAL": 1,
-            "TEXCOORD_0": 2
+            "TEXCOORD_0": 1,
+            "POSITION": 2,
+            "NORMAL": 3
           },
-          "indices": 3,
-          "material": 0
+          "mode": 4,
+          "material": 0,
+          "indices": 0
         }
       ]
     }
   ],
-  "textures": [
+  "nodes": [
     {
-      "sampler": 0,
-      "source": 0
-    },
-    {
-      "sampler": 0,
-      "source": 1
-    },
-    {
-      "sampler": 0,
-      "source": 2
-    }
-  ],
-  "images": [
-    {
-      "mimeType": "image/jpeg",
-      "name": "Sofa_01_nor_gl",
-      "uri": "textures/Sofa_01_nor_gl_2k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "Sofa_01_diff",
-      "uri": "textures/Sofa_01_diff_2k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "Sofa_01_metallic-Sofa_01_roughness",
-      "uri": "textures/Sofa_01_arm_2k.jpg"
-    }
-  ],
-  "accessors": [
-    {
-      "bufferView": 0,
-      "componentType": 5126,
-      "count": 2708,
-      "max": [
-        0.7933560013771057,
-        0.7959280610084534,
-        0.29681089520454407
+      "name": "Sofa_01",
+      "translation": [
+        0.007622212171554565,
+        0.39767053531249985,
+        -0.032196372747421265
       ],
-      "min": [
-        -0.7781115770339966,
-        -0.0005869903834536672,
-        -0.3612036406993866
+      "scale": [
+        0.7857337892055511,
+        0.7857337892055511,
+        0.7857337892055511
       ],
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 1,
-      "componentType": 5126,
-      "count": 2708,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 2,
-      "componentType": 5126,
-      "count": 2708,
-      "type": "VEC2"
-    },
-    {
-      "bufferView": 3,
-      "componentType": 5123,
-      "count": 12303,
-      "type": "SCALAR"
+      "mesh": 0
     }
   ],
-  "bufferViews": [
+  "scenes": [
     {
-      "buffer": 0,
-      "byteLength": 32496,
-      "byteOffset": 0
-    },
-    {
-      "buffer": 0,
-      "byteLength": 32496,
-      "byteOffset": 32496
-    },
-    {
-      "buffer": 0,
-      "byteLength": 21664,
-      "byteOffset": 64992
-    },
-    {
-      "buffer": 0,
-      "byteLength": 24606,
-      "byteOffset": 86656
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
     }
   ],
-  "samplers": [
-    {
-      "magFilter": 9729,
-      "minFilter": 9987
-    }
+  "scene": 0,
+  "extensionsUsed": [
+    "EXT_meshopt_compression",
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
   ],
-  "buffers": [
-    {
-      "byteLength": 111264,
-      "uri": "Sofa_01.bin"
-    }
+  "extensionsRequired": [
+    "EXT_meshopt_compression",
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
   ]
 }

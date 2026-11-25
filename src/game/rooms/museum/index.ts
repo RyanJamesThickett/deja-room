@@ -1,8 +1,8 @@
 import { EYE_HEIGHT } from '../../layout'
+import { lazyScene } from '../lazyScene'
 import type { RoomDef } from '../types'
 import { MUSEUM_BOUNDS } from './bounds'
 import { MUSEUM_ITEMS } from './items'
-import { MuseumRoom } from './MuseumRoom'
 import { HALL_X } from './plan'
 
 export const museum: RoomDef = {
@@ -16,5 +16,5 @@ export const museum: RoomDef = {
   bounds: MUSEUM_BOUNDS,
   // just inside the roped-off doorway, looking down the hall past the head
   start: { position: [HALL_X + 4.2, EYE_HEIGHT, 0.3], target: [HALL_X - 2.4, 1.2, -0.7] },
-  Scene: MuseumRoom,
+  ...lazyScene(() => import('./MuseumRoom').then((m) => m.MuseumRoom)),
 }

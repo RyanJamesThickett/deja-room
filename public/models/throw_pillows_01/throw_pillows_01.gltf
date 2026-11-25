@@ -1,65 +1,294 @@
 {
   "asset": {
-    "generator": "Khronos glTF Blender I/O v1.6.16",
+    "generator": "glTF-Transform v4.5.1",
     "version": "2.0"
   },
-  "scene": 0,
-  "scenes": [
+  "accessors": [
     {
-      "name": "Scene",
-      "nodes": [
-        0,
-        1
-      ]
-    }
-  ],
-  "nodes": [
-    {
-      "mesh": 0,
-      "name": "throw_pillows_01_pillow02",
-      "rotation": [
-        0.7003336548805237,
-        -0.09763631224632263,
-        0.09763632714748383,
-        0.7003335356712341
-      ],
-      "translation": [
-        0.2327585220336914,
-        0,
-        -0.024794653058052063
-      ]
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 9372,
+      "normalized": false,
+      "byteOffset": 0,
+      "bufferView": 0
     },
     {
-      "mesh": 1,
-      "name": "throw_pillows_01_pillow01",
-      "rotation": [
-        0.6637973189353943,
-        -0.2436661571264267,
-        0.24366618692874908,
-        0.6637971997261047
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 9714,
+      "normalized": false,
+      "byteOffset": 18744,
+      "bufferView": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 1653,
+      "max": [
+        32767,
+        18098,
+        27955
       ],
-      "translation": [
-        -0.2664976716041565,
-        0,
-        0.11120378226041794
-      ]
+      "min": [
+        -32767,
+        -18098,
+        -27955
+      ],
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 1
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 1653,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 2
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5123,
+      "count": 1653,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 3
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 1717,
+      "max": [
+        32767,
+        19914,
+        26103
+      ],
+      "min": [
+        -32767,
+        -19914,
+        -26103
+      ],
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 4
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5122,
+      "count": 1717,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 5
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5123,
+      "count": 1717,
+      "normalized": true,
+      "byteOffset": 0,
+      "bufferView": 6
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 1,
+      "byteOffset": 0,
+      "byteLength": 38172,
+      "target": 34963,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 0,
+          "byteLength": 7282,
+          "mode": "TRIANGLES",
+          "byteStride": 2,
+          "count": 19086
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 38172,
+      "byteLength": 13224,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 7284,
+          "byteLength": 8765,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 1653
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 51396,
+      "byteLength": 13224,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 16052,
+          "byteLength": 10053,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 1653
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 64620,
+      "byteLength": 6612,
+      "target": 34962,
+      "byteStride": 4,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 26108,
+          "byteLength": 5283,
+          "mode": "ATTRIBUTES",
+          "byteStride": 4,
+          "count": 1653
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 71232,
+      "byteLength": 13736,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 31392,
+          "byteLength": 9141,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 1717
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 84968,
+      "byteLength": 13736,
+      "target": 34962,
+      "byteStride": 8,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 40536,
+          "byteLength": 10386,
+          "mode": "ATTRIBUTES",
+          "byteStride": 8,
+          "count": 1717
+        }
+      }
+    },
+    {
+      "buffer": 1,
+      "byteOffset": 98704,
+      "byteLength": 6868,
+      "target": 34962,
+      "byteStride": 4,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "buffer": 0,
+          "byteOffset": 50924,
+          "byteLength": 5527,
+          "mode": "ATTRIBUTES",
+          "byteStride": 4,
+          "count": 1717
+        }
+      }
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 1
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 0
+        }
+      }
+    },
+    {
+      "sampler": 0,
+      "extensions": {
+        "EXT_texture_webp": {
+          "source": 2
+        }
+      }
+    }
+  ],
+  "images": [
+    {
+      "name": "throw_pillows_01_nor_gl",
+      "mimeType": "image/webp",
+      "uri": "textures/throw_pillows_01_nor_gl_1k.webp"
+    },
+    {
+      "name": "throw_pillows_01_diff",
+      "mimeType": "image/webp",
+      "uri": "textures/throw_pillows_01_diff_1k.webp"
+    },
+    {
+      "name": "throw_pillows_01_rough",
+      "mimeType": "image/webp",
+      "uri": "textures/throw_pillows_01_rough_1k.webp"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "throw_pillows_01.bin",
+      "byteLength": 56452
+    },
+    {
+      "byteLength": 105572,
+      "extensions": {
+        "EXT_meshopt_compression": {
+          "fallback": true
+        }
+      }
     }
   ],
   "materials": [
     {
-      "doubleSided": true,
       "name": "throw_pillows_01",
-      "normalTexture": {
-        "index": 0
-      },
+      "doubleSided": true,
       "pbrMetallicRoughness": {
-        "baseColorTexture": {
-          "index": 1
-        },
         "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 0
+        },
         "metallicRoughnessTexture": {
           "index": 2
         }
+      },
+      "normalTexture": {
+        "index": 1
       }
     }
   ],
@@ -69,12 +298,13 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 0,
-            "NORMAL": 1,
-            "TEXCOORD_0": 2
+            "POSITION": 2,
+            "NORMAL": 3,
+            "TEXCOORD_0": 4
           },
-          "indices": 3,
-          "material": 0
+          "mode": 4,
+          "material": 0,
+          "indices": 0
         }
       ]
     },
@@ -83,169 +313,77 @@
       "primitives": [
         {
           "attributes": {
-            "POSITION": 4,
-            "NORMAL": 5,
-            "TEXCOORD_0": 6
+            "POSITION": 5,
+            "NORMAL": 6,
+            "TEXCOORD_0": 7
           },
-          "indices": 7,
-          "material": 0
+          "mode": 4,
+          "material": 0,
+          "indices": 1
         }
       ]
     }
   ],
-  "textures": [
+  "nodes": [
     {
-      "sampler": 0,
-      "source": 0
-    },
-    {
-      "sampler": 0,
-      "source": 1
-    },
-    {
-      "sampler": 0,
-      "source": 2
-    }
-  ],
-  "images": [
-    {
-      "mimeType": "image/jpeg",
-      "name": "throw_pillows_01_nor_gl",
-      "uri": "textures/throw_pillows_01_nor_gl_1k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "throw_pillows_01_diff",
-      "uri": "textures/throw_pillows_01_diff_1k.jpg"
-    },
-    {
-      "mimeType": "image/jpeg",
-      "name": "throw_pillows_01_rough",
-      "uri": "textures/throw_pillows_01_rough_1k.jpg"
-    }
-  ],
-  "accessors": [
-    {
-      "bufferView": 0,
-      "componentType": 5126,
-      "count": 1653,
-      "max": [
-        0.2599124312400818,
-        0.16153106093406677,
-        0.0013513441663235426
+      "name": "throw_pillows_01_pillow02",
+      "translation": [
+        0.22825381917854973,
+        0.21994552145010884,
+        -0.007073935569856627
       ],
-      "min": [
-        -0.25888463854789734,
-        -0.12497694790363312,
-        -0.44124239683151245
+      "rotation": [
+        0.70033365470297,
+        -0.09763631139438013,
+        0.09763632712273036,
+        0.7003335420173294
       ],
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 1,
-      "componentType": 5126,
-      "count": 1653,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 2,
-      "componentType": 5126,
-      "count": 1653,
-      "type": "VEC2"
-    },
-    {
-      "bufferView": 3,
-      "componentType": 5123,
-      "count": 9372,
-      "type": "SCALAR"
-    },
-    {
-      "bufferView": 4,
-      "componentType": 5126,
-      "count": 1717,
-      "max": [
-        0.3245271146297455,
-        0.08450961112976074,
-        0.0021050451323390007
+      "scale": [
+        0.2593985348068676,
+        0.25939853260920587,
+        0.2593985326092059
       ],
-      "min": [
-        -0.2405896931886673,
-        -0.2589276134967804,
-        -0.4480541944503784
+      "mesh": 0
+    },
+    {
+      "name": "throw_pillows_01_pillow01",
+      "translation": [
+        -0.17807379217684546,
+        0.22297459198066324,
+        0.0718592314291121
       ],
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 5,
-      "componentType": 5126,
-      "count": 1717,
-      "type": "VEC3"
-    },
-    {
-      "bufferView": 6,
-      "componentType": 5126,
-      "count": 1717,
-      "type": "VEC2"
-    },
-    {
-      "bufferView": 7,
-      "componentType": 5123,
-      "count": 9714,
-      "type": "SCALAR"
+      "rotation": [
+        0.6637973201425851,
+        -0.24366615938502212,
+        0.24366618737188364,
+        0.6637971920328231
+      ],
+      "scale": [
+        0.282558404564908,
+        0.2825584066701394,
+        0.2825584066701393
+      ],
+      "mesh": 1
     }
   ],
-  "bufferViews": [
+  "scenes": [
     {
-      "buffer": 0,
-      "byteLength": 19836,
-      "byteOffset": 0
-    },
-    {
-      "buffer": 0,
-      "byteLength": 19836,
-      "byteOffset": 19836
-    },
-    {
-      "buffer": 0,
-      "byteLength": 13224,
-      "byteOffset": 39672
-    },
-    {
-      "buffer": 0,
-      "byteLength": 18744,
-      "byteOffset": 52896
-    },
-    {
-      "buffer": 0,
-      "byteLength": 20604,
-      "byteOffset": 71640
-    },
-    {
-      "buffer": 0,
-      "byteLength": 20604,
-      "byteOffset": 92244
-    },
-    {
-      "buffer": 0,
-      "byteLength": 13736,
-      "byteOffset": 112848
-    },
-    {
-      "buffer": 0,
-      "byteLength": 19428,
-      "byteOffset": 126584
+      "name": "Scene",
+      "nodes": [
+        0,
+        1
+      ]
     }
   ],
-  "samplers": [
-    {
-      "magFilter": 9729,
-      "minFilter": 9987
-    }
+  "scene": 0,
+  "extensionsUsed": [
+    "EXT_meshopt_compression",
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
   ],
-  "buffers": [
-    {
-      "byteLength": 146012,
-      "uri": "throw_pillows_01.bin"
-    }
+  "extensionsRequired": [
+    "EXT_meshopt_compression",
+    "EXT_texture_webp",
+    "KHR_mesh_quantization"
   ]
 }

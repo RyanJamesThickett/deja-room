@@ -1,8 +1,8 @@
 import { EYE_HEIGHT } from '../../layout'
+import { lazyScene } from '../lazyScene'
 import type { RoomDef } from '../types'
 import { BRIDGE_X, SPACESHIP_BOUNDS } from './bounds'
 import { SPACESHIP_ITEMS } from './items'
-import { SpaceshipRoom } from './SpaceshipRoom'
 
 export const spaceship: RoomDef = {
   id: 'spaceship',
@@ -15,5 +15,5 @@ export const spaceship: RoomDef = {
   bounds: SPACESHIP_BOUNDS,
   // at the back of the bridge, looking out of the viewport
   start: { position: [BRIDGE_X + 0.4, EYE_HEIGHT, 2.0], target: [BRIDGE_X, 1.25, -2.6] },
-  Scene: SpaceshipRoom,
+  ...lazyScene(() => import('./SpaceshipRoom').then((m) => m.SpaceshipRoom)),
 }

@@ -31,4 +31,6 @@ export interface RoomDef {
   start: { position: Vec3; target: Vec3 }
   /** The room's 3D content. Memoised with no props so re-renders never undo changes. */
   Scene: ComponentType
+  /** Starts downloading the scene's code early (see lazyScene), so entering the room doesn't wait for it. */
+  preload?: () => void
 }

@@ -9,7 +9,7 @@ pnpm install
 pnpm dev
 ```
 
-The 3D assets (about 60MB) are in `public/` already. To fetch them again from Poly Haven: `node scripts/fetch-assets.mjs`.
+The 3D assets (about 20MB, compressed) are in `public/` already. To fetch them again from Poly Haven: `node scripts/fetch-assets.mjs`, which then runs `scripts/compress-assets.mjs` to turn the textures into WebP (1024px at most) and compress the geometry.
 
 `?seed=abc123` in the URL fixes the house, so everyone with the same link gets the same changes.
 
@@ -78,7 +78,7 @@ pnpm mp
 
 ## Hosting
 
-The game is a static site, published free on Cloudflare Pages (unlimited bandwidth, which matters with ~100MB of 3D assets). The match server is a Cloudflare Worker with Durable Objects, also free:
+The game is a static site, published free on Cloudflare Pages (unlimited bandwidth, which matters with ~20MB of 3D assets). The match server is a Cloudflare Worker with Durable Objects, also free:
 
 ```bash
 bash scripts/deploy.sh

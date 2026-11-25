@@ -42,6 +42,21 @@ function bugNotes(): Plugin {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), babel({ presets: [reactCompilerPreset()] }), bugNotes()],
+  build: {
+    rolldownOptions: {
+      output: {
+        // Libraries change far less often than the game, so keep them in
+        // their own files that browsers can go on caching across deploys.
+        // (Each room's scene is split off by its dynamic import; see lazyScene.)
+        codeSplitting: {
+          groups: [
+            { name: 'three', test: /node_modules[\\/](\.pnpm[\\/])?(three|three-stdlib|@monogrid|fflate)/, priority: 2 },
+            { name: 'react', test: /node_modules[\\/](\.pnpm[\\/])?(react|react-dom|scheduler|@react-three|its-fine|zustand|suspend-react|react-use-measure)/, priority: 1 },
+          ],
+        },
+      },
+    },
+  },
   server: {
     // multiplayer: the match server from `pnpm mp` (wrangler dev), reached at /mp like the live one
     proxy: { '/mp': { target: 'http://127.0.0.1:8799', ws: true } },

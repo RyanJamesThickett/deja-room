@@ -1,4 +1,6 @@
-# packages allowed to run install scripts (wrangler needs both: esbuild bundles, workerd is the local Workers runtime)
+# packages allowed to run install scripts (wrangler needs both: esbuild bundles, workerd is the local Workers runtime;
+# sharp resizes and re-encodes textures for scripts/compress-assets.mjs)
 allowBuilds:
   esbuild: true
   workerd: true
+  sharp: true

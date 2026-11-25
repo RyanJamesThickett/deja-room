@@ -1,7 +1,7 @@
 import { EYE_HEIGHT } from '../../layout'
+import { lazyScene } from '../lazyScene'
 import type { RoomDef } from '../types'
 import { FIRESTATION_BOUNDS } from './bounds'
-import { FireStationRoom } from './FireStationRoom'
 import { FIRESTATION_ITEMS } from './items'
 import { SHIFT } from './layout'
 
@@ -19,5 +19,5 @@ export const fireStation: RoomDef = {
   bounds: FIRESTATION_BOUNDS,
   // just inside the door from the mess, looking past the back of the engine towards the bay doors
   start: { position: at(-5.3, EYE_HEIGHT, 2.2), target: at(2, 1.1, -2.4) },
-  Scene: FireStationRoom,
+  ...lazyScene(() => import('./FireStationRoom').then((m) => m.FireStationRoom)),
 }
