@@ -2347,3 +2347,113 @@ button.pop:disabled {
 .end-panel:has(.results.compact) {
   width: min(52rem, calc(100vw - 3rem));
 }
+
+/* ------------------------------------------------------------------------
+   Multiplayer: the host's controls over who's in, and rematches
+   ------------------------------------------------------------------------ */
+.player-actions {
+  display: flex;
+  flex: none;
+  gap: 0.3rem;
+  margin-left: auto;
+}
+button.pop.tiny {
+  --r: 0deg;
+  padding: 0.18rem 0.45rem 0.12rem;
+  font-size: 0.8rem;
+  border-width: 2px;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+button.pop.remove {
+  background: var(--red);
+}
+button.pop.remove.asking {
+  background: var(--ink);
+  color: var(--yellow);
+}
+.lock-toggle {
+  justify-self: start;
+  margin-top: 0.2rem;
+}
+button.pop.lock-toggle.locked {
+  background: var(--yellow);
+}
+.lobby-locked {
+  margin: 0.2rem 0 0;
+  font: 700 0.85rem/1.3 var(--body);
+}
+.pause-players {
+  display: grid;
+  gap: 0.5rem;
+  width: min(24rem, 42vw);
+  padding: 1rem 1.1rem 1.1rem;
+  background: var(--paper);
+  border: var(--outline);
+  box-shadow: var(--shadow);
+  transform: rotate(1deg);
+}
+.pause-players .lobby-label small {
+  margin-left: 0.5rem;
+}
+.rematch-line {
+  margin: 0.6rem 0 0;
+  font: 700 0.9rem/1.3 var(--body);
+}
+
+/* the host took you out of a game: a red "Out!" burst stamped on the corner */
+.kicked-panel {
+  max-width: 34rem;
+  overflow: visible;
+}
+.kicked-burst {
+  position: absolute;
+  top: -3.2rem;
+  right: -2.6rem;
+  width: 8rem;
+  height: 8rem;
+  --star: polygon(50% 0%, 56.8% 11.6%, 67.1% 3%, 69.5% 16.2%, 82.1% 11.7%, 79.9% 24.9%, 93.3% 25%, 86.6% 36.7%, 99.2% 41.3%, 89% 50%, 99.2% 58.7%, 86.6% 63.3%, 93.3% 75%, 79.9% 75.1%, 82.1% 88.3%, 69.5% 83.8%, 67.1% 97%, 56.8% 88.4%, 50% 100%, 43.2% 88.4%, 32.9% 97%, 30.5% 83.8%, 17.9% 88.3%, 20.1% 75.1%, 6.7% 75%, 13.4% 63.3%, 0.8% 58.7%, 11% 50%, 0.8% 41.3%, 13.4% 36.7%, 6.7% 25%, 20.1% 24.9%, 17.9% 11.7%, 30.5% 16.2%, 32.9% 3%, 43.2% 11.6%);
+  --fill: var(--red);
+  filter: drop-shadow(5px 5px 0 var(--ink));
+  transform: rotate(12deg);
+  animation: kicked-stamp 0.5s 0.25s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+.kicked-burst .burst-shape span {
+  font-size: 2.2rem;
+}
+@keyframes kicked-stamp {
+  from {
+    opacity: 0;
+    transform: scale(2.4) rotate(-20deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(12deg);
+  }
+}
+.kicked-panel .mp-title {
+  font-size: 2.6rem;
+  color: var(--red);
+  -webkit-text-stroke: 1.5px var(--ink);
+  paint-order: stroke fill;
+  text-shadow: 3px 3px 0 var(--ink);
+}
+.kicked-text {
+  margin: 0;
+  max-width: 28rem;
+  font: 600 1.05rem/1.45 var(--body);
+}
+.kicked-code {
+  display: inline-block;
+  padding: 0 0.35rem;
+  font: 400 1.25rem/1.2 var(--display);
+  letter-spacing: 0.12em;
+  background: var(--yellow);
+  border: 2px solid var(--ink);
+}
+@media (max-width: 40rem) {
+  .kicked-burst {
+    right: -0.8rem;
+    width: 6rem;
+    height: 6rem;
+  }
+}

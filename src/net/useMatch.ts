@@ -83,6 +83,9 @@ export interface MatchConnection {
   status: Status
   state: MatchState | null
   error: string | null
+  /** The code of the game the host just took you out of, until you dismiss it or try another game. */
+  kickedFrom: string | null
+  dismissKicked: () => void
   me: Me
   /** Server time now, from this browser's clock. */
   serverNow: () => number
@@ -97,11 +100,16 @@ export interface MatchConnection {
   poses: RefObject<Map<string, { p: [number, number, number]; yaw: number; at: number }>>
 }
 
-/** `onState` runs with every state the server sends, as it arrives. */
-export function useMatch(onState?: (state: MatchState) => void): MatchConnection {
+/**
+ * `onState` runs with every state the server sends, as it arrives. `onGone`
+ * runs when the game ends for this player without them choosing to leave:
+ * the host took them out, or the connection couldn't be got back.
+ */
+export function useMatch(onState?: (state: MatchState) => void, onGone?: () => void): MatchConnection {
   const [status, setStatus] = useState<Status>('off')
   const [state, setState] = useState<MatchState | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [kickedFrom, setKickedFrom] = useState<string | null>(null)
   const [me, setMe] = useState(loadMe)
   const ws = useRef<WebSocket | null>(null)
   // server clock minus ours, measured with pings (half the round trip either way)
@@ -113,8 +121,10 @@ export function useMatch(onState?: (state: MatchState) => void): MatchConnection
   const retries = useRef(0)
   // the latest callback, without reconnecting when it changes
   const onStateRef = useRef(onState)
+  const onGoneRef = useRef(onGone)
   useEffect(() => {
     onStateRef.current = onState
+    onGoneRef.current = onGone
   })
 
   function open(code: string, query: string, attempt: (reason: ErrorReason) => boolean) {
@@ -159,8 +169,10 @@ export function useMatch(onState?: (state: MatchState) => void): MatchConnection
           wanted.current = null
           rememberGame(null)
           setError(ERROR_TEXT[msg.reason])
+          setKickedFrom(msg.reason === 'kicked' ? code : null)
           setState(null)
           setStatus('off')
+          onGoneRef.current?.()
           break
       }
     }
@@ -183,12 +195,14 @@ export function useMatch(onState?: (state: MatchState) => void): MatchConnection
         setState(null)
         wanted.current = null
         rememberGame(null)
+        onGoneRef.current?.()
       }
     }
   }
 
   function create(mode: MatchMode) {
     setError(null)
+    setKickedFrom(null)
     let tries = 0
     const go = () => {
       const code = randomCode()
@@ -207,12 +221,14 @@ export function useMatch(onState?: (state: MatchState) => void): MatchConnection
 
   function join(code: string) {
     setError(null)
+    setKickedFrom(null)
     wanted.current = code
     open(code, '', () => false)
   }
 
   function leave() {
     wanted.current = null
+    setKickedFrom(null)
     rememberGame(null)
     ws.current?.close()
     ws.current = null
@@ -238,6 +254,11 @@ export function useMatch(onState?: (state: MatchState) => void): MatchConnection
     status,
     state,
     error,
+    kickedFrom,
+    dismissKicked: () => {
+      setKickedFrom(null)
+      setError(null)
+    },
     me,
     serverNow: () => Date.now() + offset.current,
     toLocal: (serverTime: number) => serverTime - offset.current,

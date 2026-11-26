@@ -11,8 +11,8 @@ import type { RoomDef } from './game/rooms/types'
 import { duckMusic, hushMusic, loadSoundSettings, muffleMusic, saveSoundSettings, sfx, type SoundSettings, unlockAudio } from './audio'
 import { loadProgress, saveProgress, withRoomDone } from './progress'
 import { PoseSender, Teammates, VotePins } from './net/CoopScene'
-import { CoopVoteBoard, Lobby, MultiplayerMenu } from './net/MultiplayerUI'
-import { ATTEMPTS, isCode, type MatchState, PLAYER_COLOURS, SHIFT_COVER_MS, SHIFT_MS } from './net/protocol'
+import { CoopVoteBoard, Lobby, MultiplayerMenu, PlayersPanel } from './net/MultiplayerUI'
+import { ATTEMPTS, isCode, type MatchState, MIN_PLAYERS, PLAYER_COLOURS, SHIFT_COVER_MS, SHIFT_MS } from './net/protocol'
 import { outcomeLine, standings } from './net/results'
 import { rememberedGame, useMatch } from './net/useMatch'
 import { CameraRig, type Guess, GuessPicker, House, InspectorBoxes, MissMarker, RevealMarker, ShowMe, type Snapshot, SnapshotProbe, WalkView } from './game/scene'
@@ -124,7 +124,10 @@ export default function App() {
   const [startCode] = useState(joinCodeOnLoad)
   const [phase, setPhase] = useState<Phase>(startCode ? 'multi' : 'title')
   // multiplayer: the connection to the match server and the game state it sends
-  const mp = useMatch((state) => followServer(state))
+  const mp = useMatch(
+    (state) => followServer(state),
+    () => onGameGone(),
+  )
   const match: MatchState | null = mp.state
   /** In a multiplayer game that has started (not just sitting in the lobby). */
   const online = match !== null && match.stage !== 'lobby'
@@ -178,6 +181,8 @@ export default function App() {
   const [previews, setPreviews] = useState<Record<string, Mutation>>({})
   // id of the room whose textures and shaders are on the GPU and drawing
   const [readyRoom, setReadyRoom] = useState<string | null>(null)
+  /** Goes up each time an online game (re)starts, so a rematch in the same room loads it afresh. */
+  const [visit, setVisit] = useState(0)
   // bug notes (hold P): a snapshot of where the player is, and the note being written
   const [noteToken, setNoteToken] = useState(0)
   const [note, setNote] = useState<{ snap: Snapshot; text: string } | null>(null)
@@ -368,10 +373,7 @@ export default function App() {
 
   /** Bank this room's score and walk into the next, completely different room. */
   function nextRoom() {
-    if (online) {
-      if (match.hostId === mp.me.id) mp.send({ t: 'lobby' })
-      return
-    }
+    if (online) return playAgain()
     if (!nextRoomDef) return
     setBanked((b) => [...b, { label: room.label, score: roomScore }])
     startRoom(roomIndex + 1)
@@ -504,6 +506,22 @@ export default function App() {
     return key.startsWith('decoy:') ? key.slice('decoy:'.length) : label(key)
   }
 
+  /** Online, at the end: the host starts a rematch (same room, new changes); anyone else says they're up for one. */
+  function playAgain() {
+    if (!online) return
+    if (match.hostId === mp.me.id) mp.send({ t: 'rematch' })
+    else mp.send({ t: 'ready' })
+  }
+
+  /** The game ended without you leaving: the host took you out, or the connection's gone. The multiplayer screen says which. */
+  function onGameGone() {
+    applied.current = ''
+    exitLock()
+    setPausedAt(null)
+    setShowBefore(false)
+    setPhase('multi')
+  }
+
   /** Leave the multiplayer game (or lobby) for the title screen. */
   function leaveGame() {
     applied.current = ''
@@ -555,6 +573,7 @@ export default function App() {
       case 'study':
         if (first) {
           setReadyRoom(null)
+          setVisit((v) => v + 1)
           setHistory([])
           setResults([])
           setRound(0)
@@ -732,7 +751,10 @@ export default function App() {
       if (e.code === 'ArrowRight') setPreview((saved.unlocked + previewing + 1) % saved.unlocked)
       if (e.code === 'ArrowLeft') setPreview((saved.unlocked + previewing - 1) % saved.unlocked)
     }
-    if (phase === 'multi' && e.code === 'Escape' && !match) setPhase('title')
+    if (phase === 'multi' && e.code === 'Escape' && !match) {
+      mp.dismissKicked()
+      setPhase('title')
+    }
     if (e.code === 'Enter') {
       if (paused) resume()
       else if (phase === 'title') {
@@ -849,6 +871,11 @@ export default function App() {
     return () => window.removeEventListener('beforeunload', guard)
   }, [midGame])
 
+  // the end of an online game: who's up for a rematch, and whether there's anyone to play
+  const upForMore = online ? match.players.filter((p) => p.connected && p.ready && p.id !== match.hostId) : []
+  const rematchReady = online && match.players.filter((p) => p.connected).length >= MIN_PLAYERS[match.mode]
+  const hostName = (online && match.players.find((p) => p.id === match.hostId)?.name) || 'the host'
+
   // online the clock keeps going while you're paused
   const remaining = Math.max(0, deadline - (online ? now : (pausedAt ?? now)))
   /** VS: the other player (if there is one). */
@@ -863,7 +890,7 @@ export default function App() {
           {/* the menu shows no room, so nothing loads until one is picked */}
           {phase !== 'title' && phase !== 'multi' && (
             <Suspense fallback={null}>
-              <House key={room.id} room={room} mutations={visible} onReady={onRoomReady} />
+              <House key={`${room.id}:${visit}`} room={room} mutations={visible} onReady={onRoomReady} />
             </Suspense>
           )}
           <CameraRig token={resetToken} idle={false} room={room} scatterSeed={firstLook ? undefined : `${seed}:${room.id}:${round}`} />
@@ -1269,13 +1296,27 @@ export default function App() {
                 Leave
               </button>
               {match.hostId === mp.me.id ? (
-                <button type="button" className="pop" onClick={nextRoom}>
-                  Back to the lobby <kbd>Enter</kbd>
-                </button>
+                <>
+                  <button type="button" className="pop ghost" onClick={() => mp.send({ t: 'lobby' })}>
+                    Pick another room
+                  </button>
+                  <button type="button" className="pop" disabled={!rematchReady} onClick={playAgain}>
+                    {rematchReady ? 'Play again!' : 'Need a second player'} <kbd>Enter</kbd>
+                  </button>
+                </>
+              ) : meOnline?.ready ? (
+                <span className="lobby-wait">Waiting for {hostName} to choose…</span>
               ) : (
-                <span className="lobby-wait">Waiting for the host…</span>
+                <button type="button" className="pop" onClick={playAgain}>
+                  Up for another! <kbd>Enter</kbd>
+                </button>
               )}
             </div>
+            {upForMore.length > 0 && (
+              <p className="rematch-line">
+                Up for another go: <strong>{upForMore.map((p) => (p.id === mp.me.id ? 'you' : p.name)).join(', ')}</strong>
+              </p>
+            )}
           </section>
         )}
 
@@ -1463,7 +1504,7 @@ export default function App() {
                 )}
                 <SoundToggles sound={sound} onToggle={toggleSound} big />
               </div>
-              <ControlsCard />
+              {online ? <PlayersPanel mp={mp} state={match} /> : <ControlsCard />}
             </div>
           </div>
         </div>

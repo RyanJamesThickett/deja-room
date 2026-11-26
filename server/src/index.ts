@@ -61,6 +61,8 @@ export class Match extends DurableObject<Env> {
   /** Every open socket, and the player it belongs to once they've said hello. */
   private sockets = new Map<WebSocket, string | null>()
   private timer: ReturnType<typeof setTimeout> | null = null
+  /** Players the host took out of this game: they can't rejoin it. */
+  private banned = new Set<string>()
 
   async fetch(req: Request): Promise<Response> {
     const url = new URL(req.url)
@@ -79,6 +81,7 @@ export class Match extends DurableObject<Env> {
       // a code still in use belongs to someone else's game
       if (this.game && this.game.players.some((p) => p.connected)) return refuse('code-taken')
       this.game = this.fresh(code, mode)
+      this.banned.clear()
     } else if (!this.game) return refuse('no-such-game')
 
     this.sockets.set(server, null)
@@ -108,6 +111,7 @@ export class Match extends DurableObject<Env> {
       huntStart: 0,
       players: [],
       coop: null,
+      locked: false,
     }
   }
 
@@ -149,7 +153,8 @@ export class Match extends DurableObject<Env> {
         me.loaded = true
         break
       case 'ready':
-        if (g.stage === 'study' || g.stage === 'reveal') me.ready = true
+        // at the end, "ready" means up for a rematch
+        if (g.stage === 'study' || g.stage === 'reveal' || g.stage === 'end') me.ready = true
         break
       case 'result':
         if (g.mode !== 'vs' || g.stage !== 'hunt' || msg.round !== g.round || me.done) return
@@ -174,6 +179,25 @@ export class Match extends DurableObject<Env> {
         g.players = g.players.filter((p) => p.connected)
         g.coop = null
         break
+      case 'rematch':
+        if (!isHost || g.stage !== 'end' || !g.setup) return
+        if (g.players.filter((p) => p.connected).length < MIN_PLAYERS[g.mode]) return
+        this.start()
+        break
+      case 'kick':
+        if (!isHost || msg.playerId === me.id) return
+        this.kick(msg.playerId)
+        break
+      case 'host': {
+        const next = g.players.find((p) => p.id === msg.playerId)
+        if (!isHost || !next?.connected) return
+        g.hostId = next.id
+        break
+      }
+      case 'lock':
+        if (!isHost) return
+        g.locked = msg.locked === true
+        break
       default:
         return
     }
@@ -183,6 +207,7 @@ export class Match extends DurableObject<Env> {
   private hello(ws: WebSocket, playerId: unknown, name: unknown) {
     const g = this.game!
     if (typeof playerId !== 'string' || playerId.length < 8 || playerId.length > 64) return this.send(ws, { t: 'error', reason: 'bad-request' })
+    if (this.banned.has(playerId)) return this.refuseLate(ws, 'kicked')
     const back = g.players.find((p) => p.id === playerId)
     if (back) {
       // back after a refresh or a dropped connection: drop any older socket of theirs
@@ -190,6 +215,7 @@ export class Match extends DurableObject<Env> {
       back.connected = true
     } else {
       if (g.stage !== 'lobby') return this.refuseLate(ws, 'started')
+      if (g.locked) return this.refuseLate(ws, 'locked')
       if (g.players.length >= MAX_PLAYERS[g.mode]) return this.refuseLate(ws, 'full')
       const used = new Set(g.players.map((p) => p.colour))
       g.players.push({
@@ -238,6 +264,23 @@ export class Match extends DurableObject<Env> {
     if (g.stage === 'lobby') g.players = g.players.filter((q) => q !== p)
     if (g.hostId === id) g.hostId = g.players.find((q) => q.connected)?.id ?? g.hostId
     this.advance()
+  }
+
+  /** The host takes someone out: gone from the game, their pin lifted, and kept out. */
+  private kick(id: string) {
+    const g = this.game!
+    if (!g.players.some((p) => p.id === id)) return
+    this.banned.add(id)
+    g.players = g.players.filter((p) => p.id !== id)
+    for (const [ws, wsId] of this.sockets) if (wsId === id) this.refuseLate(ws, 'kicked')
+    const c = g.coop
+    if (c && g.stage === 'hunt') {
+      delete c.votes[id]
+      const here = g.players.filter((p) => p.connected)
+      if (c.tieBreaker === id) c.tieBreaker = (here[g.round % Math.max(1, here.length)] ?? g.players[0])?.id ?? ''
+      // with them gone, everyone left may already have voted
+      c.settleAt = here.length > 0 && here.every((p) => c.votes[p.id]) ? c.settleAt || Date.now() + VOTE_SETTLE_MS : 0
+    }
   }
 
   private cleanOutcome(o: Outcome): Outcome {
@@ -335,6 +378,8 @@ export class Match extends DurableObject<Env> {
           else {
             g.stage = 'end'
             g.deadline = 0
+            // from here on, "ready" means up for a rematch, so the last reveal's doesn't count
+            for (const p of g.players) p.ready = false
           }
         }
         break

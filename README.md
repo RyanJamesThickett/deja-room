@@ -57,6 +57,8 @@ Copy `src/game/rooms/shop/` as a starting point: `bounds.ts`, `items.ts`, a memo
 
 Games are found by a four-letter code (consonants only, so no code spells anything) or an invite link (`?join=BKRT`). There are no accounts: each browser tab gets a random id and a generated name ("Wobbly Lamp"), so there's no typed text anywhere to moderate. Nothing is stored once a game ends.
 
+The host looks after the room, from the lobby or the pause menu mid-game: **Remove** takes someone out (and keeps that player out of this game), **Make host** hands the role on, and **Lock the room** stops anyone new joining with the code. If the host leaves for good, the role passes to someone still there. At the end, the host can start a **rematch** (same room and players, new changes) or go back to the lobby; everyone else can say they're up for another.
+
 | File | What it does |
 | --- | --- |
 | `server/src/index.ts` | The match server: a Cloudflare Worker that gives each room code its own Durable Object (an in-memory game: who's in, the clock, results and votes). It never knows what changed; every browser works that out from the seed. |
@@ -75,6 +77,8 @@ pnpm mp
 ```
 
 `pnpm mp` runs the match server with `wrangler dev` on port 8799; Vite forwards `/mp` to it.
+
+`pnpm test:mp` checks the server's rules with scripted players: VS and co-op games, dropping out and coming back mid-game, the host's controls, rematches. It starts its own copy of the server (on port 8798) and takes about 30 seconds. To test a server that's already running instead, set `MP_URL`, e.g. `MP_URL=ws://127.0.0.1:8799 pnpm test:mp`.
 
 ## Hosting
 

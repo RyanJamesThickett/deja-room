@@ -58,7 +58,7 @@ export interface Player {
   connected: boolean
   /** Their room has finished loading. */
   loaded: boolean
-  /** Pressed "ready" (seen enough, or done looking at a reveal). */
+  /** Pressed "ready" (seen enough, or done looking at a reveal). At the end: up for a rematch. */
   ready: boolean
   /** VS: has finished the current hunt. */
   done: boolean
@@ -116,6 +116,8 @@ export interface MatchState {
   huntStart: number
   players: Player[]
   coop: Coop | null
+  /** The host has stopped anyone new joining (people already in can still rejoin). */
+  locked: boolean
 }
 
 // --- messages -------------------------------------------------------------------
@@ -131,6 +133,14 @@ export type ClientMsg =
   | { t: 'vote'; round: number; vote: Vote | null }
   | { t: 'pose'; p: [number, number, number]; yaw: number }
   | { t: 'lobby' }
+  /** Host, at the end: the same room again with new changes, same players. */
+  | { t: 'rematch' }
+  /** Host: take someone out of the game. They can't come back into it. */
+  | { t: 'kick'; playerId: string }
+  /** Host: hand the host's role to someone else. */
+  | { t: 'host'; playerId: string }
+  /** Host: stop (or let) anyone new join. */
+  | { t: 'lock'; locked: boolean }
   | { t: 'ping'; c: number }
 
 export type ServerMsg =
@@ -139,7 +149,7 @@ export type ServerMsg =
   | { t: 'pose'; id: string; p: [number, number, number]; yaw: number }
   | { t: 'pong'; c: number; s: number }
 
-export type ErrorReason = 'no-such-game' | 'full' | 'started' | 'code-taken' | 'bad-request'
+export type ErrorReason = 'no-such-game' | 'full' | 'started' | 'code-taken' | 'bad-request' | 'kicked' | 'locked'
 
 export const ERROR_TEXT: Record<ErrorReason, string> = {
   'no-such-game': 'There’s no game with that code. Check the letters?',
@@ -147,6 +157,8 @@ export const ERROR_TEXT: Record<ErrorReason, string> = {
   started: 'That game has already started.',
   'code-taken': 'That code is in use. Try again.',
   'bad-request': 'Something went wrong talking to the server.',
+  kicked: 'The host took you out of that game.',
+  locked: 'That game isn’t letting anyone else in.',
 }
 
 // --- names ------------------------------------------------------------------------

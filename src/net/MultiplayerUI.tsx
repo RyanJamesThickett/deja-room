@@ -1,12 +1,13 @@
-import { type CSSProperties, useState } from 'react'
+import { type CSSProperties, useEffect, useState } from 'react'
 import type { RoomDef } from '../game/rooms/types'
-import { CODE_LENGTH, CODE_LETTERS, isCode, MAX_PLAYERS, MIN_PLAYERS, type MatchMode, type MatchState, PLAYER_COLOURS } from './protocol'
+import { CODE_LENGTH, CODE_LETTERS, isCode, MAX_PLAYERS, MIN_PLAYERS, type MatchMode, type MatchState, type Player, PLAYER_COLOURS } from './protocol'
 import { inviteLink } from './results'
 import type { MatchConnection } from './useMatch'
 
 /*
  * The multiplayer screens: choosing VS or co-op, starting or joining a game
- * by its code, the lobby, and VS's side-by-side results.
+ * by its code, the lobby, the host's controls over who's in, and co-op's
+ * vote board.
  */
 
 const MODES: Record<MatchMode, { title: string; blurb: string; players: string }> = {
@@ -27,6 +28,7 @@ export function MultiplayerMenu({ mp, onBack, startMode }: { mp: MatchConnection
   const [mode, setMode] = useState<MatchMode | null>(startMode ?? null)
   const [code, setCode] = useState('')
   const busy = mp.status === 'connecting' || mp.status === 'reconnecting'
+  if (mp.kickedFrom) return <KickedOut code={mp.kickedFrom} onOk={mp.dismissKicked} onBack={onBack} />
   return (
     <section className="panel mp-panel">
       <div className="caption">Multiplayer</div>
@@ -83,6 +85,33 @@ export function MultiplayerMenu({ mp, onBack, startMode }: { mp: MatchConnection
       <div className="row mp-footer">
         <button type="button" className="pop ghost" onClick={() => (mode === null || startMode ? onBack() : setMode(null))}>
           Back <kbd>Esc</kbd>
+        </button>
+      </div>
+    </section>
+  )
+}
+
+/** The host took you out of a game (or you tried to get back into one they'd taken you out of). */
+function KickedOut({ code, onOk, onBack }: { code: string; onOk: () => void; onBack: () => void }) {
+  return (
+    <section className="panel mp-panel kicked-panel" role="alertdialog" aria-labelledby="kicked-title" aria-describedby="kicked-text">
+      <div className="kicked-burst" aria-hidden="true">
+        <div className="burst-shape">
+          <span>Out!</span>
+        </div>
+      </div>
+      <div className="caption">Multiplayer</div>
+      <h2 id="kicked-title" className="mp-title">You’ve been kicked out</h2>
+      <p id="kicked-text" className="kicked-text">
+        The host took you out of game <strong className="kicked-code">{code}</strong>, so you can’t go back into that one. You can
+        start a game of your own, or join a different one.
+      </p>
+      <div className="row mp-footer">
+        <button type="button" className="pop big" autoFocus onClick={onOk}>
+          OK
+        </button>
+        <button type="button" className="pop ghost" onClick={onBack}>
+          Back to the title <kbd>Esc</kbd>
         </button>
       </div>
     </section>
@@ -210,14 +239,16 @@ export function Lobby({
                 {p.id === mp.me.id && <span className="lobby-tag">you</span>}
                 {p.id === state.hostId && <span className="lobby-tag host">host</span>}
                 {!p.connected && <span className="lobby-tag">back soon…</span>}
+                {host && p.id !== mp.me.id && <PlayerActions mp={mp} player={p} />}
               </li>
             ))}
             {Array.from({ length: empty }, (_, i) => (
               <li key={`empty${i}`} className="lobby-empty">
-                Waiting for someone to join…
+                {state.locked ? 'Locked: nobody new can join' : 'Waiting for someone to join…'}
               </li>
             ))}
           </ul>
+          <LockToggle mp={mp} state={state} />
         </div>
 
         <div className="lobby-go">
@@ -235,6 +266,84 @@ export function Lobby({
         <NameTag mp={mp} />
       </div>
     </section>
+  )
+}
+
+/**
+ * The host's buttons on someone's row: hand them the host's role, or take
+ * them out of the game (which keeps them out). Taking someone out asks first:
+ * the first click says "Sure?", a second does it.
+ */
+export function PlayerActions({ mp, player }: { mp: MatchConnection; player: Player }) {
+  const [asking, setAsking] = useState(false)
+  useEffect(() => {
+    if (!asking) return
+    // changed your mind: it goes back by itself
+    const id = setTimeout(() => setAsking(false), 3000)
+    return () => clearTimeout(id)
+  }, [asking])
+  return (
+    <span className="player-actions">
+      {player.connected && (
+        <button type="button" className="pop ghost tiny" title={`Make ${player.name} the host`} onClick={() => mp.send({ t: 'host', playerId: player.id })}>
+          Make host
+        </button>
+      )}
+      <button
+        type="button"
+        className={`pop tiny remove${asking ? ' asking' : ''}`}
+        title={`Take ${player.name} out of the game`}
+        onClick={(e) => {
+          // or Space (jump) would press it again mid-game
+          e.currentTarget.blur()
+          if (asking) mp.send({ t: 'kick', playerId: player.id })
+          else setAsking(true)
+        }}
+      >
+        {asking ? 'Sure?' : 'Remove'}
+      </button>
+    </span>
+  )
+}
+
+/** Host: stop anyone new joining with the code (everyone already in can still rejoin). Others just see whether it's locked. */
+function LockToggle({ mp, state }: { mp: MatchConnection; state: MatchState }) {
+  if (state.hostId !== mp.me.id) return state.locked ? <p className="lobby-locked">Locked by the host: nobody new can join.</p> : null
+  return (
+    <button
+      type="button"
+      className={`pop ghost small lock-toggle${state.locked ? ' locked' : ''}`}
+      aria-pressed={state.locked}
+      onClick={(e) => {
+        e.currentTarget.blur()
+        mp.send({ t: 'lock', locked: !state.locked })
+      }}
+    >
+      {state.locked ? 'Locked · let people join' : 'Lock the room'}
+    </button>
+  )
+}
+
+/** Who's in the game, for the pause menu mid-game. The host can hand over or take people out from here too. */
+export function PlayersPanel({ mp, state }: { mp: MatchConnection; state: MatchState }) {
+  const host = state.hostId === mp.me.id
+  return (
+    <div className="pause-players">
+      <span className="lobby-label">
+        Players{host && <small>you’re the host</small>}
+      </span>
+      <ul className="lobby-players">
+        {state.players.map((p) => (
+          <li key={p.id} style={{ '--player': PLAYER_COLOURS[p.colour] } as CSSProperties} className={p.connected ? '' : 'away'}>
+            <span className="lobby-name">{p.id === mp.me.id ? 'You' : p.name}</span>
+            {p.id === state.hostId && <span className="lobby-tag host">host</span>}
+            {!p.connected && <span className="lobby-tag">away</span>}
+            {host && p.id !== mp.me.id && <PlayerActions mp={mp} player={p} />}
+          </li>
+        ))}
+      </ul>
+      <LockToggle mp={mp} state={state} />
+    </div>
   )
 }
 

@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "mp": "wrangler dev --config server/wrangler.jsonc --port 8799"
+    "mp": "wrangler dev --config server/wrangler.jsonc --port 8799",
+    "test:mp": "node scripts/mp-test.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
