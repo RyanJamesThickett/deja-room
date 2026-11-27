@@ -28,3 +28,6 @@ notes/
 
 # Cloudflare wrangler cache
 .wrangler/
+
+# local tooling: deploy, asset fetching and multiplayer test scripts
+scripts/
