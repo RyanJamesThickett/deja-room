@@ -1,5 +1,5 @@
 {
-  // Déjà Room's multiplayer server. Deployed by scripts/deploy.sh; run locally with `pnpm mp`.
+  // Déjà Room's multiplayer server. Deploy with `wrangler deploy --config server/wrangler.jsonc`; run locally with `pnpm mp`.
   "$schema": "../node_modules/wrangler/config-schema.json",
   "name": "mp",
   "main": "src/index.ts",

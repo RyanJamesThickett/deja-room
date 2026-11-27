@@ -2,7 +2,7 @@ import { useTexture } from '@react-three/drei'
 import { useMemo } from 'react'
 import { RepeatWrapping, SRGBColorSpace, type Texture } from 'three'
 
-/** Poly Haven models in public/models (fetched by scripts/fetch-assets.mjs). */
+/** Poly Haven models in public/models. */
 export const MODEL_IDS = [
   'sofa_02',
   'ArmChair_01',

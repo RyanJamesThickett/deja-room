@@ -9,7 +9,7 @@ pnpm install
 pnpm dev
 ```
 
-The 3D assets (about 20MB, compressed) are in `public/` already. To fetch them again from Poly Haven: `node scripts/fetch-assets.mjs`, which then runs `scripts/compress-assets.mjs` to turn the textures into WebP (1024px at most) and compress the geometry.
+The 3D assets (about 20MB) are in `public/` already: models, textures and an HDRI from Poly Haven, with the textures turned into WebP (1024px at most) and the geometry compressed.
 
 `?seed=abc123` in the URL fixes the house, so everyone with the same link gets the same changes.
 
@@ -80,17 +80,24 @@ pnpm mp
 
 `pnpm mp` runs the match server with `wrangler dev` on port 8799; Vite forwards `/mp` to it.
 
-`pnpm test:mp` checks the server's rules with scripted players: VS and co-op games, dropping out and coming back mid-game, the host's controls, rematches. It starts its own copy of the server (on port 8798) and takes about 30 seconds. To test a server that's already running instead, set `MP_URL`, e.g. `MP_URL=ws://127.0.0.1:8799 pnpm test:mp`.
-
 ## Hosting
 
-The game is a static site, published free on Cloudflare Pages (unlimited bandwidth, which matters with ~20MB of 3D assets). The match server is a Cloudflare Worker with Durable Objects, also free:
+The game is a static site, published free on Cloudflare Pages (unlimited bandwidth, which matters with ~20MB of 3D assets). The match server is a Cloudflare Worker with Durable Objects, also free. To put up your own copy, deploy the server first:
 
 ```bash
-bash scripts/deploy.sh
+pnpm exec wrangler deploy --config server/wrangler.jsonc
 ```
 
-The first run opens a browser to log in to Cloudflare and creates the `deja-room` project; later runs just rebuild and upload. It deploys the match server first, then builds the game with the server's address baked in (`VITE_MP_URL`). Set `PAGES_PROJECT=other-name` to use a different project name. `public/_headers` tells browsers to cache the models and textures for a week.
+The first run opens a browser to log in to Cloudflare, and may ask you to pick a workers.dev subdomain. It prints the server's address. Build the game with that address baked in, then upload it:
+
+```bash
+VITE_MP_URL=https://mp.<your-subdomain>.workers.dev pnpm build
+pnpm exec wrangler pages deploy dist --project-name deja-room --branch main
+```
+
+Without `VITE_MP_URL`, the game looks for the match server on its own host, which is what `pnpm dev` does. `public/_headers` tells browsers to cache the models and textures for a week.
+
+The deploy, asset-fetching and multiplayer test scripts (`pnpm test:mp`) are kept outside this repo.
 
 ## Credits
 
