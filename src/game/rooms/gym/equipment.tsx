@@ -6,7 +6,6 @@ import {
   MeshStandardMaterial,
   Shape,
   SphereGeometry,
-  TorusGeometry,
   Vector3,
   type Group,
   type Mesh,
@@ -15,6 +14,7 @@ import { Block, Instanced, PI, type Placement } from '../../kit'
 import type { Vec3 } from '../../mutations'
 import { Hover } from '../living/oddities'
 import { CHEESE, DUMBBELLS, headLength, isCheese, isGap, RACK_LENGTH, TIERS, type Dumbbell } from './rack'
+import { KB_HANDLE_GEO, PLATE_GEO } from './shapes'
 import { beltTexture, lcdTexture, wickerTexture } from './textures'
 
 /*
@@ -107,8 +107,20 @@ export function ExerciseBike({ mode = 'idle' }: { mode?: 'idle' | 'pedalling' | 
         <Block key={z} size={[0.5, 0.05, 0.07]} position={[0, 0.025, z]} {...STEEL} radius={0.02} />
       ))}
       <Block size={[0.08, 0.08, 0.95]} position={[0, 0.09, -0.02]} {...STEEL} radius={0.02} />
-      {/* flywheel cover */}
-      <Block size={[0.13, 0.5, 0.48]} position={[0, 0.4, 0.2]} color={ORANGE} roughness={0.35} radius={0.1} paint />
+      {/* the flywheel's round cover, with a chrome hub each side */}
+      <mesh position={[0, 0.4, 0.2]} rotation={[0, 0, PI / 2]} castShadow receiveShadow userData={{ paint: true }}>
+        <cylinderGeometry args={[0.25, 0.25, 0.12, 40]} />
+        <meshStandardMaterial color={ORANGE} roughness={0.35} />
+      </mesh>
+      <mesh position={[0, 0.4, 0.2]} rotation={[0, 0, PI / 2]}>
+        <cylinderGeometry args={[0.07, 0.07, 0.135, 24]} />
+        <meshStandardMaterial {...CHROME} />
+      </mesh>
+      {/* the crank's bottom bracket */}
+      <mesh position={[0, 0.33, -0.02]} rotation={[0, 0, PI / 2]}>
+        <cylinderGeometry args={[0.04, 0.04, 0.17, 20]} />
+        <meshStandardMaterial {...STEEL} />
+      </mesh>
       <Block size={[0.06, 0.62, 0.06]} position={[0, 0.45, -0.3]} rotation={[-0.25, 0, 0]} {...STEEL} radius={0.02} />
       <Block size={[0.18, 0.06, 0.27]} position={[0, 0.79, -0.39]} {...RUBBER} radius={0.03} />
       <Block size={[0.06, 0.75, 0.06]} position={[0, 0.62, 0.34]} rotation={[-0.3, 0, 0]} {...STEEL} radius={0.02} />
@@ -155,10 +167,12 @@ export function Rower({ mode = 'idle' }: { mode?: 'idle' | 'oars' | 'seat' }) {
         <cylinderGeometry args={[0.27, 0.27, 0.2, 40]} />
         <meshStandardMaterial color="#1b1c1f" roughness={0.5} />
       </mesh>
-      <mesh position={[0.101, 0.46, 0.92]} rotation={[0, 0, PI / 2]}>
-        <cylinderGeometry args={[0.12, 0.12, 0.01, 32]} />
-        <meshStandardMaterial color={ORANGE} roughness={0.4} />
-      </mesh>
+      {[-1, 1].map((s) => (
+        <mesh key={s} position={[s * 0.101, 0.46, 0.92]} rotation={[0, 0, PI / 2]}>
+          <cylinderGeometry args={[0.12, 0.12, 0.01, 32]} />
+          <meshStandardMaterial color={ORANGE} roughness={0.4} />
+        </mesh>
+      ))}
       {[-1, 1].map((s) => (
         <Block key={s} size={[0.13, 0.26, 0.03]} position={[s * 0.09, 0.47, 0.5]} rotation={[0.6, 0, 0]} {...RUBBER} radius={0.01} />
       ))}
@@ -175,12 +189,20 @@ export function Rower({ mode = 'idle' }: { mode?: 'idle' | 'oars' | 'seat' }) {
       {mode === 'oars' &&
         [-1, 1].map((s) => (
           // swept back like a boat at rest, blades just off the floor
-          <group key={s} position={[s * 0.2, 0.52, 0.3]} rotation={[0, s * 0.35, s * -0.3]}>
-            <mesh position={[s * 0.33, 0, 0]} rotation={[0, 0, PI / 2]} castShadow>
-              <cylinderGeometry args={[0.02, 0.02, 0.66, 12]} />
-              <meshStandardMaterial color="#c98a4b" roughness={0.6} />
+          <group key={s}>
+            {/* outrigger from the rail out to the rowlock the oar turns in */}
+            <Block size={[0.16, 0.03, 0.04]} position={[s * 0.13, 0.4, 0.3]} {...STEEL} radius={0.01} />
+            <mesh position={[s * 0.2, 0.47, 0.3]}>
+              <cylinderGeometry args={[0.018, 0.018, 0.14, 12]} />
+              <meshStandardMaterial {...CHROME} />
             </mesh>
-            <Block size={[0.32, 0.12, 0.02]} position={[s * 0.81, 0, 0]} color="#f2efe8" roughness={0.5} radius={0.01} />
+            <group position={[s * 0.2, 0.52, 0.3]} rotation={[0, s * 0.35, s * -0.3]}>
+              <mesh position={[s * 0.33, 0, 0]} rotation={[0, 0, PI / 2]} castShadow>
+                <cylinderGeometry args={[0.02, 0.02, 0.66, 12]} />
+                <meshStandardMaterial color="#c98a4b" roughness={0.6} />
+              </mesh>
+              <Block size={[0.32, 0.12, 0.02]} position={[s * 0.81, 0, 0]} color="#f2efe8" roughness={0.5} radius={0.01} />
+            </group>
           </group>
         ))}
     </>
@@ -317,7 +339,10 @@ const BELL_COLOURS = ['#ff3fa4', '#1f6bff', '#ffde21', '#8a4dff', '#2fbf71', '#f
 const BELL_RADII = [0.075, 0.083, 0.091, 0.099, 0.107, 0.115]
 const BELL_GAP = 0.06
 const BODY_GEO = new SphereGeometry(1, 28, 20)
-const HANDLE_ARC = new TorusGeometry(0.58, 0.13, 10, 24, PI)
+/** The flat foot a kettlebell stands on. */
+const FOOT_GEO = new CylinderGeometry(0.62, 0.66, 0.1, 24)
+/** Body centre height (in bell radii): the ball sits on its foot. */
+const BODY_Y = 1.06
 
 /** Kettlebell centre x positions along the row, centred on 0. */
 const BELL_XS = (() => {
@@ -334,16 +359,19 @@ function Kettlebell({ r, colour, face = false }: { r: number; colour: string; fa
   return (
     // each bell blocks the player on its own, as a circle (the row isn't one solid box)
     <group scale={r} userData={{ solid: true, round: true }}>
-      <mesh geometry={BODY_GEO} position={[0, 1, 0]} castShadow>
+      <mesh geometry={BODY_GEO} position={[0, BODY_Y, 0]} castShadow>
         <meshStandardMaterial color={colour} roughness={0.45} metalness={0.2} />
       </mesh>
-      <mesh geometry={HANDLE_ARC} position={[0, 1.8, 0]} castShadow>
+      <mesh geometry={FOOT_GEO} position={[0, 0.05, 0]}>
+        <meshStandardMaterial color="#1b1c1f" roughness={0.7} />
+      </mesh>
+      <mesh geometry={KB_HANDLE_GEO} position={[0, BODY_Y - 1, 0]} castShadow>
         <meshStandardMaterial color={colour} roughness={0.45} metalness={0.2} />
       </mesh>
       {face && (
         <>
           {[-1, 1].map((s) => (
-            <group key={s} position={[s * 0.32, 1.2, 0.92]}>
+            <group key={s} position={[s * 0.32, BODY_Y + 0.2, 0.92]}>
               <mesh>
                 <sphereGeometry args={[0.17, 14, 10]} />
                 <meshStandardMaterial color="#fffbe6" roughness={0.2} />
@@ -355,7 +383,7 @@ function Kettlebell({ r, colour, face = false }: { r: number; colour: string; fa
             </group>
           ))}
           {/* a flat, unimpressed mouth */}
-          <mesh position={[0, 0.82, 0.97]} rotation={[0.3, 0, 0]}>
+          <mesh position={[0, BODY_Y - 0.18, 0.97]} rotation={[0.3, 0, 0]}>
             <boxGeometry args={[0.36, 0.06, 0.04]} />
             <meshBasicMaterial color="#111" />
           </mesh>
@@ -406,12 +434,14 @@ const HOOK_X = 0.6
 const BEND = 0.2
 
 /** One half of a barbell, from the middle out along +x, with plates on its sleeve. */
-function HalfBar({ plates }: { plates: boolean }) {
+function HalfBar({ plates, bent }: { plates: boolean; bent: boolean }) {
+  // a bent bar's halves cross a little past the middle, so the kink has no notch in it
+  const from = bent ? -0.025 : 0
   let x = 0.7
   return (
     <>
-      <mesh position={[0.33, 0, 0]} rotation={[0, 0, PI / 2]}>
-        <cylinderGeometry args={[0.014, 0.014, 0.66, 12]} />
+      <mesh position={[(from + 0.66) / 2, 0, 0]} rotation={[0, 0, PI / 2]}>
+        <cylinderGeometry args={[0.014, 0.014, 0.66 - from, 12]} />
         <meshStandardMaterial {...CHROME} />
       </mesh>
       <mesh position={[0.67, 0, 0]} rotation={[0, 0, PI / 2]}>
@@ -427,12 +457,18 @@ function HalfBar({ plates }: { plates: boolean }) {
           const at = x + p.t / 2
           x += p.t
           return (
-            <mesh key={p.colour} position={[at, 0, 0]} rotation={[0, 0, PI / 2]} castShadow>
-              <cylinderGeometry args={[0.225, 0.225, p.t, 40]} />
+            <mesh key={p.colour} geometry={PLATE_GEO} position={[at, 0, 0]} rotation={[0, 0, PI / 2]} scale={[0.225, p.t, 0.225]} castShadow>
               <meshStandardMaterial color={p.colour} roughness={0.7} />
             </mesh>
           )
         })}
+      {plates && (
+        // the spring collar holding them on
+        <mesh position={[x + 0.02, 0, 0]} rotation={[0, 0, PI / 2]}>
+          <cylinderGeometry args={[0.038, 0.038, 0.04, 20]} />
+          <meshStandardMaterial color={ORANGE} roughness={0.45} />
+        </mesh>
+      )}
     </>
   )
 }
@@ -447,7 +483,7 @@ function Barbell({ mode }: { mode: 'normal' | 'lopsided' | 'bent' }) {
           {/* each half pivots on its hook */}
           <group position={[HOOK_X, 0, 0]} rotation={[0, 0, tilt]}>
             <group position={[-HOOK_X, 0, 0]}>
-              <HalfBar plates={!(mode === 'lopsided' && s === -1)} />
+              <HalfBar plates={!(mode === 'lopsided' && s === -1)} bent={mode === 'bent'} />
             </group>
           </group>
         </group>
@@ -480,7 +516,11 @@ export function PowerRack() {
           <Block size={[0.075, 0.06, 1.3]} position={[s * HOOK_X, 0.03, 0]} {...frame} />
           {/* safety arms, and the J-hooks on the front uprights */}
           <Block size={[0.05, 0.05, 1.125]} position={[s * (HOOK_X - 0.06), 0.62, 0]} {...CHROME} radius={0.01} />
-          <Block size={[0.05, 0.09, 0.09]} position={[s * HOOK_X, 1.32, 0.66]} color={ORANGE} roughness={0.5} radius={0.01} />
+          <group position={[s * HOOK_X, 0, 0]}>
+            <Block size={[0.06, 0.16, 0.02]} position={[0, 1.33, 0.647]} color={ORANGE} roughness={0.5} radius={0.006} />
+            <Block size={[0.05, 0.022, 0.09]} position={[0, 1.364, 0.675]} color={ORANGE} roughness={0.5} radius={0.006} />
+            <Block size={[0.05, 0.06, 0.02]} position={[0, 1.39, 0.71]} color={ORANGE} roughness={0.5} radius={0.006} />
+          </group>
         </group>
       ))}
       <Block size={[1.125, 0.06, 0.075]} position={[0, 0.03, -0.6]} {...frame} />
@@ -488,7 +528,7 @@ export function PowerRack() {
   )
 }
 
-const TREE_PLATE = new CylinderGeometry(1, 1, 1, 36)
+const TREE_PLATE = PLATE_GEO
 
 /** A plate tree: big plates on the low pegs, medium and small higher up. */
 export function PlateTree({ donut = false }: { donut?: boolean }) {

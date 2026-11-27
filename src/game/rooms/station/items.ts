@@ -315,8 +315,8 @@ export const STATION_ITEMS = {
     label: 'umbrella',
     recolor: true,
     moves: [
-      { offset: [11.05, 0, -4.3], text: 'The umbrella is leaning on the information desk now' },
-      { offset: [15.65, 0, -8.3], text: 'The umbrella is leaning on the statue now' },
+      { offset: [10.83, 0, -4.3], text: 'The umbrella is leaning on the information desk now' },
+      { offset: [15.6, 0, -8.3], text: 'The umbrella is leaning on the statue now' },
     ],
     swaps: [{ variant: 'open', text: 'The umbrella has opened by itself' }],
   },

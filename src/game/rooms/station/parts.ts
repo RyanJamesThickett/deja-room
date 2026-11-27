@@ -2,6 +2,7 @@ import {
   BoxGeometry,
   CylinderGeometry,
   DoubleSide,
+  IcosahedronGeometry,
   LatheGeometry,
   MeshStandardMaterial,
   PlaneGeometry,
@@ -10,6 +11,8 @@ import {
   Vector2,
   type Texture,
 } from 'three'
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
+import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { cached } from '../market/build'
 
 /* Geometry and materials shared across the station, made once. */
@@ -17,11 +20,36 @@ import { cached } from '../market/build'
 export const BOX = new BoxGeometry(1, 1, 1)
 export const CYL = new CylinderGeometry(1, 1, 1, 28)
 /** A cheap round bar, for rods, legs and handles. */
-export const ROD = new CylinderGeometry(1, 1, 1, 8)
+export const ROD = new CylinderGeometry(1, 1, 1, 12)
 export const BALL = new SphereGeometry(1, 20, 14)
 export const BALL_LOW = new SphereGeometry(1, 10, 7)
 export const PLANE = new PlaneGeometry(1, 1)
 export const RING = new TorusGeometry(1, 0.06, 8, 32)
+
+/** A clipped bush: a unit ball, lumpy all over like massed leaves. */
+export const BUSH = (() => {
+  const ico = new IcosahedronGeometry(1, 5)
+  ico.deleteAttribute('normal')
+  ico.deleteAttribute('uv')
+  const g = mergeVertices(ico)
+  const pos = g.attributes.position
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i)
+    const y = pos.getY(i)
+    const z = pos.getZ(i)
+    const k = 1 + 0.06 * Math.sin(6 * x + 1) * Math.sin(6 * y + 2) * Math.sin(6 * z + 3) + 0.035 * Math.sin(13 * x) * Math.sin(13 * y + 1) * Math.sin(13 * z + 2)
+    pos.setXYZ(i, x * k, y * k, z * k)
+  }
+  g.computeVertexNormals()
+  return g
+})()
+
+/** A box with rounded edges, `w,h,d,radius` (made once per size: scaling would squash the rounding). */
+const roundedBox = cached((key: string) => {
+  const [w, h, d, r] = key.split(',').map(Number)
+  return new RoundedBoxGeometry(w, h, d, 3, Math.min(r, Math.min(w, h, d) / 2 - 0.001))
+})
+export const rounded = (w: number, h: number, d: number, r: number) => roundedBox([w, h, d, r].join(','))
 
 export const lathe = (profile: [number, number][], segments = 24) => new LatheGeometry(profile.map(([r, y]) => new Vector2(r, y)), segments)
 

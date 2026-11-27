@@ -4,8 +4,11 @@ import {
   CatmullRomCurve3,
   CylinderGeometry,
   DoubleSide,
+  LatheGeometry,
   MeshStandardMaterial,
+  TorusGeometry,
   TubeGeometry,
+  Vector2,
   Vector3,
   type Group,
   type Mesh,
@@ -732,22 +735,54 @@ export function Poster({ kind, upside = false }: { kind: 'smoke' | 'missing'; up
 const LAMP_DROP = 0.45
 const SWING_LAMP = 3
 const DEAD_LAMP = 4
+const LAMP_BODY = new MeshStandardMaterial({ color: '#2f3439', metalness: 0.6, roughness: 0.45 })
+/** The shade: a short neck, a shoulder, then a wide flared bell. Closed on top, open below, drawn both sides so the inside shows. */
+const SHADE = new LatheGeometry(
+  [
+    [0.0, 0.0],
+    [0.07, 0.0],
+    [0.075, -0.05],
+    [0.12, -0.07],
+    [0.2, -0.12],
+    [0.255, -0.175],
+  ].map(([r, y]) => new Vector2(r, y)),
+  32,
+)
+const SHADE_MAT = new MeshStandardMaterial({ color: '#2f3439', metalness: 0.6, roughness: 0.45, side: DoubleSide })
+/** The white enamel inside the bell, and the bright lens across the mouth. */
+const REFLECTOR = new LatheGeometry(
+  [
+    [0.25, -0.172],
+    [0.195, -0.118],
+    [0.115, -0.07],
+    [0.0, -0.07],
+  ].map(([r, y]) => new Vector2(r, y)),
+  32,
+)
+const LIP = new TorusGeometry(0.255, 0.01, 8, 40)
+const ROSE = new CylinderGeometry(0.07, 0.07, 0.03, 20)
 
 function Lamp({ lit = true }: { lit?: boolean }) {
   return (
     <>
+      {/* ceiling rose and the drop rod */}
+      <mesh geometry={ROSE} material={LAMP_BODY} position={[0, -0.015, 0]} />
       <mesh position={[0, -LAMP_DROP / 2, 0]}>
         <cylinderGeometry args={[0.012, 0.012, LAMP_DROP, 8]} />
         <meshStandardMaterial color="#3b3f44" metalness={0.6} roughness={0.4} />
       </mesh>
-      <mesh position={[0, -LAMP_DROP - 0.06, 0]} castShadow={false}>
-        <cylinderGeometry args={[0.12, 0.25, 0.12, 32]} />
-        <meshStandardMaterial color="#2f3439" metalness={0.6} roughness={0.45} />
-      </mesh>
-      <mesh position={[0, -LAMP_DROP - 0.121, 0]} rotation={[PI / 2, 0, 0]}>
-        <circleGeometry args={[0.23, 32]} />
-        <meshStandardMaterial color={lit ? '#ffffff' : '#9aa0a6'} emissive="#f4f8ff" emissiveIntensity={lit ? 2.4 : 0} roughness={0.4} />
-      </mesh>
+      <group position={[0, -LAMP_DROP, 0]}>
+        <mesh geometry={SHADE} material={SHADE_MAT} />
+        <mesh geometry={REFLECTOR}>
+          <meshStandardMaterial color={lit ? '#f1f1ec' : '#7d8389'} emissive="#f4f8ff" emissiveIntensity={lit ? 0.5 : 0} roughness={0.35} side={DoubleSide} />
+        </mesh>
+        <mesh geometry={LIP} material={LAMP_BODY} position={[0, -0.175, 0]} rotation={[PI / 2, 0, 0]} />
+        {/* the lamp itself, a glowing dome filling the middle of the bell */}
+        <mesh position={[0, -0.07, 0]} scale={[1, 0.55, 1]}>
+          <sphereGeometry args={[0.17, 28, 12, 0, PI * 2, PI / 2, PI / 2]} />
+          <meshStandardMaterial color={lit ? '#ffffff' : '#9aa0a6'} emissive="#f4f8ff" emissiveIntensity={lit ? 2.4 : 0} roughness={0.4} />
+        </mesh>
+      </group>
     </>
   )
 }

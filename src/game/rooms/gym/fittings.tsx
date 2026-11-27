@@ -8,6 +8,7 @@ import { dayStreet, nightStreet } from '../shop/textures'
 import { Watches } from './equipment'
 import { DOORWAY } from './layout'
 import { ghostName, makeMirror } from './mirror'
+import { BOTTLE_GEO, WATER_GEO } from './shapes'
 import {
   checkInTexture,
   clockTexture,
@@ -188,22 +189,29 @@ export function WaterCooler({ mode }: { mode: 'full' | 'fish' | 'empty' }) {
         <Block key={s} size={[0.03, 0.05, 0.04]} position={[s * 0.05, 0.88, 0.18]} color={s < 0 ? '#1f6bff' : '#e0262a'} roughness={0.4} radius={0.008} />
       ))}
       <Block size={[0.2, 0.02, 0.07]} position={[0, 0.69, 0.19]} color="#5d6166" roughness={0.5} radius={0.005} />
-      {/* paper cups on the side */}
-      <mesh position={[0.2, 0.75, 0]}>
-        <cylinderGeometry args={[0.04, 0.04, 0.3, 16]} />
+      {/* paper cups on the side: a tube with a cup showing at the bottom */}
+      <mesh position={[0.2, 0.76, 0]}>
+        <cylinderGeometry args={[0.04, 0.04, 0.28, 16]} />
         <meshStandardMaterial color="#e8f2ff" roughness={0.5} transparent opacity={0.8} />
       </mesh>
-      <mesh position={[0, 1.03, 0]}>
-        <cylinderGeometry args={[0.045, 0.045, 0.06, 20]} />
-        <meshStandardMaterial color="#9fd0ff" roughness={0.2} transparent opacity={0.6} />
+      <mesh position={[0.2, 0.91, 0]}>
+        <cylinderGeometry args={[0.044, 0.044, 0.025, 16]} />
+        <meshStandardMaterial color="#5d6166" roughness={0.5} />
       </mesh>
-      <mesh position={[0, 1.285, 0]} renderOrder={2}>
-        <cylinderGeometry args={[0.135, 0.135, 0.45, 32]} />
+      <mesh position={[0.2, 0.6, 0]}>
+        <cylinderGeometry args={[0.04, 0.03, 0.05, 16]} />
+        <meshStandardMaterial color="#ffffff" roughness={0.7} />
+      </mesh>
+      {/* the socket the bottle stands upside down in */}
+      <mesh position={[0, 1.015, 0]}>
+        <cylinderGeometry args={[0.07, 0.08, 0.03, 24]} />
+        <meshStandardMaterial color="#d9dde2" roughness={0.4} />
+      </mesh>
+      <mesh geometry={BOTTLE_GEO} position={[0, 1.0, 0]} renderOrder={2}>
         <meshPhysicalMaterial color="#bfe2ff" transparent opacity={0.3} roughness={0.05} clearcoat={1} depthWrite={false} />
       </mesh>
       {mode !== 'empty' && (
-        <mesh position={[0, 1.24, 0]} renderOrder={1}>
-          <cylinderGeometry args={[0.127, 0.127, 0.36, 32]} />
+        <mesh geometry={WATER_GEO} position={[0, 1.0, 0]} renderOrder={1}>
           <meshStandardMaterial color="#5fb6f2" roughness={0.1} transparent opacity={0.45} depthWrite={false} />
         </mesh>
       )}
@@ -250,9 +258,15 @@ export function TowelRail({ upward }: { upward: boolean }) {
       {TOWEL_XS.map((x, i) => {
         const up = upward && i === 2
         return (
+          // folded over the rail: a long fall in front, a shorter one behind, and the fold round the top
           <group key={x} position={[x, 0, 0.09]} rotation={[0, 0, up ? PI : 0]}>
-            <Block size={[0.22, 0.44, 0.035]} position={[0, -0.21, 0]} color={TOWEL_COLOURS[i]} roughness={1} radius={0.012} />
-            <Block size={[0.222, 0.03, 0.036]} position={[0, -0.36, 0]} color={ORANGE} roughness={1} radius={0.006} />
+            <Block size={[0.22, 0.44, 0.018]} position={[0, -0.21, 0.02]} color={TOWEL_COLOURS[i]} roughness={1} radius={0.008} />
+            <Block size={[0.22, 0.3, 0.018]} position={[0, -0.14, -0.02]} color={TOWEL_COLOURS[i]} roughness={1} radius={0.008} />
+            <mesh rotation={[0, 0, PI / 2]} castShadow>
+              <cylinderGeometry args={[0.029, 0.029, 0.22, 16]} />
+              <meshStandardMaterial color={TOWEL_COLOURS[i]} roughness={1} />
+            </mesh>
+            <Block size={[0.222, 0.03, 0.02]} position={[0, -0.36, 0.021]} color={ORANGE} roughness={1} radius={0.006} />
           </group>
         )
       })}
@@ -456,7 +470,8 @@ export function GymBag() {
     <>
       <Block size={[0.55, 0.28, 0.3]} position={[0, 0.14, 0]} color="#1b1c1f" roughness={0.7} radius={0.1} />
       <Block size={[0.556, 0.04, 0.306]} position={[0, 0.14, 0]} color={ORANGE} roughness={0.7} radius={0.015} />
-      <mesh position={[0, 0.28, 0]} rotation={[0, 0, 0]}>
+      {/* the carry handle, its ends sunk into the top */}
+      <mesh position={[0, 0.265, 0]} rotation={[0, 0, 0]}>
         <torusGeometry args={[0.1, 0.012, 8, 20, PI]} />
         <meshStandardMaterial color="#111" roughness={0.7} />
       </mesh>
@@ -468,8 +483,12 @@ export function GymBag() {
 export function WipesStation() {
   return (
     <>
-      <Block size={[0.26, 0.34, 0.14]} position={[0, 0.17, 0.07]} color="#f1f1ee" roughness={0.4} radius={0.02} />
-      <Block size={[0.12, 0.02, 0.02]} position={[0, 0.05, 0.145]} color="#5d6166" roughness={0.5} radius={0.004} />
+      {/* the dispenser hangs high enough to clear the spray bottle on the shelf */}
+      <Block size={[0.26, 0.34, 0.14]} position={[0, 0.27, 0.07]} color="#f1f1ee" roughness={0.4} radius={0.02} />
+      <Block size={[0.12, 0.02, 0.02]} position={[0, 0.15, 0.145]} color="#5d6166" roughness={0.5} radius={0.004} />
+      {[-1, 1].map((s) => (
+        <Block key={s} size={[0.02, 0.08, 0.1]} position={[s * 0.12, -0.17, 0.05]} color="#c9ced6" metalness={0.6} roughness={0.35} radius={0.004} />
+      ))}
       <Block size={[0.3, 0.02, 0.14]} position={[0, -0.12, 0.07]} color="#c9ced6" metalness={0.6} roughness={0.35} radius={0.004} />
       <mesh position={[0.06, -0.02, 0.07]}>
         <cylinderGeometry args={[0.035, 0.038, 0.18, 16]} />
@@ -492,6 +511,13 @@ export function Bin() {
         <cylinderGeometry args={[0.172, 0.172, 0.03, 28]} />
         <meshStandardMaterial color="#1b1c1f" roughness={0.4} />
       </mesh>
+      {/* black base band, the lid's hinge at the back and the pedal at the front (-z faces the room) */}
+      <mesh position={[0, 0.02, 0]}>
+        <cylinderGeometry args={[0.165, 0.165, 0.04, 28]} />
+        <meshStandardMaterial color="#1b1c1f" roughness={0.5} />
+      </mesh>
+      <Block size={[0.08, 0.03, 0.03]} position={[0, 0.62, 0.17]} color="#1b1c1f" roughness={0.4} radius={0.008} />
+      <Block size={[0.12, 0.025, 0.07]} position={[0, 0.03, -0.19]} color="#1b1c1f" roughness={0.5} radius={0.008} />
     </>
   )
 }

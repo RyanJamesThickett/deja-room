@@ -1,6 +1,7 @@
 import {
   BoxGeometry,
   CatmullRomCurve3,
+  Color,
   ConeGeometry,
   CylinderGeometry,
   DoubleSide,
@@ -10,6 +11,7 @@ import {
   Shape,
   ShapeGeometry,
   SphereGeometry,
+  TorusGeometry,
   TubeGeometry,
   Vector3,
   type BufferGeometry,
@@ -113,15 +115,40 @@ export const lampGeometry = once(() => {
     b.add(UNIT_BALL, iron, [0, ly + 0.68, 0], undefined, [0.035, 0.035, 0.035])
     if (basket) {
       // hanging baskets of flowers off each end of the bar
-      const bowl = lathe([[0, 0], [0.18, 0.06], [0.22, 0.2]], 14)
+      // a wire bowl with a rolled rim, a dome of leaves studded with flowers, ivy trailing over the edge, three chains up to the bar
+      const bowl = lathe([[0, 0], [0.18, 0.06], [0.22, 0.2], [0.235, 0.21]], 16)
+      const rim = new TorusGeometry(0.228, 0.014, 6, 24).rotateX(PI / 2)
+      const leaves = leafBall(4.2, 0.14, 14)
+      const rng = mulberry32(5)
       for (const s of [-1, 1]) {
+        const x = s * 0.31
         const y = LAMP.armY - 0.45
-        b.add(bowl, iron, [s * 0.31, y, 0])
-        b.add(UNIT_BALL, '#3f7a2f', [s * 0.31, y + 0.2, 0], undefined, [0.25, 0.14, 0.25])
-        for (let k = 0; k < 5; k++) b.add(UNIT_BALL, k % 2 ? '#e8402a' : '#ff9fc4', [s * 0.31 + Math.cos(k * 1.3) * 0.17, y + 0.25 + (k % 3) * 0.03, Math.sin(k * 1.3) * 0.17], undefined, [0.05, 0.05, 0.05])
-        b.box([0.01, 0.25, 0.01], [s * 0.31, y + 0.33, 0], iron)
+        b.add(bowl, iron, [x, y, 0])
+        b.add(rim, iron, [x, y + 0.205, 0])
+        b.add(leaves, '#3f7a2f', [x, y + 0.2, 0], [0, s, 0], [0.25, 0.15, 0.25])
+        for (let k = 0; k < 12; k++) {
+          const a = k * 2.4 + s
+          const r = 0.06 + (k % 3) * 0.06
+          b.add(UNIT_BALL, ['#e8402a', '#ff9fc4', '#ffffff', '#8a4dff'][k % 4], [x + Math.cos(a) * r, y + 0.33 - r * 0.45, Math.sin(a) * r], undefined, [0.042, 0.035, 0.042])
+        }
+        for (let k = 0; k < 7; k++) {
+          const a = (k / 7) * PI * 2 + rng()
+          const top: Vec3 = [x + Math.cos(a) * 0.22, y + 0.2, Math.sin(a) * 0.22]
+          const len = 0.1 + rng() * 0.16
+          for (let j = 0; j < 3; j++) {
+            const t = (j + 0.5) / 3
+            const r = 0.034 - j * 0.006
+            b.add(UNIT_BALL, j % 2 ? '#4f8a32' : '#3a6e28', [top[0] + Math.cos(a) * 0.03 * t + (rng() - 0.5) * 0.03, top[1] - len * t, top[2] + Math.sin(a) * 0.03 * t + (rng() - 0.5) * 0.03], [rng(), rng() * 6, 0], [r * 1.3, r * 0.8, r])
+          }
+        }
+        for (let k = 0; k < 3; k++) {
+          const a = (k / 3) * PI * 2 + PI / 2
+          rod(b, [x + Math.cos(a) * 0.22, y + 0.21, Math.sin(a) * 0.22], [x, LAMP.armY - 0.02, 0], 0.004, iron)
+        }
       }
       bowl.dispose()
+      rim.dispose()
+      leaves.dispose()
     }
     return b.merge()
   }
@@ -216,6 +243,27 @@ export const benchSlats = once(() => ({
   meltedSeat: sagged(slat(BENCH.length, 0.03, 0.08), 0.36),
   meltedBack: sagged(slat(BENCH.length, 0.075, 0.03), 0.5),
 }))
+
+/**
+ * One cast-iron end of the bench, in its y-z plane (front to +z): a front leg
+ * curling out at the foot, a back leg sweeping up into the backrest, the rail
+ * under the seat, and an armrest that scrolls down into the front leg.
+ */
+export const benchEnd = once(() => {
+  const b = new Builder()
+  const tube = (pts: [number, number][], r: number, n = 16) => {
+    const g = new TubeGeometry(new CatmullRomCurve3(pts.map(([y, z]) => new Vector3(0, y, z))), n, r, 8, false)
+    b.add(g, '#1f3a2a', [0, 0, 0])
+    g.dispose()
+  }
+  tube([[0.0, 0.27], [0.04, 0.23], [0.2, 0.2], [0.43, 0.2]], 0.024)
+  tube([[0.0, -0.3], [0.05, -0.27], [0.25, -0.24], [0.43, -0.25], [0.62, -0.3], [0.88, -0.365]], 0.024, 24)
+  tube([[0.42, 0.26], [0.42, -0.25]], 0.02, 2)
+  tube([[0.6, -0.29], [0.66, -0.1], [0.66, 0.12], [0.6, 0.24], [0.52, 0.25], [0.5, 0.2], [0.43, 0.2]], 0.02, 24)
+  // ball feet and the caps on the ends of the tubes
+  for (const [y, z] of [[0.0, 0.27], [0.0, -0.3], [0.88, -0.365]] as [number, number][]) b.add(UNIT_BALL, '#1f3a2a', [0, y + (y > 0 ? 0 : 0.02), z], undefined, [0.034, 0.03, 0.034])
+  return b.merge()
+})
 
 // ---------------------------------------------------------------------------
 // Pigeons
@@ -331,28 +379,116 @@ export function moneyIn(n: number, r: number, seed: number): Placement[] {
 // Trees: a London plane in a grate
 // ---------------------------------------------------------------------------
 
-/** Trunk and branches as one mesh; the bare variant shows them all. */
+/** A round bar from `a` (radius `r0`) to `c` (radius `r1`), with `rings` cuts along it so it can be mottled. */
+export function taper(b: Builder, a: Vec3, c: Vec3, r0: number, r1: number, colour: string, sides = 10, rings = 1) {
+  const d = new Vector3(c[0] - a[0], c[1] - a[1], c[2] - a[2])
+  const g = new CylinderGeometry(r1, r0, d.length(), sides, rings)
+  g.applyQuaternion(new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), d.normalize()))
+  b.add(g, colour, [(a[0] + c[0]) / 2, (a[1] + c[1]) / 2, (a[2] + c[2]) / 2])
+  g.dispose()
+}
+
+/** A smooth noise in about [-1, 1], from where a point is. */
+const wobble = (x: number, y: number, z: number, f: number, s: number) =>
+  (Math.sin(x * f + s) * Math.cos(y * f * 0.8 - s * 1.7) + Math.sin(z * f * 1.1 + s * 2.3) * Math.cos(x * f * 0.6 + y * f * 0.5)) / 2
+
+/**
+ * Paints a baked (non-indexed) mesh in flat patches, a whole triangle at a
+ * time: the camouflage a plane tree's bark flakes into.
+ */
+export function mottle(g: BufferGeometry, colours: string[], f: number, seed: number) {
+  const p = g.attributes.position
+  const col = g.attributes.color
+  const c = new Color()
+  for (let i = 0; i + 2 < p.count; i += 3) {
+    const x = (p.getX(i) + p.getX(i + 1) + p.getX(i + 2)) / 3
+    const y = (p.getY(i) + p.getY(i + 1) + p.getY(i + 2)) / 3
+    const z = (p.getZ(i) + p.getZ(i + 1) + p.getZ(i + 2)) / 3
+    const n = Math.min(0.999, Math.max(0, wobble(x, y, z, f, seed) * 0.5 + 0.5))
+    c.set(colours[Math.floor(n * colours.length)])
+    for (let k = 0; k < 3; k++) col.setXYZ(i + k, c.r, c.g, c.b)
+  }
+  col.needsUpdate = true
+  return g
+}
+
+/** Darkens a baked mesh's vertex colours towards its underside: `dark` at `y0` and below, full colour from `y1` up. */
+export function shadeBelow(g: BufferGeometry, y0: number, y1: number, dark: number) {
+  const p = g.attributes.position
+  const col = g.attributes.color
+  for (let i = 0; i < p.count; i++) {
+    const t = Math.min(1, Math.max(0, (p.getY(i) - y0) / (y1 - y0)))
+    const k = dark + (1 - dark) * t
+    col.setXYZ(i, col.getX(i) * k, col.getY(i) * k, col.getZ(i) * k)
+  }
+  col.needsUpdate = true
+  return g
+}
+
+/** A ball of leaves: a sphere pushed in and out in soft lumps, `w` segments round. The lumps come from each vertex's own position, so the seams stay shut. */
+export function leafBall(seed: number, bump = 0.12, w = 18) {
+  const g = new SphereGeometry(1, w, Math.round(w * 0.7))
+  const p = g.attributes.position
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i)
+    const y = p.getY(i)
+    const z = p.getZ(i)
+    const k = 1 + bump * Math.sin(x * 5 + seed) * Math.sin(y * 4 + seed * 2) * Math.sin(z * 5 - seed) + bump * 0.5 * Math.sin(x * 11 - seed) * Math.sin(z * 9 + y * 7)
+    p.setXYZ(i, x * k, y * k, z * k)
+  }
+  g.computeVertexNormals()
+  return g
+}
+
+const BARK_CAMO = ['#7c8650', '#a6aa6e', '#d6cf9a', '#c2c088', '#8f965c']
+
+/**
+ * The tree in parts: the trunk (the only part you can bump into), the limbs
+ * and twigs above head height, the crowns of leaves, the seed balls that
+ * hang off the bare twigs, and the iron grate round its foot.
+ */
 export const treeParts = once(() => {
   const rng = mulberry32(71)
+  // a straight trunk, flared at the foot, mottled cream and olive
+  const t = new Builder()
+  taper(t, [0, -0.02, 0], [0, 0.4, 0], 0.34, 0.24, '#ffffff', 18, 3)
+  taper(t, [0, 0.4, 0], [0, 3.0, 0], 0.24, 0.17, '#ffffff', 18, 12)
+  t.add(UNIT_BALL, '#ffffff', [0, 2.98, 0], undefined, [0.18, 0.15, 0.18])
+  const trunk = mottle(t.merge(), BARK_CAMO, 4.5, 1.3)
+
   const b = new Builder()
-  const bark = '#9a9a7a'
-  rod(b, [0, 0, 0], [0, 3.0, 0], 0.17, bark)
+  const ends: Vec3[] = []
   const grow = (from: Vec3, dir: Vector3, len: number, r: number, depth: number) => {
     const to: Vec3 = [from[0] + dir.x * len, from[1] + dir.y * len, from[2] + dir.z * len]
-    rod(b, from, to, r, depth > 1 ? '#a8a88a' : '#8a8a6e')
-    if (depth === 0) return
+    // each limb tapers to the size of what grows out of it, with a knuckle where they meet
+    taper(b, from, to, r, r * 0.62, '#ffffff', depth > 1 ? 12 : depth > 0 ? 8 : 5, depth > 1 ? 5 : depth > 0 ? 2 : 1)
+    if (depth === 0) {
+      ends.push(to)
+      return
+    }
+    b.add(UNIT_BALL, '#ffffff', to, undefined, [r * 0.64, r * 0.64, r * 0.64])
     for (let k = 0; k < 3; k++) {
       const d = dir.clone().add(new Vector3((rng() - 0.5) * 1.2, rng() * 0.5, (rng() - 0.5) * 1.2)).normalize()
-      grow(to, d, len * 0.65, r * 0.6, depth - 1)
+      grow(to, d, len * 0.65, r * 0.62, depth - 1)
     }
   }
   for (let k = 0; k < 4; k++) {
     const a = (k / 4) * PI * 2 + 0.4
-    grow([0, 2.8, 0], new Vector3(Math.cos(a) * 0.6, 1, Math.sin(a) * 0.6).normalize(), 1.4, 0.1, 2)
+    grow([0, 2.75 + k * 0.06, 0], new Vector3(Math.cos(a) * 0.85, 1, Math.sin(a) * 0.85).normalize(), 1.25, 0.14, 3)
   }
-  const wood = b.merge()
+  const limbs = mottle(b.merge(), BARK_CAMO, 5, 2.1)
 
-  // the crown: overlapping lumpy blobs, darker underneath
+  // the seed balls: bobbles on long stalks, hanging off every other twig
+  const s = new Builder()
+  ends.forEach((e, i) => {
+    if (i % 3) return
+    const ball: Vec3 = [e[0] + 0.03, e[1] - 0.24, e[2]]
+    rod(s, [e[0], e[1] - 0.02, e[2]], ball, 0.006, '#6b5a3a')
+    s.add(UNIT_BALL, '#7a5a30', ball, undefined, [0.045, 0.045, 0.045])
+  })
+  const seeds = s.merge()
+
+  // the crown: big lumpy clouds of leaves, smaller ones round the edge to break up the outline, darker underneath
   const crown = (colours: string[]) => {
     const c = new Builder()
     const crng = mulberry32(72)
@@ -365,29 +501,51 @@ export const treeParts = once(() => {
       [[0.2, 6.1, 0.2], 1.4],
       [[-1.0, 5.6, 0.8], 1.1],
       [[1.1, 5.7, -0.7], 1.1],
+      // the fringe
+      [[2.15, 4.3, -0.35], 0.75],
+      [[-2.1, 4.4, 0.5], 0.8],
+      [[0.9, 4.15, 1.75], 0.75],
+      [[-1.3, 4.2, -1.55], 0.75],
+      [[1.75, 5.25, 1.05], 0.7],
+      [[-0.35, 6.75, -0.4], 0.8],
+      [[0.25, 3.95, 0.15], 0.9],
     ]
-    for (const [at, r] of blobs) {
-      // a lumpy ball: bumps from the vertex's own position, so seams stay shut
-      const g = new SphereGeometry(1, 16, 12)
-      const p = g.attributes.position
-      const seed = crng() * 10
-      for (let i = 0; i < p.count; i++) {
-        const x = p.getX(i)
-        const y = p.getY(i)
-        const z = p.getZ(i)
-        const k = 1 + 0.12 * Math.sin(x * 5 + seed) * Math.sin(y * 4 + seed * 2) * Math.sin(z * 5 - seed)
-        p.setXYZ(i, x * k, y * k * 0.8, z * k)
-      }
-      g.computeVertexNormals()
-      c.add(g, colours[Math.floor(crng() * colours.length)], at, [0, crng() * 6, 0], [r * 0.82, r * 0.82, r * 0.82])
+    blobs.forEach(([at, r], i) => {
+      const g = leafBall(crng() * 10, 0.11, i < 8 ? 20 : 14)
+      c.add(g, colours[Math.floor(crng() * colours.length)], at, [0, crng() * 6, 0], [r * 0.82, r * 0.82 * 0.8, r * 0.82])
       g.dispose()
+    })
+    return shadeBelow(c.merge(), 3.6, 5.4, 0.62)
+  }
+
+  // the grate: an iron frame round rings and spokes, over a pit of dark earth
+  const gr = new Builder()
+  const iron = '#4a5357'
+  for (const side of [-1, 1]) {
+    gr.box([1.24, 0.03, 0.06], [0, 0.015, side * 0.59], iron)
+    gr.box([0.06, 0.03, 1.12], [side * 0.59, 0.015, 0], iron)
+  }
+  gr.box([1.14, 0.006, 1.14], [0, 0.003, 0], '#3b2a1c')
+  for (const r of [0.3, 0.44]) {
+    for (let k = 0; k < 28; k++) {
+      const a0 = (k / 28) * PI * 2
+      const a1 = ((k + 1) / 28) * PI * 2
+      rod(gr, [Math.cos(a0) * r, 0.02, Math.sin(a0) * r], [Math.cos(a1) * r, 0.02, Math.sin(a1) * r], 0.014, iron)
     }
-    return c.merge()
+  }
+  for (let k = 0; k < 16; k++) {
+    const a = (k / 16) * PI * 2
+    // out to the frame, square on to it
+    const reach = 0.56 / Math.max(Math.abs(Math.cos(a)), Math.abs(Math.sin(a)))
+    rod(gr, [Math.cos(a) * 0.3, 0.018, Math.sin(a) * 0.3], [Math.cos(a) * reach, 0.018, Math.sin(a) * reach], 0.011, iron)
   }
   return {
-    wood,
-    summer: crown(['#4f7a32', '#5a8a3a', '#46702c', '#64913f']),
-    autumn: crown(['#d9761f', '#c8452a', '#e8a62a', '#b85a1f']),
+    trunk,
+    limbs,
+    seeds,
+    grate: gr.merge(),
+    summer: crown(['#4f8a32', '#5e9a3a', '#468032', '#6aa23f']),
+    autumn: crown(['#e07a1f', '#cf4a26', '#eaa82a', '#c2621f']),
   }
 })
 

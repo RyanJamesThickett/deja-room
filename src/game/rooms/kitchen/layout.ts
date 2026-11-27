@@ -1,4 +1,4 @@
-import { MeshStandardMaterial } from 'three'
+import { DoubleSide, MeshStandardMaterial } from 'three'
 import type { Look } from '../../kit'
 import { KITCHEN_BOUNDS as B } from './bounds'
 
@@ -47,6 +47,9 @@ export const DARK_STEEL: Look = { color: '#3b3f45', metalness: 0.6, roughness: 0
 export const STEEL_MAT = new MeshStandardMaterial({ color: '#c3c9cf', metalness: 0.75, roughness: 0.32 })
 export const CAST_IRON = new MeshStandardMaterial({ color: '#1d1e21', metalness: 0.5, roughness: 0.6 })
 export const WHITE_CHINA = new MeshStandardMaterial({ color: '#f4f2ec', roughness: 0.25 })
+/** The same steel and china, drawn on both sides: for the walls of open pots, pans and bowls, so you can see in. */
+export const STEEL_OPEN = new MeshStandardMaterial({ color: '#c3c9cf', metalness: 0.75, roughness: 0.32, side: DoubleSide })
+export const CHINA_OPEN = new MeshStandardMaterial({ color: '#f4f2ec', roughness: 0.25, side: DoubleSide })
 
 export const ROOM = B
 

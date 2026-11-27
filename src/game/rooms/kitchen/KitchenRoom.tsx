@@ -611,6 +611,14 @@ function Storage() {
       </Decoy>
       <Decoy label="shelf of glass racks" position={[halfX, 1.75, 0.15]} rotation={RIGHT}>
         <Block size={[1.1, 0.03, 0.5]} position={[0, 0, 0.27]} {...STAINLESS} radius={0.004} />
+        {/* the brackets it sits on */}
+        {[-0.42, 0.42].map((x) => (
+          <group key={x} position={[x, 0, 0]}>
+            <Block size={[0.025, 0.24, 0.025]} position={[0, -0.12, 0.0125]} {...STAINLESS} radius={0.004} />
+            <Block size={[0.025, 0.025, 0.42]} position={[0, -0.025, 0.21]} {...STAINLESS} radius={0.004} />
+            <Block size={[0.02, 0.022, 0.3]} position={[0, -0.12, 0.13]} rotation={[-0.7, 0, 0]} {...STAINLESS} radius={0.004} />
+          </group>
+        ))}
         <group position={[-0.27, 0.015, 0.28]}>
           <GlassRack />
         </group>

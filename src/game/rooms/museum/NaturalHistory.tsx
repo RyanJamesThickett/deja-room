@@ -178,9 +178,18 @@ function Shell() {
       {/* hanging globe lamps down the middle */}
       {[-1.6, 1.6].map((x) => (
         <group key={x} position={[x, H, -1.6]}>
+          {/* ceiling rose, flex, and a brass gallery holding the globe */}
+          <mesh position={[0, -0.012, 0]}>
+            <cylinderGeometry args={[0.05, 0.065, 0.025, 24]} />
+            <meshStandardMaterial color="#ece8de" roughness={0.8} />
+          </mesh>
           <mesh position={[0, -0.4, 0]}>
-            <cylinderGeometry args={[0.005, 0.005, 0.8, 4]} />
+            <cylinderGeometry args={[0.005, 0.005, 0.8, 6]} />
             <meshStandardMaterial color="#1c1c1c" />
+          </mesh>
+          <mesh position={[0, -0.76, 0]}>
+            <cylinderGeometry args={[0.022, 0.05, 0.05, 20]} />
+            <meshStandardMaterial color="#c39a45" metalness={0.85} roughness={0.3} />
           </mesh>
           <mesh position={[0, -0.92, 0]}>
             <sphereGeometry args={[0.16, 24, 16]} />
@@ -223,24 +232,34 @@ function Geode() {
     for (let i = 0; i < 70; i++) {
       const a = rng() * PI * 2
       const r = Math.sqrt(rng()) * 0.12
-      out.push({ at: [Math.cos(a) * r, 0.17 + Math.sin(a) * r * 0.85, 0.03 + (0.12 - r) * 0.4], rot: [PI / 2 - 0.4 * (rng() - 0.5), 0, (rng() - 0.5) * 0.8] })
+      // growing out of the floor of the hollow, their tips just proud of the sawn face
+      out.push({ at: [Math.cos(a) * r, 0.17 + Math.sin(a) * r * 0.85, -0.008 + (0.12 - r) * 0.12], rot: [PI / 2 - 0.4 * (rng() - 0.5), 0, (rng() - 0.5) * 0.8] })
     }
     return out
   }, [])
   return (
-    <group position={[0, PLINTH_TOP, 0]}>
+    // set down a little so its round underside sits on the plinth rather than hovering over it
+    <group position={[0, PLINTH_TOP - 0.03, 0]}>
+      {/* the back half of the stone: the sawn face, at z = 0, looks out along +z */}
       <mesh position={[0, 0.17, 0]} scale={[1, 0.85, 0.7]} castShadow>
-        <sphereGeometry args={[0.17, 24, 16, 0, PI]} />
+        <sphereGeometry args={[0.17, 28, 18, PI, PI]} />
         <meshStandardMaterial color="#6b625a" roughness={0.9} side={DoubleSide} />
       </mesh>
-      <mesh position={[0, 0.17, 0.002]} scale={[1, 0.85, 1]}>
-        <circleGeometry args={[0.165, 32]} />
-        <meshStandardMaterial color="#cfc6b8" roughness={0.8} />
-      </mesh>
-      <mesh position={[0, 0.17, 0.004]} scale={[1, 0.85, 1]}>
-        <circleGeometry args={[0.135, 32]} />
-        <meshStandardMaterial color="#3a2450" roughness={0.6} />
-      </mesh>
+      {/* the pale rind round the sawn face, and the hollow inside it, sunk into the stone */}
+      <group position={[0, 0.17, 0]} scale={[1, 0.85, 1]}>
+        <mesh position={[0, 0, 0.002]}>
+          <ringGeometry args={[0.135, 0.168, 40]} />
+          <meshStandardMaterial color="#cfc6b8" roughness={0.8} />
+        </mesh>
+        <mesh position={[0, 0, -0.018]} rotation={[PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.135, 0.13, 0.04, 32, 1, true]} />
+          <meshStandardMaterial color="#4a2e66" roughness={0.6} side={DoubleSide} />
+        </mesh>
+        <mesh position={[0, 0, -0.038]}>
+          <circleGeometry args={[0.13, 32]} />
+          <meshStandardMaterial color="#3a2450" roughness={0.6} />
+        </mesh>
+      </group>
       <Instanced geometry={CRYSTAL_GEO} material={AMETHYST} items={crystals} />
     </group>
   )

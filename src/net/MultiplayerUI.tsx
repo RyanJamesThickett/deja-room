@@ -372,32 +372,47 @@ export function CoopVoteBoard({
   const breaker = c.votes[c.tieBreaker]?.key
   const leading = tied.length === 1 ? tied[0] : breaker && tied.includes(breaker) ? breaker : tied[0]
   return (
-    <aside className="vote-board" aria-label="Team votes">
-      <div className="vote-board-title">Team votes</div>
-      <ul>
-        {here.map((p) => {
-          const vote = c.votes[p.id]
-          return (
-            <li key={p.id} style={{ '--player': PLAYER_COLOURS[p.colour] } as CSSProperties} className={vote ? 'voted' : ''}>
-              <span className="lobby-dot" />
-              <span className="vote-who">
-                {p.id === me ? 'You' : p.name}
-                {p.id === c.tieBreaker && here.length > 1 && (
-                  <span className="vote-breaker" title="Breaks ties this change">
-                    ★
-                  </span>
-                )}
-              </span>
-              <span className="vote-what">{vote ? keyLabel(vote.key) : 'looking…'}</span>
-            </li>
-          )
-        })}
-      </ul>
+    <>
+      <aside className="vote-board" aria-label="Team votes">
+        <div className="vote-board-title">Team votes</div>
+        <ul>
+          {here.map((p) => {
+            const vote = c.votes[p.id]
+            return (
+              // keyed by the pick too, so a new or moved pin pops in
+              <li key={`${p.id}:${vote?.key ?? ''}`} style={{ '--player': PLAYER_COLOURS[p.colour] } as CSSProperties} className={vote ? 'voted' : ''}>
+                <span className="lobby-dot" />
+                <span className="vote-who">
+                  {p.id === me ? 'You' : p.name}
+                  {p.id === c.tieBreaker && here.length > 1 && (
+                    <span className="vote-breaker" title="Breaks ties this change">
+                      ★
+                    </span>
+                  )}
+                </span>
+                <span className="vote-what">{vote ? keyLabel(vote.key) : 'looking…'}</span>
+              </li>
+            )
+          })}
+        </ul>
+        {here.length > 1 && (
+          <div className="vote-count">
+            {Object.keys(c.votes).length} of {here.length} pinned{settleIn === null && Object.keys(c.votes).length > 0 ? ': the guess goes in when everyone has' : ''}
+          </div>
+        )}
+      </aside>
+      {/* outside the board: it's tilted, and this belongs in the middle of the screen */}
       {settleIn !== null && leading && (
-        <div className="vote-settle">
-          Going with the {keyLabel(leading)} in {Math.max(1, Math.ceil(settleIn / 1000))}…
+        <div className="vote-settle" role="status">
+          <span className="vote-settle-label">Everyone’s pinned! Going with the</span>
+          <strong className="vote-settle-what">{keyLabel(leading)}</strong>
+          <span className="vote-settle-label">in</span>
+          <span className="vote-settle-n" key={Math.max(1, Math.ceil(settleIn / 1000))}>
+            {Math.max(1, Math.ceil(settleIn / 1000))}
+          </span>
+          <span className="vote-settle-hint">· move your pin to change it</span>
         </div>
       )}
-    </aside>
+    </>
   )
 }

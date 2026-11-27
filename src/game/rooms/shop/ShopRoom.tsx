@@ -1,6 +1,6 @@
 import { Environment } from '@react-three/drei'
 import { memo, useMemo } from 'react'
-import { Object3D } from 'three'
+import { CylinderGeometry, MeshStandardMaterial, Object3D, SphereGeometry, TorusGeometry } from 'three'
 import { useSurface } from '../../assets'
 import { Block, Decoy, Item, PI, Variant, Wallpaper } from '../../kit'
 import { Model } from '../../Model'
@@ -69,6 +69,12 @@ const SHORT_AISLE = { ...AISLE_UNIT, width: 2.0 }
 const LOO_BAY = { ...WALL_BAY, width: 2.2 }
 const FRIDGE_XS = [-3.6, -2.35, -1.1]
 const COUNTER = { x: B.halfX - 1.175, z: 2.3, length: 2.6 }
+const BIN_BODY = new CylinderGeometry(0.19, 0.17, 0.6, 32)
+const BIN_FOOT = new CylinderGeometry(0.175, 0.18, 0.05, 32)
+const BIN_RIM = new TorusGeometry(0.19, 0.014, 10, 40)
+const BIN_LID = new SphereGeometry(0.196, 32, 12, 0, PI * 2, 0, PI / 2)
+const BIN_STEEL = new MeshStandardMaterial({ color: '#3b4148', metalness: 0.6, roughness: 0.4 })
+const BIN_DARK = new MeshStandardMaterial({ color: '#2a2f35', metalness: 0.6, roughness: 0.35 })
 /** Which crisp shelf each swap changes. */
 const CRISP_SHELF = { normal: [], puffed: [3], float: [2] }
 
@@ -145,6 +151,14 @@ function Shell() {
         <Stool />
       </Decoy>
       <Block size={[0.26, 0.03, 1.4]} position={[halfX - 0.14, 1.45, COUNTER.z]} color="#f2efe8" roughness={0.4} radius={0.005} />
+      {/* on two brackets screwed to the wall */}
+      {[-0.55, 0.55].map((dz) => (
+        <group key={dz} position={[halfX, 0, COUNTER.z + dz]}>
+          <Block size={[0.018, 0.17, 0.025]} position={[-0.009, 1.35, 0]} color="#c9ced6" metalness={0.8} roughness={0.3} radius={0.004} />
+          <Block size={[0.22, 0.018, 0.025]} position={[-0.12, 1.426, 0]} color="#c9ced6" metalness={0.8} roughness={0.3} radius={0.004} />
+          <Block size={[0.2, 0.016, 0.02]} position={[-0.1, 1.355, 0]} rotation={[0, 0, -0.66]} color="#c9ced6" metalness={0.8} roughness={0.3} radius={0.004} />
+        </group>
+      ))}
       {/* card machine on the customer's side of the counter */}
       <Decoy label="card machine" position={[COUNTER.x - 0.17, 0.95, COUNTER.z + 0.35]} rotation={[0, -PI / 2, 0]}>
         <CardReader />
@@ -210,7 +224,8 @@ function Front() {
         </Variant>
       </Item>
 
-      <Item id="gumball" position={[0.6, 0, halfZ - 0.35]}>
+      {/* turned to face the shop, so its coin slot and its contents look at the customers */}
+      <Item id="gumball" position={[0.6, 0, halfZ - 0.35]} rotation={[0, PI, 0]}>
         {(['gum', 'eyes', 'empty'] as const).map((f) => (
           <Variant key={f} of="gumball" name={f === 'gum' ? 'default' : f}>
             <GumballMachine fill={f} />
@@ -227,7 +242,7 @@ function Front() {
       </Item>
 
       {/* under the window: fruit and veg, and the ice cream freezer */}
-      <Item id="veg" position={[-1.75, 0, halfZ - 0.55]} rotation={[0, PI, 0]}>
+      <Item id="veg" position={[-1.75, 0, halfZ - 0.6]} rotation={[0, PI, 0]}>
         {(['normal', 'faces', 'cubes'] as const).map((f) => (
           <Variant key={f} of="veg" name={f === 'normal' ? 'default' : f}>
             <VegStand fruit={f} />
@@ -235,7 +250,8 @@ function Front() {
         ))}
       </Item>
 
-      <Item id="freezer" position={[-3.3, 0, halfZ - 0.4]} rotation={[0, PI, 0]}>
+      {/* far enough off the wall to clear the window sill */}
+      <Item id="freezer" position={[-3.3, 0, halfZ - 0.47]} rotation={[0, PI, 0]}>
         {(['lollies', 'fish', 'snowman'] as const).map((c) => (
           <Variant key={c} of="freezer" name={c === 'lollies' ? 'default' : c}>
             <ChestFreezer contents={c} />
@@ -451,17 +467,16 @@ function Clutter() {
       {/* candy-striped paper behind the counter, so the jars and the neon have to compete with it */}
       <Wallpaper kind="stripes" width={halfZ - 1.0} height={B.height - 0.12} position={[halfX, 0.12 + (B.height - 0.12) / 2, (halfZ + 1.0) / 2]} rotation={[0, -PI / 2, 0]} />
       {/* a bin just inside the door */}
-      <Decoy label="bin" position={[2.45, 0, halfZ - 0.3]} solid>
-        <mesh position={[0, 0.32, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.19, 0.17, 0.64, 32]} />
-          <meshStandardMaterial color="#3b4148" metalness={0.6} roughness={0.4} />
-        </mesh>
-        <mesh position={[0, 0.66, 0]} castShadow>
-          <cylinderGeometry args={[0.2, 0.2, 0.05, 32]} />
-          <meshStandardMaterial color="#2a2f35" metalness={0.6} roughness={0.35} />
-        </mesh>
+      {/* a pedal bin: foot band, body, rolled rim, domed lid with a hinge at the back */}
+      <Decoy label="bin" position={[2.45, 0, halfZ - 0.3]} rotation={[0, PI, 0]} solid>
+        <mesh geometry={BIN_FOOT} material={BIN_DARK} position={[0, 0.025, 0]} receiveShadow />
+        <mesh geometry={BIN_BODY} material={BIN_STEEL} position={[0, 0.33, 0]} castShadow receiveShadow />
+        <mesh geometry={BIN_RIM} material={BIN_DARK} position={[0, 0.63, 0]} rotation={[PI / 2, 0, 0]} />
+        <mesh geometry={BIN_LID} material={BIN_STEEL} position={[0, 0.635, 0]} scale={[1, 0.32, 1]} castShadow />
+        <Block size={[0.08, 0.03, 0.03]} position={[0, 0.635, -0.195]} color="#2a2f35" metalness={0.6} roughness={0.35} radius={0.008} />
+        <Block size={[0.12, 0.022, 0.09]} position={[0, 0.03, 0.2]} rotation={[0.18, 0, 0]} color="#2a2f35" metalness={0.6} roughness={0.35} radius={0.008} />
       </Decoy>
-      <Decoy label="fire extinguisher" position={[halfX - 0.15, 0, -0.3]} rotation={[0, -PI / 2, 0]} solid>
+      <Decoy label="fire extinguisher" position={[halfX - 0.165, 0, -0.3]} rotation={[0, -PI / 2, 0]} solid>
         <Model id="korean_fire_extinguisher_01" />
       </Decoy>
       {/* a delivery that never gets unpacked: looks just like the boxes that can change */}

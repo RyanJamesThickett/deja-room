@@ -1480,10 +1480,13 @@ button.pop:disabled {
   margin-bottom: 3.2rem;
   opacity: 0.92;
 }
-.end-panel.walking .results,
+.end-panel.walking .results {
+  display: none;
+}
+/* walking about: the buttons stay as a reminder of the keys, but the mouse is busy looking */
 .reveal-panel.walking .row,
 .end-panel.walking .row {
-  display: none;
+  pointer-events: none;
 }
 
 /* ------------------------------------------------------------------------
@@ -2176,6 +2179,11 @@ button.pop:disabled {
 .burst.vs-final span {
   font-size: 0.6em;
 }
+/* the end of a room: the score is the point, so it fills its burst (solo and co-op; VS has words instead) */
+.end-panel .burst.final:not(.vs-final) span {
+  font-size: 3.7rem;
+  letter-spacing: 0.02em;
+}
 
 /* ------------------------------------------------------------------------
    Co-op: the vote board, teammates' name tags, the team's result line
@@ -2241,19 +2249,126 @@ button.pop:disabled {
   margin-left: 0.25rem;
   color: var(--pink);
 }
-.vote-settle {
-  margin-top: 0.6rem;
-  padding: 0.35rem 0.5rem;
-  font: 800 0.88rem/1.25 var(--body);
-  text-align: center;
-  background: var(--yellow);
-  border: 2px solid var(--ink);
-  animation: settle-pulse 0.5s ease-in-out infinite alternate;
+.vote-board li {
+  animation: vote-pop 0.35s cubic-bezier(0.2, 1.6, 0.4, 1) both;
 }
-@keyframes settle-pulse {
-  to {
-    transform: scale(1.04);
+@keyframes vote-pop {
+  from {
+    transform: scale(1.25);
+    background: var(--yellow);
   }
+}
+.vote-count {
+  margin-top: 0.55rem;
+  font: 700 0.75rem/1.3 var(--body);
+  color: #555;
+}
+/* everyone's pinned: the team's guess is about to go in. A slim strip under
+   the tries, clear of the crosshair, since this is when you'd aim to move your pin */
+.vote-settle {
+  position: absolute;
+  top: 10.6rem;
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.5rem 0.35rem 1rem;
+  white-space: nowrap;
+  background: var(--dots), var(--yellow);
+  border: 3px solid var(--ink);
+  box-shadow: 5px 5px 0 var(--ink);
+  transform: rotate(-1deg);
+  animation: panel-in 0.35s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  pointer-events: none;
+}
+.vote-settle-label {
+  font: 800 0.9rem/1.2 var(--body);
+}
+.vote-settle-what {
+  font: 400 1.5rem/1 var(--display);
+  letter-spacing: 0.03em;
+}
+.vote-settle-n {
+  display: grid;
+  place-items: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  font: 400 1.7rem/1 var(--display);
+  color: #fff;
+  background: var(--red);
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  animation: settle-n 0.9s ease-out both;
+}
+@keyframes settle-n {
+  from {
+    transform: scale(1.7);
+  }
+  30% {
+    transform: scale(1);
+  }
+}
+.vote-settle-hint {
+  font: 700 0.75rem/1.2 var(--body);
+  color: #444;
+}
+
+/* the team's guess went in and it wasn't it */
+/* under the tries, clear of the crosshair: you're about to start looking again */
+.team-call {
+  position: absolute;
+  top: 10rem;
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: team-call 2.6s ease both;
+}
+.team-call-burst {
+  --size: 7rem;
+}
+.team-call-burst .burst-shape span {
+  font-size: 1.9rem;
+}
+.team-call-line {
+  padding: 0.45rem 0.9rem;
+  font: 700 1.05rem/1.3 var(--body);
+  background: var(--paper);
+  border: var(--outline);
+  box-shadow: 4px 4px 0 var(--ink);
+  transform: rotate(1deg);
+}
+@keyframes team-call {
+  0%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* online reveal: how long until the game moves on by itself */
+.reveal-clock {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.7rem;
+  font: 700 0.9rem/1.2 var(--body);
+}
+.reveal-clock-n {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  font: 400 1.25rem/1 var(--display);
+  color: #fff;
+  background: var(--ink);
+  border-radius: 50%;
 }
 .teammate-tag {
   display: inline-block;
@@ -2273,7 +2388,9 @@ button.pop:disabled {
   font: 700 0.95rem/1.3 var(--body);
 }
 @media (prefers-reduced-motion: reduce) {
-  .vote-settle {
+  .vote-settle,
+  .vote-settle-n,
+  .vote-board li {
     animation: none;
   }
 }

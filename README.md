@@ -53,7 +53,9 @@ Copy `src/game/rooms/shop/` as a starting point: `bounds.ts`, `items.ts`, a memo
 **Multiplayer!** on the title screen leads to two modes:
 
 - **VS**: two players, same room, same changes, at the same time. Each hunts alone; both results are revealed together, then the next change starts for both. Points as in solo; the quicker total time breaks a tie.
-- **Co-op**: 1 to 6 players in bigger levels made for teams (`COOP_ROOMS` in `src/game/rooms/index.ts`). Everyone wanders the same level (shown to each other as the faceless figure, with a name tag) and votes by clicking: your pin goes on what you think changed, and once everyone has a pin down, the most-voted thing is the team's guess. A different player breaks ties each change.
+- **Co-op**: 1 to 6 players in bigger levels made for teams (`COOP_ROOMS` in `src/game/rooms/index.ts`). Everyone wanders the same level (shown to each other as the faceless figure, with a name tag) and votes by clicking: your pin goes on what you think changed, and once everyone has a pin down, the most-voted thing is the team's guess. A different player breaks ties each change. You hear (and see) each teammate's pin go in; once everyone's pinned, a three-second countdown gives the team a last chance to move pins before the guess goes in.
+
+After each change, everyone sees what it was. The game moves on when everyone's pressed Ready, or after 30 seconds (counted down on screen), so one idle player can't hold the rest up.
 
 Games are found by a four-letter code (consonants only, so no code spells anything) or an invite link (`?join=BKRT`). There are no accounts: each browser tab gets a random id and a generated name ("Wobbly Lamp"), so there's no typed text anywhere to moderate. Nothing is stored once a game ends.
 

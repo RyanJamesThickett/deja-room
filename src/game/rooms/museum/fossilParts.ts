@@ -177,6 +177,10 @@ function taper<T extends BufferGeometry>(g: T, length: number, by: number) {
   return g
 }
 
+const SKULL_TAPER = 0.62
+/** Half the skull's width at `x` along it, not counting its bevel. */
+const skullHalf = (x: number) => 0.1 * (1 - SKULL_TAPER * Math.min(1, Math.max(0, x / 0.77)))
+
 /** Profile of the skull from the side (x forward from the back of the skull, y up), with its openings. */
 export const SKULL_GEO = (() => {
   const s = new Shape()
@@ -203,9 +207,10 @@ export const SKULL_GEO = (() => {
   hole(0.38, 0.14, 0.09, 0.045) // the big opening in front of the eye
   hole(0.66, 0.12, 0.025, 0.018) // nostril
   hole(0.04, 0.15, 0.03, 0.05) // behind the eye
-  const g = new ExtrudeGeometry(s, { depth: 0.16, bevelEnabled: true, bevelThickness: 0.025, bevelSize: 0.012, bevelSegments: 2, curveSegments: 16 })
-  g.translate(0, 0, -0.08)
-  return taper(g, 0.77, 0.5)
+  // broad across the back of the skull, narrowing hard to the snout
+  const g = new ExtrudeGeometry(s, { depth: 0.2, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.015, bevelSegments: 3, curveSegments: 16 })
+  g.translate(0, 0, -0.1)
+  return taper(g, 0.77, SKULL_TAPER)
 })()
 
 export const JAW_GEO = (() => {
@@ -232,10 +237,11 @@ export const JAW_GEO = (() => {
 export const UPPER_TEETH: Placement[] = (() => {
   const out: Placement[] = []
   for (let i = 0; i < 11; i++)
-    for (const z of [-0.07, 0.07]) {
+    for (const side of [-1, 1]) {
       const x = 0.16 + i * 0.053
       const s = 1.3 - i * 0.07
-      out.push({ at: [x, 0.02 - 0.025 * s, z], rot: [Math.PI, 0, 0], scale: [s, s, s] })
+      // along the edge of the upper jaw, which narrows to the snout
+      out.push({ at: [x, 0.02 - 0.025 * s, side * (skullHalf(x) + 0.005)], rot: [Math.PI, 0, 0], scale: [s, s, s] })
     }
   return out
 })()
@@ -379,7 +385,8 @@ export const TENTACLE_GEO = new CapsuleGeometry(0.02, 0.07, 3, 8)
 export const METEORITE_GEO = (() => {
   const g = new IcosahedronGeometry(0.28, 5)
   const rng = mulberry32(19)
-  const bumps = Array.from({ length: 14 }, () => ({ d: new Vector3(rng() - 0.5, rng() - 0.5, rng() - 0.5).normalize(), k: (rng() - 0.4) * 0.12 }))
+  // big knobs and dents, so it reads as a lump of rock and not an egg
+  const bumps = Array.from({ length: 26 }, () => ({ d: new Vector3(rng() - 0.5, rng() - 0.5, rng() - 0.5).normalize(), k: (rng() - 0.45) * 0.34 }))
   const pos = g.attributes.position
   const v = new Vector3()
   let minY = 0
@@ -387,9 +394,11 @@ export const METEORITE_GEO = (() => {
     v.fromBufferAttribute(pos, i)
     const n = v.clone().normalize()
     let r = 1
-    for (const b of bumps) r += b.k * Math.max(0, n.dot(b.d)) ** 3
+    for (const b of bumps) r += b.k * Math.max(0, n.dot(b.d)) ** 6
     v.multiplyScalar(r)
     v.y *= 0.72
+    // sawn flat underneath where it sits on the plinth
+    v.y = Math.max(v.y, -0.15)
     v.x *= 1.15
     pos.setXYZ(i, v.x, v.y, v.z)
     minY = Math.min(minY, v.y)
@@ -412,24 +421,73 @@ export const PTERO_HEAD_GEO = (() => {
   s.lineTo(0.0, -0.035)
   s.lineTo(-0.06, -0.02)
   s.quadraticCurveTo(-0.1, 0.06, -0.32, 0.1)
-  const g = new ExtrudeGeometry(s, { depth: 0.03, bevelEnabled: true, bevelThickness: 0.008, bevelSize: 0.006, bevelSegments: 1 })
-  g.translate(0, 0, -0.015)
-  return g
+  const g = new ExtrudeGeometry(s, { depth: 0.036, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.007, bevelSegments: 2, curveSegments: 12 })
+  g.translate(0, 0, -0.018)
+  return taper(g, 0.42, 0.6)
 })()
+
+/** The leading edge of a wing: shoulder, elbow, wrist and the tip of the long wing finger (out along +z). */
+export const WING_BONES: Vec3[] = [
+  [0.06, 0, 0.0],
+  [0.16, 0.012, 0.32],
+  [0.08, 0.012, 0.56],
+  [-0.05, 0, 1.24],
+]
 
 /** One wing's membrane, flat in the xz plane, from the body out along +z. */
 export const WING_GEO = (() => {
   const s = new Shape()
-  s.moveTo(0.08, 0)
-  s.lineTo(0.14, 0.32)
-  s.lineTo(0.06, 0.52)
-  s.lineTo(-0.02, 1.08)
-  s.quadraticCurveTo(-0.12, 0.6, -0.24, 0.1)
-  s.lineTo(-0.2, 0)
-  const g = new ShapeGeometry(s)
+  const [shoulder, elbow, wrist, tip] = WING_BONES
+  s.moveTo(shoulder[0], shoulder[2])
+  s.lineTo(elbow[0], elbow[2])
+  s.lineTo(wrist[0], wrist[2])
+  s.lineTo(tip[0], tip[2])
+  // the trailing edge sweeps in from the tip and back to the hip
+  s.bezierCurveTo(-0.1, 0.95, -0.08, 0.6, -0.2, 0.36)
+  s.quadraticCurveTo(-0.27, 0.14, -0.2, 0.0)
+  s.lineTo(shoulder[0], shoulder[2])
+  const g = new ShapeGeometry(s, 24)
   // shape is in xy; lay it into xz (y of the shape becomes +z)
   g.rotateX(Math.PI / 2)
   return g
 })()
 
-export const MEMBRANE = new MeshStandardMaterial({ color: '#7d5f45', roughness: 0.85, side: DoubleSide, transparent: true, opacity: 0.88 })
+// lit a little from within, so its underside (the side everyone sees) isn't a black cut-out against the ceiling
+export const MEMBRANE = new MeshStandardMaterial({
+  color: '#b8875a',
+  emissive: '#5a3a20',
+  emissiveIntensity: 0.55,
+  roughness: 0.85,
+  side: DoubleSide,
+  transparent: true,
+  opacity: 0.92,
+})
+
+// ---------------------------------------------------------------------------
+// The fossil fish
+// ---------------------------------------------------------------------------
+
+/**
+ * The swimming fish's stone, a centimetre thick, between its two painted
+ * faces: the outline of the stone round it in fishTexture, in metres on a
+ * 0.48 x 0.24 plane, so it never vanishes when it swims edge-on to you.
+ */
+export const FISH_CORE = (() => {
+  const k = 0.48 / 512
+  const at = (x: number, y: number): [number, number] => [x * k, -y * k]
+  const body = new Shape()
+  body.moveTo(...at(-180, 0))
+  body.bezierCurveTo(...at(-70, -124), ...at(104, -124), ...at(178, 0))
+  body.bezierCurveTo(...at(104, 112), ...at(-70, 112), ...at(-180, 0))
+  const tail = new Shape()
+  tail.moveTo(...at(-170, 0))
+  tail.lineTo(...at(-240, -90))
+  tail.lineTo(...at(-216, 0))
+  tail.lineTo(...at(-240, 90))
+  tail.lineTo(...at(-170, 0))
+  const g = new ExtrudeGeometry([body, tail], { depth: 0.01, bevelEnabled: false, curveSegments: 16 })
+  g.translate(0, 0, -0.005)
+  g.scale(0.97, 0.97, 1)
+  return g
+})()
+export const FISH_STONE = new MeshStandardMaterial({ color: '#cdbd96', roughness: 0.9 })

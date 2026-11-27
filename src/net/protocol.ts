@@ -31,8 +31,11 @@ export const SHIFT_COVER_MS = 350
 export const ATTEMPTS = 3
 /** Extra time the server waits after a hunt's deadline for late results to arrive. */
 export const GRACE_MS = 4000
-/** A reveal moves on by itself after this long, so one idle player can't stall everyone. */
-export const REVEAL_MAX_MS = 45_000
+/**
+ * A reveal moves on by itself after this long (counted down on screen), so
+ * one idle player can't stall everyone. Everyone pressing Ready skips it.
+ */
+export const REVEAL_MAX_MS = 30_000
 /** Loading stops being waited for after this long; latecomers join the first look in progress. */
 export const LOAD_MAX_MS = 120_000
 /** Co-op: once everyone has a pin down, the team guess goes in after this countdown (time to change your mind). */

@@ -206,6 +206,7 @@ export function HelmetBays({ mode }: { mode: 'default' | 'watching' | 'cone' }) 
 // ---------------------------------------------------------------------------
 
 const TUNIC = '#1e2533'
+const TUNIC_DARK = '#141923'
 const HIVIS = '#d9e021'
 const SILVER = '#cfd4d8'
 
@@ -218,20 +219,34 @@ export function Tunic({ reach = 0 }: { reach?: number }) {
         <meshStandardMaterial color="#d5d9dd" metalness={0.9} roughness={0.25} />
       </mesh>
       <Block size={[0.38, 0.015, 0.015]} position={[0, -0.07, 0]} color="#d5d9dd" metalness={0.9} roughness={0.25} radius={0.005} />
-      <Block size={[0.2, 0.07, 0.13]} position={[0, -0.1, 0]} color="#151a24" roughness={0.85} radius={0.02} />
-      <Block size={[0.42, 0.62, 0.14]} position={[0, -0.42, 0]} color={TUNIC} roughness={0.85} radius={0.03} paint />
+      {/* the stand-up collar, open at the front */}
+      <Block size={[0.24, 0.075, 0.16]} position={[0, -0.1, -0.005]} color={TUNIC_DARK} roughness={0.85} radius={0.03} />
+      <Block size={[0.42, 0.62, 0.14]} position={[0, -0.42, 0]} color={TUNIC} roughness={0.85} radius={0.04} paint />
       {[
         [-0.55, HIVIS],
         [-0.6, SILVER],
         [-0.65, HIVIS],
       ].map(([y, c]) => (
-        <Block key={y} size={[0.425, 0.03, 0.145]} position={[0, y as number, 0]} color={c as string} roughness={0.4} metalness={c === SILVER ? 0.5 : 0} radius={0.004} />
+        <Block key={y} size={[0.425, 0.03, 0.145]} position={[0, y as number, 0]} color={c as string} roughness={0.4} metalness={c === SILVER ? 0.5 : 0} radius={0.012} />
+      ))}
+      {/* storm flap down the front over the zip, and a chest pocket each side with its flap */}
+      <Block size={[0.045, 0.6, 0.01]} position={[0, -0.42, 0.072]} color={TUNIC_DARK} roughness={0.85} radius={0.004} />
+      {[-1, 1].map((s) => (
+        <group key={s} position={[s * 0.115, -0.29, 0.071]}>
+          <Block size={[0.12, 0.11, 0.012]} color={TUNIC} roughness={0.85} radius={0.005} paint />
+          <Block size={[0.13, 0.035, 0.018]} position={[0, 0.05, 0.002]} color={TUNIC_DARK} roughness={0.85} radius={0.006} />
+          <Block size={[0.06, 0.012, 0.004]} position={[0, -0.02, 0.008]} color={HIVIS} roughness={0.4} radius={0.002} />
+        </group>
       ))}
       {[-1, 1].map((s) => (
         <group key={s} position={[s * 0.265, -0.14, 0]} rotation={[-reach, 0, s * 0.07]}>
-          <Block size={[0.11, 0.56, 0.12]} position={[0, -0.28, 0]} color={TUNIC} roughness={0.85} radius={0.025} paint />
-          <Block size={[0.115, 0.03, 0.125]} position={[0, -0.44, 0]} color={HIVIS} roughness={0.4} radius={0.004} />
-          <Block size={[0.115, 0.025, 0.125]} position={[0, -0.48, 0]} color={SILVER} roughness={0.3} metalness={0.5} radius={0.004} />
+          {/* rounded shoulder where the sleeve is set in */}
+          <Block size={[0.12, 0.09, 0.13]} position={[-s * 0.01, -0.02, 0]} color={TUNIC} roughness={0.85} radius={0.04} paint />
+          <Block size={[0.11, 0.56, 0.12]} position={[0, -0.28, 0]} color={TUNIC} roughness={0.85} radius={0.04} paint />
+          <Block size={[0.115, 0.03, 0.125]} position={[0, -0.44, 0]} color={HIVIS} roughness={0.4} radius={0.012} />
+          <Block size={[0.115, 0.025, 0.125]} position={[0, -0.48, 0]} color={SILVER} roughness={0.3} metalness={0.5} radius={0.011} />
+          {/* knitted cuff */}
+          <Block size={[0.095, 0.045, 0.105]} position={[0, -0.575, 0]} color={TUNIC_DARK} roughness={0.95} radius={0.02} />
         </group>
       ))}
     </>
@@ -474,9 +489,18 @@ export function Pole({ mode }: { mode: 'default' | 'through' | 'twist' }) {
         <circleGeometry args={[0.42, 40]} />
         <meshBasicMaterial color="#050506" />
       </mesh>
-      <mesh position={[0, h - 0.02, 0]} rotation={[PI / 2, 0, 0]}>
+      {/* a steel collar lining the hole, and its rolled lip */}
+      <mesh position={[0, h - 0.06, 0]}>
+        <cylinderGeometry args={[0.42, 0.42, 0.12, 40, 1, true]} />
+        <meshStandardMaterial color="#5f666d" metalness={0.6} roughness={0.45} side={DoubleSide} />
+      </mesh>
+      <mesh position={[0, h - 0.12, 0]} rotation={[PI / 2, 0, 0]}>
         <torusGeometry args={[0.43, 0.025, 10, 48]} />
         <meshStandardMaterial color="#8d949a" metalness={0.7} roughness={0.35} />
+      </mesh>
+      <mesh position={[0, h - 0.01, 0]} rotation={[PI / 2, 0, 0]}>
+        <ringGeometry args={[0.42, 0.56, 40]} />
+        <meshStandardMaterial color="#8d949a" metalness={0.6} roughness={0.4} />
       </mesh>
       {mode === 'through' ? (
         <>

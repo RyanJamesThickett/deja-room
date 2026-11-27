@@ -1,4 +1,4 @@
-import type { MatchState, Outcome } from './protocol'
+import { ATTEMPTS, type MatchState, type Outcome } from './protocol'
 
 /* Small helpers for showing multiplayer results. */
 
@@ -13,7 +13,7 @@ export function formatSeconds(ms: number) {
 /** A one-line summary of how someone did on one change. */
 export function outcomeLine(o: Outcome | null | undefined) {
   if (!o) return 'Still looking…'
-  if (!o.found) return 'Didn’t find it'
+  if (!o.found) return o.misses < ATTEMPTS ? 'Ran out of time' : 'Out of tries'
   const tries = ['first try', 'second try', 'last try'][o.misses] ?? `${o.misses + 1} tries`
   return `Found it, ${tries}, ${formatSeconds(o.ms)}`
 }

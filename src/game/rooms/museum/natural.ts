@@ -110,7 +110,10 @@ export function boardTexture(mode: BoardMode) {
   g.fillRect(40, 132, 944, 4)
   g.fillStyle = BOARD_INK
   g.textBaseline = 'alphabetic'
-  g.font = 'bold 84px Georgia, serif'
+  // as big as fits across the board (it was clipping the X)
+  let size = 84
+  do g.font = `bold ${size--}px Georgia, serif`
+  while (g.measureText('TYRANNOSAURUS REX').width > W - 80 && size > 40)
   g.fillText('TYRANNOSAURUS REX', 40, 110)
   g.font = 'italic 38px Georgia, serif'
   g.fillText('Late Cretaceous, North America', 40, 190)

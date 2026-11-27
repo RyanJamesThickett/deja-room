@@ -1,12 +1,13 @@
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef, type ReactNode } from 'react'
-import { CylinderGeometry, DoubleSide, ExtrudeGeometry, MeshStandardMaterial, Path, Shape, type Group, type Mesh } from 'three'
+import { CylinderGeometry, DoubleSide, ExtrudeGeometry, MeshStandardMaterial, Path, Shape, SphereGeometry, type Group, type Mesh } from 'three'
 import { ShadowFigure } from '../../figure'
 import { Block, PI } from '../../kit'
 import type { Vec3 } from '../../mutations'
 import { once } from '../../outsideLayers'
+import { plateStack } from './fx'
 import { Hover } from '../living/oddities'
-import { BRUSHED, DARK_STEEL, PASS, PASS_DEPTH, PORTHOLE, STAINLESS, STEEL_MAT, WHITE_CHINA } from './layout'
+import { BRUSHED, CHINA_OPEN, DARK_STEEL, PASS, PASS_DEPTH, PORTHOLE, STAINLESS, STEEL_MAT, WHITE_CHINA } from './layout'
 import { longTicketTexture, signTexture, ticketTexture, TICKETS } from './textures'
 
 /*
@@ -20,7 +21,8 @@ import { longTicketTexture, signTexture, ticketTexture, TICKETS } from './textur
 // ---------------------------------------------------------------------------
 
 const PLATE = new CylinderGeometry(0.14, 0.11, 0.022, 32)
-const PLATE_STACK = new CylinderGeometry(0.135, 0.135, 0.3, 28)
+const PLATE_STACK = plateStack(0.135, 14)
+const BOWL_STACK = plateStack(0.1, 9, 0.024)
 
 /** Kitchen side of the pass: a stainless counter with plate shelves underneath. Front (+z) faces the line. */
 export function PassCounter({ width }: { width: number }) {
@@ -28,18 +30,23 @@ export function PassCounter({ width }: { width: number }) {
   const h = PASS.sill
   return (
     <>
-      <Block size={[width, h - 0.1, d - 0.04]} position={[0, 0.1 + (h - 0.1) / 2 - 0.02, -0.02]} {...BRUSHED} radius={0.008} />
-      <Block size={[width + 0.04, 0.04, d]} position={[0, h - 0.02, 0]} {...STAINLESS} radius={0.006} />
-      {/* open shelf of warm plates under the counter */}
-      <mesh position={[0, 0.5, d / 2 - 0.015]}>
-        <planeGeometry args={[width - 0.1, 0.62]} />
-        <meshStandardMaterial color="#1b1c1f" roughness={0.9} />
-      </mesh>
-      <Block size={[width - 0.1, 0.02, d - 0.1]} position={[0, 0.42, -0.02]} {...STAINLESS} radius={0.004} />
-      {[-1.2, -0.8, -0.4, 0.4, 0.8, 1.2].map((x) => (
-        <mesh key={x} geometry={PLATE_STACK} material={WHITE_CHINA} position={[x, 0.58, 0]} />
+      {/* the carcass, open to the front: back, ends, a middle upright, the floor and a rail under the top */}
+      <Block size={[width, h - 0.1, 0.02]} position={[0, 0.08 + (h - 0.1) / 2, -d / 2 + 0.01]} color="#8c939a" metalness={0.6} roughness={0.5} radius={0.004} />
+      {[-1, 0, 1].map((s) => (
+        <Block key={s} size={[0.03, h - 0.1, d - 0.04]} position={[s * (width / 2 - 0.015), 0.08 + (h - 0.1) / 2, -0.02]} {...BRUSHED} radius={0.006} />
       ))}
-      <Block size={[width, 0.08, 0.02]} position={[0, 0.06, d / 2 - 0.03]} {...DARK_STEEL} radius={0.004} />
+      <Block size={[width, 0.06, d - 0.04]} position={[0, 0.11, -0.02]} {...BRUSHED} radius={0.006} />
+      <Block size={[width, 0.07, 0.03]} position={[0, h - 0.075, d / 2 - 0.055]} {...BRUSHED} radius={0.006} />
+      <Block size={[width + 0.04, 0.04, d]} position={[0, h - 0.02, 0]} {...STAINLESS} radius={0.006} />
+      {/* open shelves of warm plates under the counter, bowls on the bottom */}
+      <Block size={[width - 0.06, 0.02, d - 0.06]} position={[0, 0.42, -0.02]} {...STAINLESS} radius={0.004} />
+      {[-1.2, -0.8, -0.4, 0.4, 0.8, 1.2].map((x) => (
+        <mesh key={x} geometry={PLATE_STACK} material={WHITE_CHINA} position={[x, 0.43 + 0.147, 0]} />
+      ))}
+      {[-1.25, -0.95, -0.65, 0.35, 0.65, 0.95, 1.25].map((x, i) => (
+        <mesh key={x} geometry={BOWL_STACK} material={WHITE_CHINA} position={[x, 0.14 + 0.108, 0.02 - (i % 2) * 0.04]} />
+      ))}
+      <Block size={[width, 0.08, 0.02]} position={[0, 0.04, d / 2 - 0.03]} {...DARK_STEEL} radius={0.004} />
     </>
   )
 }
@@ -73,8 +80,11 @@ function SteakPlate() {
 function SoupPlate() {
   return (
     <>
-      <mesh position={[0, 0.03, 0]} material={WHITE_CHINA}>
+      <mesh position={[0, 0.03, 0]} material={CHINA_OPEN}>
         <cylinderGeometry args={[0.085, 0.06, 0.06, 28, 1, true]} />
+      </mesh>
+      <mesh position={[0, 0.06, 0]} rotation={[PI / 2, 0, 0]} material={WHITE_CHINA}>
+        <torusGeometry args={[0.085, 0.004, 6, 32]} />
       </mesh>
       <mesh position={[0, 0.002, 0]} material={WHITE_CHINA}>
         <cylinderGeometry args={[0.06, 0.06, 0.004, 28]} />
@@ -145,6 +155,10 @@ export function PassPlates({ mode }: { mode: 'normal' | 'cloche' | 'jelly' }) {
           <mesh position={[0, 0.022, 0]} material={STEEL_MAT} castShadow>
             <sphereGeometry args={[0.13, 32, 16, 0, PI * 2, 0, PI / 2]} />
           </mesh>
+          {/* its rolled bottom edge, sitting on the plate */}
+          <mesh position={[0, 0.024, 0]} rotation={[PI / 2, 0, 0]} material={STEEL_MAT}>
+            <torusGeometry args={[0.13, 0.005, 6, 40]} />
+          </mesh>
           <mesh position={[0, 0.16, 0]} material={STEEL_MAT}>
             <sphereGeometry args={[0.018, 12, 8]} />
           </mesh>
@@ -179,6 +193,10 @@ function HeatLamp({ y, ceiling, colour }: { y: number; ceiling: number; colour: 
     <group position={[0, y, 0]}>
       <mesh position={[0, (ceiling - y) / 2 + 0.1, 0]} material={STEEL_MAT}>
         <cylinderGeometry args={[0.005, 0.005, ceiling - y - 0.2, 6]} />
+      </mesh>
+      {/* the rose it hangs from */}
+      <mesh position={[0, ceiling - y - 0.015, 0]} material={SHADE_MAT}>
+        <cylinderGeometry args={[0.04, 0.05, 0.03, 20]} />
       </mesh>
       <mesh position={[0, 0.1, 0]} material={SHADE_MAT} castShadow>
         <cylinderGeometry args={[0.03, 0.11, 0.16, 24, 1, true]} />
@@ -312,11 +330,21 @@ export function HandSink({ mode }: { mode: 'normal' | 'running' | 'sign' }) {
   })
   return (
     <>
-      {/* bowl on a wall bracket */}
-      <Block size={[0.44, 0.16, 0.34]} position={[0, 0.8, 0.17]} {...STAINLESS} radius={0.02} />
-      <mesh position={[0, 0.881, 0.18]} rotation={[-PI / 2, 0, 0]}>
-        <planeGeometry args={[0.34, 0.24]} />
+      {/* bowl on a wall bracket: its floor, four walls with a rolled lip, and the drain */}
+      <Block size={[0.44, 0.03, 0.34]} position={[0, 0.735, 0.17]} {...STAINLESS} radius={0.012} />
+      {[-1, 1].map((s) => (
+        <Block key={`z${s}`} size={[0.44, 0.16, 0.025]} position={[0, 0.8, 0.17 + s * 0.1575]} {...STAINLESS} radius={0.01} />
+      ))}
+      {[-1, 1].map((s) => (
+        <Block key={`x${s}`} size={[0.025, 0.16, 0.34]} position={[s * 0.2075, 0.8, 0.17]} {...STAINLESS} radius={0.01} />
+      ))}
+      <mesh position={[0, 0.7505, 0.17]} rotation={[-PI / 2, 0, 0]}>
+        <planeGeometry args={[0.39, 0.29]} />
         <meshStandardMaterial color="#8d949a" metalness={0.8} roughness={0.25} />
+      </mesh>
+      <mesh position={[0, 0.752, 0.17]} rotation={[-PI / 2, 0, 0]}>
+        <circleGeometry args={[0.025, 20]} />
+        <meshStandardMaterial color="#2a2d31" metalness={0.6} roughness={0.4} />
       </mesh>
       <Block size={[0.44, 0.2, 0.02]} position={[0, 0.98, 0.01]} {...STAINLESS} radius={0.006} />
       {/* knee-operated tap: spout from the splashback */}
@@ -327,12 +355,14 @@ export function HandSink({ mode }: { mode: 'normal' | 'running' | 'sign' }) {
         <cylinderGeometry args={[0.012, 0.012, 0.05, 10]} />
       </mesh>
       {mode === 'running' && (
-        <mesh ref={water} position={[0, 0.93, 0.145]}>
-          <cylinderGeometry args={[0.006, 0.008, 0.1, 10]} />
+        <mesh ref={water} position={[0, 0.865, 0.145]}>
+          <cylinderGeometry args={[0.006, 0.009, 0.22, 10]} />
           <meshPhysicalMaterial color="#cfe8ff" transparent opacity={0.6} roughness={0.05} />
         </mesh>
       )}
-      <Block size={[0.06, 0.18, 0.06]} position={[0, 0.55, 0.06]} {...STAINLESS} radius={0.01} />
+      {/* the knee valve under the bowl, its push-plate to the front */}
+      <Block size={[0.06, 0.22, 0.06]} position={[0, 0.61, 0.06]} {...STAINLESS} radius={0.01} />
+      <Block size={[0.1, 0.08, 0.015]} position={[0, 0.58, 0.095]} {...DARK_STEEL} radius={0.005} />
       {/* soap, paper towels and the sign */}
       <Block size={[0.1, 0.18, 0.08]} position={[-0.17, 1.22, 0.04]} color="#f2f2ee" roughness={0.4} radius={0.01} />
       <Block size={[0.3, 0.36, 0.12]} position={[0.08, 1.38, 0.06]} color="#f2f2ee" roughness={0.4} radius={0.015} />
@@ -349,15 +379,31 @@ export function HandSink({ mode }: { mode: 'normal' | 'running' | 'sign' }) {
 // Hooks by the door: an apron and the chef's hat
 // ---------------------------------------------------------------------------
 
+/** The hat's puff: a ball, pleated all round where it gathers into the band. */
+const HAT_PUFF = (() => {
+  const g = new SphereGeometry(0.135, 56, 18)
+  const pos = g.attributes.position
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i)
+    const y = pos.getY(i)
+    const z = pos.getZ(i)
+    // pleats strongest round the middle and the bottom, smoothing out over the crown
+    const k = 1 + 0.05 * Math.cos(Math.atan2(z, x) * 12) * (1 - Math.max(0, y / 0.135) ** 2)
+    pos.setXYZ(i, x * k, y, z * k)
+  }
+  g.computeVertexNormals()
+  return g
+})()
+const HAT_BAND = new CylinderGeometry(0.1, 0.1, 0.12, 32, 1, true)
+
 function ChefHat() {
   return (
     <>
-      <mesh position={[0, 0.06, 0]} castShadow userData={{ paint: true }}>
-        <cylinderGeometry args={[0.1, 0.1, 0.12, 28]} />
-        <meshStandardMaterial color="#fbfbf8" roughness={0.9} />
+      {/* the band is a tube: from underneath you look up into the hat */}
+      <mesh geometry={HAT_BAND} position={[0, 0.06, 0]} castShadow userData={{ paint: true }}>
+        <meshStandardMaterial color="#fbfbf8" roughness={0.9} side={DoubleSide} />
       </mesh>
-      <mesh position={[0, 0.17, 0]} scale={[1, 0.7, 1]} castShadow userData={{ paint: true }}>
-        <sphereGeometry args={[0.135, 24, 16]} />
+      <mesh geometry={HAT_PUFF} position={[0, 0.17, 0]} scale={[1, 0.7, 1]} castShadow userData={{ paint: true }}>
         <meshStandardMaterial color="#fbfbf8" roughness={0.9} />
       </mesh>
     </>

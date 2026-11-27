@@ -42,7 +42,18 @@ export function Fountain() {
       <mesh geometry={BASIN} material={MAT.stone} castShadow receiveShadow />
       {/* the pedestal: a base, a shaft with a lion on each face, a cornice */}
       <mesh geometry={UNIT_BOX} material={MAT.stone} position={[0, 0.58, 0]} scale={[1.5, 0.32, 1.26]} castShadow receiveShadow />
+      <mesh geometry={UNIT_BOX} material={MAT.stone} position={[0, 0.77, 0]} scale={[1.32, 0.06, 1.08]} castShadow receiveShadow />
       <mesh geometry={UNIT_BOX} material={MAT.stone} position={[0, 1.2, 0]} scale={[1.16, 0.94, 0.92]} castShadow receiveShadow />
+      {/* pilasters up each corner of the shaft, framing the lions */}
+      {[-1, 1].flatMap((sx) =>
+        [-1, 1].map((sz) => <mesh key={`${sx}${sz}`} geometry={UNIT_BOX} material={MAT.stone} position={[sx * 0.54, 1.2, sz * 0.42]} scale={[0.14, 0.94, 0.14]} castShadow />),
+      )}
+      {/* a sunk panel behind each lion */}
+      {FACES.map((a, i) => (
+        <group key={a} rotation={[0, a, 0]}>
+          <mesh geometry={UNIT_BOX} material={MAT.darkStone} position={[0, 1.2, i % 2 ? 0.5805 : 0.4605]} scale={[i % 2 ? 0.6 : 0.82, 0.66, 0.002]} />
+        </group>
+      ))}
       <mesh geometry={UNIT_BOX} material={MAT.darkStone} position={[0, 1.7, 0]} scale={[1.36, 0.08, 1.12]} castShadow receiveShadow />
       <mesh geometry={UNIT_BOX} material={MAT.stone} position={[0, plinthTop - 0.06, 0]} scale={[1.3, 0.12, 1.06]} castShadow receiveShadow />
       {FACES.map((a, i) => (

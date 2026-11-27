@@ -1,6 +1,6 @@
 import { useFrame } from '@react-three/fiber'
 import { useRef, type ReactNode } from 'react'
-import { CylinderGeometry, SphereGeometry, type Group } from 'three'
+import { CylinderGeometry, DoubleSide, MeshStandardMaterial, SphereGeometry, TorusGeometry, type Group } from 'three'
 import { Instanced, PI, type Placement } from '../../kit'
 import { Model } from '../../Model'
 import { once } from '../../outsideLayers'
@@ -31,6 +31,7 @@ import {
   MELON,
   MELON_CUBE,
   MELON_MAT,
+  meltedLabel,
   meltedRecord,
   NECK,
   POLY,
@@ -42,6 +43,7 @@ import {
   UNIT_BOX,
   type HatKind,
 } from './stallParts'
+import { leafBall } from './squareParts'
 import { Awning, StallFrame } from './StallFrame'
 import { Tinted } from './Tinted'
 
@@ -85,6 +87,9 @@ const fruitLayout = once(() => {
   }
 })
 
+/** A cabbage: a ball with its leaves bulging, round enough not to look cut from facets. */
+const CABBAGE = leafBall(1.7, 0.08, 16)
+
 function Tier({ at, children }: { at: Vec3; children: ReactNode }) {
   return (
     <group position={at} rotation={[TIER_TILT, 0, 0]}>
@@ -104,7 +109,7 @@ function HangingScale() {
         const a = (k / 3) * PI * 2
         return <mesh key={k} geometry={UNIT_BOX} material={MAT.steel} position={[Math.cos(a) * 0.07, -0.37, Math.sin(a) * 0.07]} rotation={[Math.sin(a) * 0.32, 0, -Math.cos(a) * 0.32]} scale={[0.005, 0.3, 0.005]} />
       })}
-      <mesh geometry={lathe([[0, 0], [0.13, 0.03], [0.15, 0.05]], 20)} material={MAT.brass} position={[0, -0.56, 0]} />
+      <mesh geometry={SCALE_PAN} material={MAT.brass} position={[0, -0.56, 0]} />
     </group>
   )
 }
@@ -127,7 +132,7 @@ export function FruitStall() {
         <Instanced geometry={BALL} material={glossMaterial('#2f4a1f')} items={f.avocados} castShadow />
         <Instanced geometry={BALL} material={glossMaterial('#d8281e')} items={f.peppers} castShadow />
         <Instanced geometry={BALL} material={matteMaterial('#b08a5a')} items={f.potatoes} castShadow />
-        <Instanced geometry={BALL} material={matteMaterial('#7aa84a')} items={f.cabbages} castShadow />
+        <Instanced geometry={CABBAGE} material={matteMaterial('#7aa84a')} items={f.cabbages} castShadow />
       </Tier>
       <Instanced geometry={PUMPKIN} material={glossMaterial('#e8781a')} items={f.pumpkins.map((p) => ({ ...p, at: [p.at[0], p.at[1] + 0.12, p.at[2]] as Vec3 }))} castShadow />
       {/* the watermelon crate on the ground at the front */}
@@ -167,20 +172,37 @@ export function FruitChange({ mode }: { mode: 'default' | 'square' | 'blue' }) {
 // ---------------------------------------------------------------------------
 
 const HORN = once(() => ({
-  small: lathe([[0.012, 0], [0.02, 0.15], [0.05, 0.3], [0.12, 0.4], [0.2, 0.43]], 24),
-  big: lathe([[0.03, 0], [0.05, 0.25], [0.15, 0.55], [0.33, 0.74], [0.5, 0.8]], 32),
+  small: lathe([[0.012, 0], [0.02, 0.15], [0.05, 0.3], [0.12, 0.4], [0.2, 0.43], [0.205, 0.435]], 28),
+  big: lathe([[0.03, 0], [0.05, 0.25], [0.15, 0.55], [0.33, 0.74], [0.5, 0.8], [0.51, 0.81]], 40),
+  /** A rolled lip round the bell's mouth. */
+  lip: new TorusGeometry(1, 0.035, 8, 40).rotateX(PI / 2),
+  /** Sheet brass: you see its inside down the bell's mouth. */
+  mat: new MeshStandardMaterial({ color: '#c9a13f', roughness: 0.3, metalness: 0.9, side: DoubleSide }),
 }))
+const SCALE_PAN = lathe([[0, 0], [0.13, 0.03], [0.15, 0.05], [0.14, 0.052], [0.12, 0.038], [0, 0.014]], 24)
+const CANDLESTICK = lathe([[0, 0], [0.05, 0], [0.05, 0.02], [0.015, 0.04], [0.012, 0.22], [0.03, 0.24], [0.022, 0.27], [0, 0.262]], 16)
+const CANDLE = new CylinderGeometry(0.013, 0.013, 0.12, 12)
 
 function Gramophone({ big }: { big: boolean }) {
   const h = HORN()
   return (
     <group>
       <mesh geometry={UNIT_BOX} material={MAT.darkWood} position={[0, 0.07, 0]} scale={[0.32, 0.14, 0.32]} castShadow />
-      <mesh geometry={DISC} material={MAT.black} position={[0, 0.145, 0.02]} scale={[0.13, 0.01, 0.13]} />
+      <mesh geometry={UNIT_BOX} material={MAT.darkWood} position={[0, 0.006, 0]} scale={[0.35, 0.012, 0.35]} />
+      <mesh geometry={UNIT_BOX} material={MAT.darkWood} position={[0, 0.137, 0]} scale={[0.34, 0.014, 0.34]} />
+      <mesh geometry={DISC} material={MAT.black} position={[0, 0.15, 0.02]} scale={[0.13, 0.01, 0.13]} />
+      <mesh geometry={DISC} material={MAT.brass} position={[0, 0.157, 0.02]} scale={[0.03, 0.006, 0.03]} />
       <mesh geometry={DISC} material={MAT.brass} position={[0.11, 0.2, -0.1]} scale={[0.012, 0.12, 0.012]} />
+      {/* the tone arm out to the record, and the winding handle on the side */}
+      <mesh geometry={UNIT_BOX} material={MAT.brass} position={[0.08, 0.17, -0.02]} rotation={[0, 0.5, 0]} scale={[0.015, 0.015, 0.17]} />
+      <mesh geometry={UNIT_BOX} material={MAT.brass} position={[0.04, 0.165, 0.05]} scale={[0.03, 0.025, 0.03]} />
+      <mesh geometry={DISC} material={MAT.brass} position={[0.19, 0.08, 0]} rotation={[0, 0, PI / 2]} scale={[0.008, 0.06, 0.008]} />
+      <mesh geometry={UNIT_BOX} material={MAT.brass} position={[0.22, 0.05, 0]} scale={[0.012, 0.07, 0.012]} />
+      <mesh geometry={DISC} material={MAT.darkWood} position={[0.24, 0.02, 0]} rotation={[0, 0, PI / 2]} scale={[0.014, 0.04, 0.014]} />
       {/* the horn rises from the back and opens towards the customer */}
       <group position={[0.11, 0.26, -0.1]} rotation={[0.85, 0, 0]}>
-        <mesh geometry={big ? h.big : h.small} material={MAT.brass} castShadow />
+        <mesh geometry={big ? h.big : h.small} material={h.mat} castShadow />
+        <mesh geometry={h.lip} material={MAT.brass} position={[0, big ? 0.81 : 0.435, 0]} scale={big ? [0.51, 0.5, 0.51] : [0.205, 0.22, 0.205]} />
       </group>
     </group>
   )
@@ -207,7 +229,11 @@ export function AntiquesStall() {
       <Model id="vintage_telephone_wall_clock" anchor="wall" position={[0.75, 1.75, -1.05]} />
       {/* brass candlesticks either side of the bust */}
       {[-0.32, 0.32].map((x) => (
-        <mesh key={x} geometry={lathe([[0.05, 0], [0.05, 0.02], [0.015, 0.04], [0.012, 0.22], [0.03, 0.24], [0.02, 0.27]], 14)} material={MAT.brass} position={[x, TOP, 0.42]} castShadow />
+        <group key={x} position={[x, TOP, 0.42]}>
+          <mesh geometry={CANDLESTICK} material={MAT.brass} castShadow />
+          <mesh geometry={CANDLE} material={MAT.white} position={[0, 0.32, 0]} castShadow />
+          <mesh geometry={BALL} material={MAT.black} position={[0, 0.385, 0]} scale={[0.003, 0.012, 0.003]} />
+        </group>
       ))}
       {/* a boombox on the ground out front */}
       <Model id="boombox" position={[-0.7, 0, 1.35]} rotation={[0, 0.15, 0]} scale={0.9} />
@@ -334,7 +360,10 @@ export function RecordChange({ mode }: { mode: 'default' | 'flying' | 'melted' }
       {mode === 'flying' && <FlyingBooks />}
       {mode === 'melted' &&
         [-0.95, -0.6, -0.25].map((x, i) => (
-          <mesh key={x} geometry={meltedRecord()} material={MAT.vinyl} position={[x, TOP + 0.004, COUNTER.z + COUNTER.depth / 2 - 0.02]} rotation={[0, (i - 1) * 0.15, 0]} castShadow />
+          <group key={x} position={[x, TOP + 0.004, COUNTER.z + COUNTER.depth / 2 - 0.02]} rotation={[0, (i - 1) * 0.15, 0]}>
+            <mesh geometry={meltedRecord()} material={MAT.vinyl} castShadow />
+            <mesh geometry={meltedLabel()} material={glossMaterial(['#e8402a', '#f2d23a', '#16d0ff'][i])} />
+          </group>
         ))}
     </>
   )

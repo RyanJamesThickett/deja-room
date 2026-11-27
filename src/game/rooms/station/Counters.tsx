@@ -1,9 +1,11 @@
+import { TorusGeometry, type Material } from 'three'
 import { ShadowFigure } from '../../figure'
 import { Instanced, PI, type Placement } from '../../kit'
 import { once } from '../../outsideLayers'
+import type { Vec3 } from '../../mutations'
 import { mulberry32 } from '../../rng'
 import { BALL, CYL, glow, gloss, lathe, MAT, matte, metal, POP } from './parts'
-import { Ball, Box, Cyl, Print, Rod } from './Prims'
+import { Ball, Box, Cyl, Print, Rod, Soft } from './Prims'
 import { DESK } from './plan'
 import { mapTexture, posterTexture, screenTexture, sign } from './textures'
 
@@ -258,27 +260,52 @@ export function Poster({ mode }: { mode: 'default' | 'shark' | 'rain' }) {
 
 export function HelpPoint({ phone = false }: { phone?: boolean }) {
   const handset = gloss('#141414')
+  const yellow = gloss(POP.yellow)
   return (
-    <group position={[0, 0, 0.27]}>
-      <Box size={[0.36, 0.64, 0.12]} at={[0, 1.25, 0]} mat={gloss(POP.yellow)} />
-      <Print map={sign('HELP\nPOINT', '#ffd21f', '#141414', 192, 128)} w={0.3} h={0.2} at={[0, 1.44, 0.062]} />
-      <Cyl r={0.05} h={0.03} at={[-0.07, 1.22, 0.065]} rot={[PI / 2, 0, 0]} mat={glow('#ff2a2a')} />
-      <Cyl r={0.05} h={0.03} at={[0.07, 1.22, 0.065]} rot={[PI / 2, 0, 0]} mat={glow('#2a8aff')} />
-      {[0, 1, 2].map((k) => (
-        <Box key={k} size={[0.2, 0.015, 0.01]} at={[0, 1.06 + k * 0.03, 0.062]} mat={MAT.black} />
+    <group>
+      {/* two steel bands round the column, and a bracket out to the back of the box */}
+      {[1.05, 1.45].map((y) => (
+        <group key={y}>
+          <mesh geometry={STRAP} material={MAT.steel} position={[0, y, 0]} rotation={[PI / 2, 0, 0]} />
+          <Box size={[0.08, 0.06, 0.1]} at={[0, y, 0.19]} mat={MAT.steel} />
+        </group>
       ))}
-      {/* the hook on the side, and the handset: on it, or hanging by its cord */}
-      <Box size={[0.04, 0.08, 0.06]} at={[0.2, 1.3, 0]} mat={MAT.black} />
-      {phone ? (
-        <>
-          {Array.from({ length: 9 }, (_, k) => (
-            <mesh key={k} geometry={BALL} material={handset} position={[0.21 + Math.sin(k * 1.9) * 0.02, 1.2 - k * 0.07, 0.03 + Math.cos(k * 1.9) * 0.02]} scale={0.018} />
-          ))}
-          <Box size={[0.06, 0.24, 0.06]} at={[0.22, 0.48, 0.05]} rot={[0.3, 0, 0.1]} mat={handset} />
-        </>
-      ) : (
-        <Box size={[0.06, 0.24, 0.06]} at={[0.24, 1.32, 0.0]} mat={handset} />
-      )}
+      <group position={[0, 0, 0.27]}>
+        <Soft size={[0.36, 0.64, 0.12]} r={0.03} at={[0, 1.25, 0]} mat={yellow} />
+        <Soft size={[0.4, 0.04, 0.16]} r={0.015} at={[0, 1.585, 0.01]} mat={MAT.black} />
+        <Print map={sign('HELP\nPOINT', '#ffd21f', '#141414', 192, 128)} w={0.3} h={0.2} at={[0, 1.44, 0.062]} />
+        <Cyl r={0.05} h={0.03} at={[-0.07, 1.22, 0.065]} rot={[PI / 2, 0, 0]} mat={glow('#ff2a2a')} />
+        <Cyl r={0.05} h={0.03} at={[0.07, 1.22, 0.065]} rot={[PI / 2, 0, 0]} mat={glow('#2a8aff')} />
+        {[0, 1, 2].map((k) => (
+          <Box key={k} size={[0.2, 0.015, 0.01]} at={[0, 1.06 + k * 0.03, 0.062]} mat={MAT.black} />
+        ))}
+        {/* the hook on the side, and the handset: on it, or hanging by its cord */}
+        <Box size={[0.04, 0.08, 0.06]} at={[0.2, 1.3, 0]} mat={MAT.black} />
+        {phone ? (
+          <>
+            {Array.from({ length: 9 }, (_, k) => (
+              <mesh key={k} geometry={BALL} material={handset} position={[0.21 + Math.sin(k * 1.9) * 0.02, 1.2 - k * 0.07, 0.03 + Math.cos(k * 1.9) * 0.02]} scale={0.018} />
+            ))}
+            <Handset at={[0.22, 0.48, 0.05]} rot={[0.3, 0, 0.1]} mat={handset} />
+          </>
+        ) : (
+          <Handset at={[0.24, 1.32, 0.0]} mat={handset} />
+        )}
+      </group>
+    </group>
+  )
+}
+
+/** A strap round a lamp column, at about the help point's height. */
+const STRAP = new TorusGeometry(0.16, 0.012, 6, 28)
+
+/** A telephone handset standing on end: a grip with an ear and a mouth piece. */
+function Handset({ at, rot, mat }: { at: Vec3; rot?: Vec3; mat: Material }) {
+  return (
+    <group position={at} rotation={rot}>
+      <Soft size={[0.05, 0.2, 0.045]} r={0.018} mat={mat} />
+      <Soft size={[0.07, 0.06, 0.065]} r={0.024} at={[0, 0.1, 0.012]} mat={mat} />
+      <Soft size={[0.07, 0.06, 0.065]} r={0.024} at={[0, -0.1, 0.012]} mat={mat} />
     </group>
   )
 }
@@ -289,19 +316,29 @@ export function HelpPoint({ phone = false }: { phone?: boolean }) {
 
 
 const BELL = lathe([[0, 0], [0.4, 0], [0.4, 0.03], [0.32, 0.08], [0.3, 0.2], [0.2, 0.32], [0.05, 0.36], [0.05, 0.44], [0.09, 0.47], [0, 0.5]], 32)
+/** The rounded lip round the top of the desk. */
+const DESK_LIP = new TorusGeometry(DESK.r + 0.07, 0.035, 10, 64)
 
 export function InfoDesk({ mode }: { mode: 'default' | 'question' | 'bell' }) {
   const blue = gloss(POP.blue)
   const face = sign(mode === 'question' ? '?' : 'i', '#1f6bff', '#ffffff', 256, 256)
   return (
     <group>
-      <Cyl r={DESK.r} h={1.0} at={[0, 0.5, 0]} mat={MAT.white} />
+      {/* a dark kick plinth, the white drum with its blue band, and a top with a rounded lip */}
+      <Cyl r={DESK.r - 0.04} h={0.1} at={[0, 0.05, 0]} mat={MAT.black} />
+      <Cyl r={DESK.r} h={0.9} at={[0, 0.55, 0]} mat={MAT.white} />
       <Cyl r={DESK.r + 0.005} h={0.16} at={[0, 0.78, 0]} mat={blue} />
+      <Cyl r={DESK.r + 0.006} h={0.025} at={[0, 0.66, 0]} mat={gloss(POP.yellow)} shadow={false} />
       <Cyl r={DESK.r + 0.07} h={0.06} at={[0, 1.03, 0]} mat={blue} />
-      {/* a monitor, a rack of leaflets, a little bell */}
-      <Box size={[0.5, 0.34, 0.04]} at={[0.45, 1.3, -0.35]} rot={[0, -0.6, 0]} mat={MAT.black} />
-      <Box size={[0.06, 0.12, 0.06]} at={[0.43, 1.1, -0.38]} mat={MAT.black} />
-      <Box size={[0.5, 0.3, 0.12]} at={[-0.1, 1.2, -0.8]} rot={[-0.2, 0.2, 0]} mat={MAT.steel} />
+      <mesh geometry={DESK_LIP} material={blue} position={[0, 1.03, 0]} rotation={[PI / 2, 0, 0]} />
+      {/* a monitor on a stand, a rack of leaflets, a little bell */}
+      <group position={[0.45, DESK.top, -0.38]} rotation={[0, -0.6, 0]}>
+        <Soft size={[0.5, 0.34, 0.04]} r={0.015} at={[0, 0.24, 0.03]} mat={MAT.black} />
+        <Box size={[0.44, 0.28, 0.005]} at={[0, 0.24, 0.051]} mat={MAT.darkGlass} shadow={false} />
+        <Box size={[0.05, 0.1, 0.03]} at={[0, 0.06, 0]} mat={MAT.black} />
+        <Soft size={[0.2, 0.02, 0.14]} r={0.008} at={[0, 0.01, 0]} mat={MAT.black} />
+      </group>
+      <Soft size={[0.5, 0.3, 0.12]} r={0.02} at={[-0.1, 1.2, -0.8]} rot={[-0.2, 0.2, 0]} mat={MAT.steel} />
       {[POP.yellow, POP.pink, POP.green].map((c, k) => (
         <Box key={c} size={[0.13, 0.2, 0.02]} at={[-0.25 + k * 0.15, 1.28, -0.76]} rot={[-0.2, 0.2, 0]} mat={matte(c)} />
       ))}
@@ -311,13 +348,16 @@ export function InfoDesk({ mode }: { mode: 'default' | 'question' | 'bell' }) {
         <mesh geometry={BELL} material={MAT.brass} position={[0.55, DESK.top, 0.75]} scale={0.14} castShadow />
       )}
       {/* the sign: an i on every side of a cube, high on a pole */}
+      <Cyl r={0.09} h={0.05} at={[0, DESK.top + 0.025, 0]} mat={MAT.steel} />
       <Rod a={[0, DESK.top, 0]} b={[0, 3.2, 0]} r={0.05} mat={MAT.steel} />
-      <Box size={[0.7, 0.7, 0.7]} at={[0, 3.5, 0]} mat={blue} />
+      <Soft size={[0.7, 0.7, 0.7]} r={0.05} at={[0, 3.5, 0]} mat={blue} />
       {[0, PI / 2, PI, -PI / 2].map((a) => (
         <group key={a} rotation={[0, a, 0]}>
-          <Print map={face} w={0.66} h={0.66} at={[0, 3.5, 0.352]} lit />
+          <Print map={face} w={0.6} h={0.6} at={[0, 3.5, 0.352]} lit />
         </group>
       ))}
+      <Soft size={[0.72, 0.04, 0.72]} r={0.015} at={[0, 3.87, 0]} mat={gloss(POP.yellow)} />
+      <Soft size={[0.72, 0.04, 0.72]} r={0.015} at={[0, 3.13, 0]} mat={gloss(POP.yellow)} />
     </group>
   )
 }

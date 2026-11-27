@@ -1,12 +1,13 @@
 import { useFrame } from '@react-three/fiber'
 import { useMemo } from 'react'
-import { MeshStandardMaterial } from 'three'
+import { DoubleSide, MeshStandardMaterial, PlaneGeometry, TorusGeometry } from 'three'
 import { ShadowFigure } from '../../figure'
 import { Instanced, PI, type Placement } from '../../kit'
 import { once } from '../../outsideLayers'
 import { mulberry32 } from '../../rng'
-import { BALL, BOX, CYL, glow, gloss, lathe, MAT, matte, POP, printed } from './parts'
-import { Box, Cyl, Print, Rod } from './Prims'
+import type { Vec3 } from '../../mutations'
+import { BALL, BOX, CYL, glow, gloss, lathe, MAT, matte, POP, printed, ROD, BUSH } from './parts'
+import { Box, Cyl, Print, Rod, Soft } from './Prims'
 import { chalkTexture, coversTexture, lockerTexture, paperTexture, photoSamplesTexture, shutterTexture, sign } from './textures'
 
 /*
@@ -23,6 +24,42 @@ const LID = lathe([[0, 0], [0.64, 0], [0.64, 0.08], [0.5, 0.16], [0, 0.2]], 32)
 const SLEEVE = lathe([[0.488, 0], [0.552, 0.45]], 32)
 const SMALL_CUP = lathe([[0, 0], [0.035, 0], [0.045, 0.11], [0, 0.11]], 12)
 
+/** The espresso machine on the back counter: chrome body, red top, two group heads, a steam wand, cups warming on top. */
+function Espresso() {
+  return (
+    <group position={[0.6, 0.95, -0.55]}>
+      <Soft size={[0.8, 0.45, 0.42]} r={0.04} at={[0, 0.225, 0]} mat={MAT.chrome} />
+      <Soft size={[0.82, 0.06, 0.44]} r={0.02} at={[0, 0.48, 0]} mat={gloss(POP.red)} />
+      <Soft size={[0.7, 0.03, 0.14]} r={0.01} at={[0, 0.02, 0.26]} mat={MAT.black} />
+      {[-0.18, 0.18].map((x) => (
+        <group key={x} position={[x, 0.2, 0.22]}>
+          <Cyl r={0.05} h={0.08} at={[0, 0.03, 0]} mat={MAT.steel} />
+          <Cyl r={0.045} h={0.04} at={[0, -0.03, 0]} mat={MAT.black} />
+          <Rod a={[0, -0.03, 0.03]} b={[0, -0.05, 0.18]} r={0.014} mat={MAT.black} />
+        </group>
+      ))}
+      <Rod a={[0.34, 0.3, 0.2]} b={[0.36, 0.08, 0.26]} r={0.008} mat={MAT.steel} />
+      {[-0.25, -0.1, 0.05].map((x) => (
+        <mesh key={x} geometry={SMALL_CUP} material={MAT.white} position={[x, 0.51, 0.05]} castShadow />
+      ))}
+      <Print map={sign('ESPRESSO', '#ff3131', '#ffffff', 256, 48)} w={0.4} h={0.075} at={[0, 0.36, 0.211]} />
+    </group>
+  )
+}
+
+/** A coffee grinder: a black body under a clear hopper of beans. */
+const HOPPER = lathe([[0.04, 0], [0.11, 0.18], [0.11, 0.2], [0, 0.2]], 18)
+
+function Grinder() {
+  return (
+    <group position={[-0.05, 0.95, -0.6]}>
+      <Soft size={[0.16, 0.3, 0.2]} r={0.03} at={[0, 0.15, 0]} mat={MAT.black} />
+      <Cyl r={0.04} h={0.04} at={[0, 0.32, 0]} mat={MAT.steel} />
+      <mesh geometry={HOPPER} material={matte('#5a321c')} position={[0, 0.34, 0]} />
+    </group>
+  )
+}
+
 export function CoffeeKiosk({ mode }: { mode: 'default' | 'cup' | 'queue' | 'shut' }) {
   const teal = gloss(POP.teal)
   return (
@@ -32,18 +69,19 @@ export function CoffeeKiosk({ mode }: { mode: 'default' | 'cup' | 'queue' | 'shu
       {[-1, 1].map((s) => (
         <Box key={s} size={[0.12, 2.6, 2.0]} at={[s * 1.54, 1.3, 0]} mat={teal} paint />
       ))}
-      <Box size={[3.5, 0.18, 2.3]} at={[0, 2.69, 0.05]} mat={gloss(POP.red)} />
+      <Soft size={[3.5, 0.18, 2.3]} r={0.04} at={[0, 2.69, 0.05]} mat={gloss(POP.red)} />
+      {/* white stripes across the roof, like an awning */}
+      {[-1.2, -0.6, 0, 0.6, 1.2].map((x) => (
+        <Box key={x} size={[0.3, 0.01, 2.24]} at={[x, 2.783, 0.05]} mat={MAT.white} shadow={false} />
+      ))}
       <Box size={[3.2, 0.5, 0.12]} at={[0, 2.35, 0.94]} mat={MAT.white} />
       <Print map={sign('PLATFORM ZERO COFFEE', '#ffffff', '#ff3131', 1024, 160)} w={3.1} h={0.48} at={[0, 2.35, 1.005]} />
       <Box size={[3.2, 1.0, 0.6]} at={[0, 0.5, 0.65]} mat={teal} paint />
-      <Box size={[3.3, 0.06, 0.8]} at={[0, 1.03, 0.62]} mat={MAT.white} />
+      <Soft size={[3.3, 0.06, 0.8]} r={0.025} at={[0, 1.03, 0.62]} mat={MAT.white} />
       {/* behind the counter: worktop, espresso machine, menu */}
       <Box size={[3.0, 0.95, 0.5]} at={[0, 0.475, -0.55]} mat={MAT.steel} />
-      <Box size={[0.8, 0.45, 0.42]} at={[0.6, 1.18, -0.55]} mat={MAT.chrome} />
-      <Box size={[0.82, 0.06, 0.44]} at={[0.6, 1.43, -0.55]} mat={gloss(POP.red)} />
-      {[0.4, 0.8].map((x) => (
-        <Cyl key={x} r={0.03} h={0.12} at={[x, 1.0, -0.3]} mat={MAT.black} />
-      ))}
+      <Espresso />
+      <Grinder />
       <Print map={chalkTexture('MENU\nFLAT WHITE\nLATTE  MOCHA\nHOT CHOC\nTEA')} w={1.0} h={1.5} at={[-0.7, 1.75, -0.79]} />
       {/* on the counter: a cake case and a few cups */}
       <Box size={[0.9, 0.35, 0.45]} at={[-0.95, 1.235, 0.62]} mat={MAT.glass} shadow={false} />
@@ -130,7 +168,7 @@ export function Newsagent({ mode }: { mode: 'default' | 'headline' | 'blank' | '
             {jarSpots()
               .slice(0, 6)
               .map((p, k) => (
-                <mesh key={k} geometry={JAR} material={MAT.glass} position={p.at} rotation={[0, 0, k === 2 ? PI / 2 : 0]} />
+                <mesh key={k} geometry={JAR} material={MAT.glass} position={k === 2 ? [p.at[0], 0.1, p.at[2]] : p.at} rotation={[0, 0, k === 2 ? PI / 2 : 0]} />
               ))}
             {spilled().map((items, k) => (
               <Instanced key={k} geometry={BALL} material={sweets[k]} items={items} />
@@ -164,7 +202,17 @@ export function Newsagent({ mode }: { mode: 'default' | 'headline' | 'blank' | '
 // Photo booth: 1.4 m wide, 1.5 m deep, curtain on the right of the front
 // ---------------------------------------------------------------------------
 
-const CURTAIN = new MeshStandardMaterial({ color: '#c8102e', roughness: 0.95 })
+const CURTAIN = new MeshStandardMaterial({ color: '#c8102e', roughness: 0.95, side: DoubleSide })
+/** The booth's curtain: a sheet gathered into soft folds. */
+const CURTAIN_FOLDS = (() => {
+  const w = 0.78
+  const g = new PlaneGeometry(w, 1.62, 48, 1)
+  const pos = g.attributes.position
+  for (let i = 0; i < pos.count; i++) pos.setZ(i, 0.022 * Math.sin((pos.getX(i) / w) * PI * 2 * 5.5))
+  g.computeVertexNormals()
+  return g
+})()
+const CURTAIN_RING = new TorusGeometry(0.022, 0.006, 6, 12)
 
 /** Light spilling out round the curtain; there's only the one booth, so one material. */
 const FLASH = new MeshStandardMaterial({ color: '#ffffff', emissive: '#ffffff', emissiveIntensity: 0, roughness: 0.4 })
@@ -204,8 +252,9 @@ export function PhotoBooth({ mode }: { mode: 'default' | 'feet' | 'flash' | 'bro
       <Cyl r={0.17} h={0.06} at={[0.25, 0.55, 0]} mat={MAT.black} />
       <Cyl r={0.03} h={0.52} at={[0.25, 0.27, 0]} mat={MAT.chrome} />
       <Box size={[0.75, 0.03, 0.03]} at={[0.25, 2.0, 0.72]} mat={MAT.chrome} />
-      {[0, 1, 2, 3, 4].map((k) => (
-        <Box key={k} size={[0.16, 1.62, 0.04]} at={[-0.06 + k * 0.155, 1.17, 0.72 + (k % 2) * 0.03]} mat={CURTAIN} />
+      <mesh geometry={CURTAIN_FOLDS} material={CURTAIN} position={[0.27, 1.17, 0.735]} castShadow />
+      {[0, 1, 2, 3, 4, 5].map((k) => (
+        <mesh key={k} geometry={CURTAIN_RING} material={MAT.chrome} position={[-0.08 + k * 0.14, 2.0, 0.72]} rotation={[0, PI / 2, 0]} />
       ))}
       {mode === 'feet' &&
         [-1, 1].map((s) => (
@@ -329,19 +378,43 @@ export function WallSign({ text, bg, fg, w, h }: { text: string; bg: string; fg:
 
 const BUCKET = lathe([[0, 0], [0.15, 0], [0.19, 0.34], [0.2, 0.36], [0, 0.36]], 20)
 const BLOOM_COLOURS = ['#ff3131', '#ffd21f', '#ff3fa4']
-const blooms = once(() => {
+/**
+ * A bunch in each bucket: stems fanning out of the foliage with a bloom on
+ * each. Wilted, the stems flop out over the rim and the heads hang.
+ */
+const bunches = once(() => {
   const rng = mulberry32(55)
-  const fresh = Array.from({ length: 14 }, (): Placement => {
-    const a = rng() * PI * 2
-    const r = rng() * 0.14
-    return { at: [Math.cos(a) * r, 0.7 + rng() * 0.14, Math.sin(a) * r], scale: [0.045, 0.05, 0.045] }
-  })
-  // wilted: hanging over the bucket's rim
-  const dead = fresh.map((p): Placement => ({ at: [p.at[0] * 1.6 + 0.08, p.at[1] - 0.3, p.at[2] * 1.6 + 0.12], scale: [0.035, 0.03, 0.035] }))
-  return { fresh, dead }
+  const make = (dead: boolean) => {
+    const stems: Placement[] = []
+    const heads: Placement[] = []
+    const hearts: Placement[] = []
+    for (let k = 0; k < 9; k++) {
+      const a = (k / 9) * PI * 2 + rng() * 0.4
+      const t = dead ? 0.75 + rng() * 0.4 : k === 0 ? 0 : 0.12 + rng() * 0.28
+      const len = (dead ? 0.2 : 0.36) + rng() * 0.12
+      const dir: Vec3 = [Math.sin(t) * Math.cos(a), Math.cos(t), -Math.sin(t) * Math.sin(a)]
+      const at = (d: number): Vec3 => [dir[0] * d, 0.3 + dir[1] * d, dir[2] * d]
+      stems.push({ at: at(len / 2), rot: [0, a, -t], scale: [0.008, len, 0.008] })
+      const tip = at(len)
+      if (dead) {
+        // bent over at the top, the head hanging off the end
+        const bend = PI - 0.4
+        const drop = 0.12
+        const d2: Vec3 = [Math.sin(bend) * Math.cos(a), Math.cos(bend), -Math.sin(bend) * Math.sin(a)]
+        stems.push({ at: [tip[0] + (d2[0] * drop) / 2, tip[1] + (d2[1] * drop) / 2, tip[2] + (d2[2] * drop) / 2], rot: [0, a, -bend], scale: [0.008, drop, 0.008] })
+        heads.push({ at: [tip[0] + d2[0] * (drop + 0.02), tip[1] + d2[1] * (drop + 0.02), tip[2] + d2[2] * (drop + 0.02)], rot: [0, a, -bend], scale: [0.03, 0.045, 0.03] })
+      } else {
+        heads.push({ at: tip, rot: [0, a, -t], scale: [0.055, 0.035, 0.055] })
+        hearts.push({ at: at(len + 0.025), scale: [0.02, 0.016, 0.02] })
+      }
+    }
+    return { stems, heads, hearts }
+  }
+  return { fresh: make(false), dead: make(true) }
 })
 
 export function Flowers({ dead = false }: { dead?: boolean }) {
+  const b = bunches()[dead ? 'dead' : 'fresh']
   const stems = matte(dead ? '#6b5a2e' : '#3f8a3a')
   const steps: [number, number][] = [
     [-0.42, 0.0],
@@ -350,15 +423,22 @@ export function Flowers({ dead = false }: { dead?: boolean }) {
   ]
   return (
     <group>
-      <Box size={[1.3, 0.25, 0.5]} at={[0, 0.125, 0]} mat={MAT.darkWood} />
-      <Box size={[0.5, 0.25, 0.5]} at={[0, 0.375, 0]} mat={MAT.darkWood} />
+      <Soft size={[1.3, 0.25, 0.5]} r={0.02} at={[0, 0.125, 0]} mat={MAT.darkWood} />
+      <Soft size={[0.5, 0.25, 0.5]} r={0.02} at={[0, 0.375, 0]} mat={MAT.darkWood} />
       {steps.map(([x, y], k) => (
         <group key={x} position={[x, y + 0.25, 0]}>
           <mesh geometry={BUCKET} material={MAT.steel} castShadow />
-          <mesh geometry={CYL} material={stems} position={[0, 0.5, 0]} scale={[0.12, 0.4, 0.12]} rotation={dead ? [0.15, 0, 0.2] : [0, 0, 0]} />
-          <Instanced geometry={BALL} material={dead ? matte('#5a3a2a') : gloss(BLOOM_COLOURS[k])} items={dead ? blooms().dead : blooms().fresh} />
+          <mesh geometry={RIM} material={MAT.steel} position={[0, 0.355, 0]} rotation={[PI / 2, 0, 0]} />
+          {/* foliage packed in the top of the bucket */}
+          <mesh geometry={BUSH} material={dead ? matte('#5e5a2a') : matte('#2f7a34')} position={[0, 0.35, 0]} scale={[0.18, 0.07, 0.18]} />
+          <Instanced geometry={ROD} material={stems} items={b.stems} />
+          <Instanced geometry={BALL} material={dead ? matte('#5a3a2a') : gloss(BLOOM_COLOURS[k])} items={b.heads} castShadow />
+          {!dead && <Instanced geometry={BALL} material={gloss(POP.yellow)} items={b.hearts} />}
         </group>
       ))}
     </group>
   )
 }
+
+/** The rolled rim of a galvanised bucket. */
+const RIM = new TorusGeometry(0.2, 0.012, 6, 24)

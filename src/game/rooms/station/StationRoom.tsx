@@ -26,10 +26,10 @@ import {
 import { Atm, HelpPoint, InfoDesk, LostProperty, MapBoard, Poster, TakeawayCup, TicketMachines, TicketOffice } from './Counters'
 import { Banner, Entrance, ExitSign, FanWindow, StationClock } from './Entrance'
 import { Hall, Lights } from './Hall'
-import { gloss, matte, POP } from './parts'
+import { BUSH, gloss, matte, POP } from './parts'
 import { BEAM, DESK, FLOCKS, GATES, HALL, LAMPS, roofY, TRACKS } from './plan'
 import { BufferStop, DeparturesBoard, Gates, PlatformSigns, SteamTrain, Train } from './Platforms'
-import { Box, Cyl } from './Prims'
+import { Box, Cyl, Soft } from './Prims'
 import { ABoard, CoffeeKiosk, Flowers, Lockers, Newsagent, PhotoBooth, Vending, WallSign } from './Shops'
 
 /*
@@ -60,6 +60,8 @@ function Swaps<M extends string>({ id, modes, render }: { id: string; modes: rea
     </>
   )
 }
+
+const TOPIARY = matte('#2f8a3a')
 
 /** Wall-hung things face into the hall from each wall. */
 const WEST = [0, PI / 2, 0] as [number, number, number]
@@ -198,16 +200,15 @@ function SouthEnd() {
       <Item id="scooter" position={[11.8, 0, 10.35]}>
         <Scooter />
       </Item>
-      {/* planters either side of the middle doors */}
+      {/* planters either side of the middle doors: a clipped bay tree in a square pot */}
       {[-3.9, 3.9].map((x) => (
         <Decoy key={x} label="planter" position={[x, 0, 10.3]} solid>
-          <Box size={[0.9, 0.6, 0.9]} at={[0, 0.3, 0]} mat={gloss(POP.ink)} />
-          <Box size={[0.94, 0.06, 0.94]} at={[0, 0.6, 0]} mat={gloss(POP.yellow)} />
-          <Cyl r={0.05} h={0.6} at={[0, 0.9, 0]} mat={matte('#5a3a22')} />
-          <mesh position={[0, 1.45, 0]} scale={[0.5, 0.6, 0.5]} castShadow>
-            <sphereGeometry args={[1, 16, 12]} />
-            <meshStandardMaterial color="#2f8a3a" roughness={0.85} />
-          </mesh>
+          <Soft size={[0.9, 0.56, 0.9]} r={0.05} at={[0, 0.3, 0]} mat={gloss(POP.ink)} />
+          <Soft size={[0.96, 0.08, 0.96]} r={0.03} at={[0, 0.6, 0]} mat={gloss(POP.yellow)} />
+          <Soft size={[0.94, 0.04, 0.94]} r={0.015} at={[0, 0.04, 0]} mat={gloss(POP.yellow)} />
+          <Box size={[0.8, 0.02, 0.8]} at={[0, 0.645, 0]} mat={matte('#3b2416')} shadow={false} />
+          <Cyl r={0.05} h={0.75} at={[0, 1.0, 0]} mat={matte('#5a3a22')} />
+          <mesh geometry={BUSH} material={TOPIARY} position={[0, 1.55, 0]} scale={[0.5, 0.55, 0.5]} castShadow />
         </Decoy>
       ))}
     </>
@@ -290,7 +291,7 @@ function Floor() {
       <Item id="suitcase" position={[-1.8, 0, -7.6]} rotation={[0, 0, 0]}>
         <Swaps id="suitcase" modes={['default', 'open'] as const} render={(m) => <Suitcase open={m === 'open'} />} />
       </Item>
-      <Item id="umbrella" position={[LAMPS[2][0] + 0.4, 0, LAMPS[2][1]]}>
+      <Item id="umbrella" position={[LAMPS[2][0] + 0.5, 0, LAMPS[2][1]]}>
         <Swaps id="umbrella" modes={['default', 'open'] as const} render={(m) => <Umbrella open={m === 'open'} />} />
       </Item>
 

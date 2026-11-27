@@ -300,8 +300,11 @@ export function booksIn(at: Vec3, seed: number, n = 16): Placement[] {
 }
 
 /** A record drooping over an edge: a disc whose far half bends down, as if melted. */
-export const meltedRecord = once(() => {
-  const g = new CylinderGeometry(0.15, 0.15, 0.004, 40, 1)
+export const meltedRecord = once(() => droop(new CylinderGeometry(0.15, 0.15, 0.004, 40, 1)))
+/** The melted record's label, drooping the same way over the edge. */
+export const meltedLabel = once(() => droop(new CylinderGeometry(0.05, 0.05, 0.002, 24, 1).translate(0, 0.0025, 0)))
+
+function droop(g: BufferGeometry) {
   const p = g.attributes.position
   for (let i = 0; i < p.count; i++) {
     const x = p.getX(i)
@@ -311,7 +314,7 @@ export const meltedRecord = once(() => {
   }
   g.computeVertexNormals()
   return g
-})
+}
 
 // ---------------------------------------------------------------------------
 // Hats

@@ -19,7 +19,7 @@ import { Block, PanelLight, PI } from '../../kit'
 import { Model } from '../../Model'
 import type { Vec3 } from '../../mutations'
 import { cheeseCurtain, cheeseString, flameParts, ovenElement, ovenRack } from './fx'
-import { BRUSHED, CAST_IRON, DARK_STEEL, LINE, STAINLESS, STEEL_MAT } from './layout'
+import { BRUSHED, CAST_IRON, DARK_STEEL, LINE, STAINLESS, STEEL_MAT, STEEL_OPEN } from './layout'
 import { wireMeshTexture } from './textures'
 
 /*
@@ -35,6 +35,8 @@ const KNOB = new CylinderGeometry(0.022, 0.022, 0.025, 16)
 const KNOB_MAT = new MeshStandardMaterial({ color: '#141518', roughness: 0.5 })
 const LEG = new CylinderGeometry(0.025, 0.03, 0.1, 12)
 const RING = new TorusGeometry(0.07, 0.012, 8, 32)
+/** A rolled rim for the top of a pan, scaled to its radius. */
+const RIM = new TorusGeometry(1, 0.05, 6, 40)
 
 /** The oven's cavity in the range: its width, floor, roof and how far back it goes. */
 const OVEN = { w: 0.96, y0: 0.22, y1: 0.64, back: -0.3 }
@@ -138,9 +140,10 @@ export function StovePans() {
   return (
     <>
       <group position={[0, TOP + 0.036, 0.2]}>
-        <mesh position={[0, 0.06, 0]} material={STEEL_MAT} castShadow>
+        <mesh position={[0, 0.06, 0]} material={STEEL_OPEN} castShadow>
           <cylinderGeometry args={[0.1, 0.1, 0.12, 28, 1, true]} />
         </mesh>
+        <mesh geometry={RIM} material={STEEL_MAT} position={[0, 0.12, 0]} rotation={[PI / 2, 0, 0]} scale={[0.1, 0.1, 0.12]} />
         <mesh position={[0, 0.003, 0]} material={STEEL_MAT}>
           <cylinderGeometry args={[0.1, 0.1, 0.006, 28]} />
         </mesh>
@@ -151,11 +154,16 @@ export function StovePans() {
         <Block size={[0.03, 0.02, 0.2]} position={[0, 0.1, 0.19]} {...DARK_STEEL} radius={0.008} />
       </group>
       <group position={[0.38, TOP + 0.036, -0.2]}>
-        <mesh position={[0, 0.03, 0]} material={STEEL_MAT} castShadow>
+        <mesh position={[0, 0.03, 0]} material={STEEL_OPEN} castShadow>
           <cylinderGeometry args={[0.14, 0.13, 0.06, 28, 1, true]} />
         </mesh>
-        <mesh position={[0, 0.003, 0]}>
+        <mesh geometry={RIM} material={STEEL_MAT} position={[0, 0.06, 0]} rotation={[PI / 2, 0, 0]} scale={[0.14, 0.14, 0.12]} />
+        <mesh position={[0, 0.003, 0]} material={STEEL_MAT}>
           <cylinderGeometry args={[0.13, 0.13, 0.006, 28]} />
+        </mesh>
+        {/* a creamy sauce, a little way up the sides */}
+        <mesh position={[0, 0.016, 0]}>
+          <cylinderGeometry args={[0.133, 0.13, 0.02, 28]} />
           <meshStandardMaterial color="#d8c27a" roughness={0.6} />
         </mesh>
         <Block size={[0.03, 0.02, 0.24]} position={[0.12, 0.05, 0.17]} rotation={[0, 0.5, 0]} {...DARK_STEEL} radius={0.008} />
@@ -350,7 +358,7 @@ export function Stockpot({ contents }: { contents: 'stock' | 'purple' | 'tentacl
   }, [])
   return (
     <>
-      <mesh position={[0, POT_H / 2, 0]} material={STEEL_MAT} castShadow>
+      <mesh position={[0, POT_H / 2, 0]} material={STEEL_OPEN} castShadow>
         <cylinderGeometry args={[POT_R, POT_R, POT_H, 32, 1, true]} />
       </mesh>
       <mesh position={[0, 0.004, 0]} material={STEEL_MAT}>
@@ -404,6 +412,10 @@ export function Stockpot({ contents }: { contents: 'stock' | 'purple' | 'tentacl
         <group position={[0.06, POT_H - 0.05, 0.04]} rotation={[0.25, 0, -0.35]}>
           <mesh position={[0, 0.17, 0]} material={STEEL_MAT}>
             <cylinderGeometry args={[0.007, 0.007, 0.34, 8]} />
+          </mesh>
+          {/* the hook on the end of the handle */}
+          <mesh position={[0.018, 0.34, 0]} material={STEEL_MAT}>
+            <torusGeometry args={[0.018, 0.006, 6, 16, PI]} />
           </mesh>
         </group>
       )}
@@ -822,13 +834,14 @@ export function HoodFilters({ width, depth, missing }: { width: number; depth: n
   return (
     <>
       {/* dark plenum behind the filters */}
-      <mesh position={[0, y, -depth / 2 + 0.16]} rotation={[-PI / 4, 0, 0]}>
+      <mesh position={[0, y + 0.02, -depth / 2 + 0.15]} rotation={[PI / 4, 0, 0]}>
         <planeGeometry args={[width - 0.08, 0.36]} />
-        <meshStandardMaterial color="#0c0c0d" roughness={0.9} />
+        <meshStandardMaterial color="#0c0c0d" roughness={0.9} side={DoubleSide} />
       </mesh>
+      {/* the bank leans in at the top, its face down towards the cooks */}
       {Array.from({ length: n }, (_, i) =>
         i === missing ? null : (
-          <group key={i} position={[start + i * FILTER_W, y, -depth / 2 + 0.17]} rotation={[-PI / 4, 0, 0]}>
+          <group key={i} position={[start + i * FILTER_W, y, -depth / 2 + 0.17]} rotation={[PI / 4, 0, 0]}>
             <Block size={[FILTER_W - 0.02, 0.34, 0.02]} position={[0, 0, 0]} color="#9aa1a8" metalness={0.75} roughness={0.35} radius={0.004} />
             {[-0.12, -0.04, 0.04, 0.12].map((x) => (
               <Block key={x} size={[0.035, 0.3, 0.02]} position={[x, 0, 0.015]} color="#7f868d" metalness={0.75} roughness={0.4} radius={0.004} />

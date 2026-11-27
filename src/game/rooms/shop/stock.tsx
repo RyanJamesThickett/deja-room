@@ -1,6 +1,19 @@
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
-import { BoxGeometry, CircleGeometry, CylinderGeometry, LatheGeometry, MeshStandardMaterial, PlaneGeometry, SphereGeometry, Vector2, type Group } from 'three'
+import {
+  BoxGeometry,
+  CircleGeometry,
+  CylinderGeometry,
+  ExtrudeGeometry,
+  LatheGeometry,
+  MeshStandardMaterial,
+  PlaneGeometry,
+  Shape,
+  SphereGeometry,
+  TorusGeometry,
+  Vector2,
+  type Group,
+} from 'three'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
 import { dimCorridorTexture } from '../../doorway'
 import { Block, Instanced, PI, type Placement } from '../../kit'
@@ -142,7 +155,11 @@ const SPRAY = lathe([
 ])
 const BLEACH_CAP = new CylinderGeometry(0.019, 0.019, 0.03, 16)
 const SUDZ_CAP = new CylinderGeometry(0.013, 0.011, 0.03, 12)
-const TRIGGER = new BoxGeometry(0.03, 0.055, 0.075)
+// a trigger-spray head: a neck, the rounded head, a nozzle out of the front and the trigger under it
+const SPRAY_NECK = new CylinderGeometry(0.012, 0.014, 0.016, 14)
+const TRIGGER = new RoundedBoxGeometry(0.034, 0.04, 0.072, 2, 0.01)
+const NOZZLE = new CylinderGeometry(0.007, 0.009, 0.02, 12)
+const LEVER = new RoundedBoxGeometry(0.016, 0.045, 0.012, 2, 0.005)
 const POWDER = new BoxGeometry(0.17, 0.22, 0.065)
 
 function useHouseholdMaterials() {
@@ -159,6 +176,7 @@ function useHouseholdMaterials() {
       sudzLabel: printed(bottleLabel('sudz')),
       spray: plain('#ffe9a8'),
       trigger: plain('#f08a1c'),
+      sprayNeck: plain('#f4f4f0'),
       sprayLabel: printed(bottleLabel('spray')),
       // box faces: +x, -x, +y, -y, +z (front), -z
       powder: [box, box, box, box, printed(powderBoxTexture()), box],
@@ -189,6 +207,9 @@ export function Detergent({ spec, face = 1 }: { spec: ShelfSpec; face?: 1 | -1 }
       sudzLabel: [] as Placement[],
       spray: [] as Placement[],
       trigger: [] as Placement[],
+      sprayNeck: [] as Placement[],
+      nozzle: [] as Placement[],
+      lever: [] as Placement[],
       sprayLabel: [] as Placement[],
     }
     at(0, 0.19, 2, (x, y, zz) => r.powder.push({ at: [x, y + 0.11, zz] }))
@@ -204,7 +225,10 @@ export function Detergent({ spec, face = 1 }: { spec: ShelfSpec; face?: 1 | -1 }
     })
     at(3, 0.085, 2, (x, y, zz) => {
       r.spray.push({ at: [x, y, zz] })
-      r.trigger.push({ at: [x, y + 0.205, zz + 0.012] })
+      r.sprayNeck.push({ at: [x, y + 0.189, zz] })
+      r.trigger.push({ at: [x, y + 0.216, zz + 0.012] })
+      r.nozzle.push({ at: [x, y + 0.222, zz + 0.056], rot: [PI / 2, 0, 0] })
+      r.lever.push({ at: [x, y + 0.183, zz + 0.036], rot: [-0.3, 0, 0] })
       r.sprayLabel.push({ at: [x, y + 0.075, zz] })
     })
     return r
@@ -219,7 +243,10 @@ export function Detergent({ spec, face = 1 }: { spec: ShelfSpec; face?: 1 | -1 }
       <Instanced geometry={SUDZ_CAP} material={m.sudzCap} items={rows.sudzCap} />
       <Instanced geometry={SUDZ_LABEL} material={m.sudzLabel} items={rows.sudzLabel} />
       <Instanced geometry={SPRAY} material={m.spray} items={rows.spray} />
+      <Instanced geometry={SPRAY_NECK} material={m.sprayNeck} items={rows.sprayNeck} />
       <Instanced geometry={TRIGGER} material={m.trigger} items={rows.trigger} />
+      <Instanced geometry={NOZZLE} material={m.sprayNeck} items={rows.nozzle} />
+      <Instanced geometry={LEVER} material={m.trigger} items={rows.lever} />
       <Instanced geometry={SPRAY_LABEL} material={m.sprayLabel} items={rows.sprayLabel} />
     </group>
   )
@@ -334,7 +361,12 @@ export function ChestFreezer({ contents }: { contents: 'lollies' | 'fish' | 'sno
   const white = { color: '#f6f7f8', roughness: 0.35 }
   return (
     <>
-      <Block size={[1.3, 0.26, 0.7]} position={[0, 0.13, 0]} {...white} radius={0.02} paint />
+      {/* a dark plinth under the cabinet, and the compressor's vent grille on the front */}
+      <Block size={[1.24, 0.05, 0.64]} position={[0, 0.025, 0]} color="#2a2f35" roughness={0.6} radius={0.01} />
+      <Block size={[1.3, 0.22, 0.7]} position={[0, 0.15, 0]} {...white} radius={0.02} paint />
+      {[0.09, 0.12, 0.15, 0.18].map((y) => (
+        <Block key={y} size={[0.3, 0.012, 0.006]} position={[0.42, y, 0.351]} color="#5a626b" roughness={0.6} radius={0.003} />
+      ))}
       {[-1, 1].map((s) => (
         <Block key={`z${s}`} size={[1.3, 0.6, 0.06]} position={[0, 0.55, s * 0.32]} {...white} radius={0.015} paint />
       ))}
@@ -416,12 +448,28 @@ export function ChestFreezer({ contents }: { contents: 'lollies' | 'fish' | 'sno
           </mesh>
         </group>
       )}
-      {/* sliding glass lids */}
-      {[-0.3, 0.3].map((x) => (
-        <mesh key={x} position={[x, 0.86, 0]} rotation={[-PI / 2, 0, 0]} renderOrder={2}>
-          <planeGeometry args={[0.62, 0.62]} />
-          <meshPhysicalMaterial color="#ffffff" transparent opacity={0.14} roughness={0.05} clearcoat={1} depthWrite={false} />
-        </mesh>
+      {/* two sliding glass lids in a track along the front and back, one riding above the other */}
+      {[-1, 1].map((s) => (
+        <Block key={s} size={[1.3, 0.02, 0.05]} position={[0, 0.86, s * 0.31]} color="#c9ced6" metalness={0.6} roughness={0.35} radius={0.006} />
+      ))}
+      {[
+        [-0.3, 0.872, 1],
+        [0.3, 0.89, -1],
+      ].map(([x, y, toward]) => (
+        <group key={x} position={[x, y, 0]}>
+          <mesh rotation={[-PI / 2, 0, 0]} renderOrder={2}>
+            <planeGeometry args={[0.6, 0.6]} />
+            <meshPhysicalMaterial color="#ffffff" transparent opacity={0.14} roughness={0.05} clearcoat={1} depthWrite={false} />
+          </mesh>
+          {[-1, 1].map((s) => (
+            <Block key={`z${s}`} size={[0.62, 0.016, 0.025]} position={[0, 0, s * 0.3]} {...white} radius={0.005} />
+          ))}
+          {[-1, 1].map((s) => (
+            <Block key={`x${s}`} size={[0.025, 0.016, 0.62]} position={[s * 0.3, 0, 0]} {...white} radius={0.005} />
+          ))}
+          {/* finger pull at the lid's inner end */}
+          <Block size={[0.03, 0.02, 0.16]} position={[toward * 0.26, 0.014, 0]} color="#1f6bff" roughness={0.4} radius={0.008} />
+        </group>
       ))}
     </>
   )
@@ -439,17 +487,39 @@ const EYE_MAT = new MeshStandardMaterial({ color: '#fffbe6', roughness: 0.2 })
 const PUPIL_MAT = new MeshStandardMaterial({ color: '#050505', roughness: 0.2 })
 const PUPIL = new SphereGeometry(0.007, 8, 6)
 
+/** The stand's side: a board that steps up from the front crate to the back one, in profile (z, y). */
+const VEG_SIDE = (() => {
+  const shape = new Shape()
+  shape.moveTo(0.44, 0)
+  shape.lineTo(0.44, 0.44)
+  shape.lineTo(-0.4, 0.94)
+  // stepped down at the back, under the window sill
+  shape.lineTo(-0.4, 0.76)
+  shape.lineTo(-0.54, 0.76)
+  shape.lineTo(-0.54, 0)
+  shape.closePath()
+  const g = new ExtrudeGeometry(shape, { depth: 0.024, bevelEnabled: true, bevelThickness: 0.008, bevelSize: 0.008, bevelSegments: 2 })
+  g.translate(0, 0, -0.012)
+  return g
+})()
+const VEG_NAMES = ['APPLES', 'ORANGES', 'LEMONS']
+const VEG_WOOD = new MeshStandardMaterial({ color: '#a8744a', roughness: 0.8 })
+
 /** Three tilted crates of apples, oranges and lemons (1.1 wide, 1.0 deep). */
 export function VegStand({ fruit }: { fruit: 'normal' | 'faces' | 'cubes' }) {
   const wood = { color: '#a8744a', roughness: 0.8 }
+  const tags = useMemo(() => VEG_NAMES.map((name) => plaqueTexture(name, '#ffffff', '#1a1a1a')), [])
   const crate = useMemo(() => {
+    const rng = mulberry32(17)
     const fruitAt: Placement[] = []
     const eyes: Placement[] = []
     const pupils: Placement[] = []
     for (let r = 0; r < 3; r++)
       for (let i = 0; i < 11; i++) {
         const at: Vec3 = [-0.47 + i * 0.094 + (r % 2) * 0.03, 0.1, -0.09 + r * 0.09]
-        fruitAt.push({ at, rot: [0.3 * i, 0.7 * r, 0] })
+        // no two quite the same size
+        const k = 0.92 + rng() * 0.14
+        fruitAt.push({ at, rot: [0.3 * i, 0.7 * r, 0], scale: [k, k, k] })
         if (r === 2)
           for (const s of [-1, 1]) {
             eyes.push({ at: [at[0] + s * 0.016, at[1] + 0.018, at[2] + 0.038] })
@@ -461,15 +531,26 @@ export function VegStand({ fruit }: { fruit: 'normal' | 'faces' | 'cubes' }) {
   return (
     <>
       {[-1, 1].map((s) => (
-        <Block key={s} size={[0.04, 1.0, 1.0]} position={[s * 0.57, 0.5, -0.05]} {...wood} radius={0.01} paint />
+        <mesh key={s} geometry={VEG_SIDE} material={VEG_WOOD} position={[s * 0.57, 0, 0]} rotation={[0, -PI / 2, 0]} castShadow receiveShadow userData={{ paint: true }} />
       ))}
+      {/* a rail across the back to hold the sides together */}
+      <Block size={[1.14, 0.06, 0.03]} position={[0, 0.15, -0.52]} {...wood} radius={0.008} paint />
       {[0, 1, 2].map((i) => (
         // front crate lowest, each one further back sits higher; all tilted towards the shopper
         <group key={i} position={[0, 0.32 + i * 0.24, 0.27 - i * 0.3]} rotation={[0.28, 0, 0]}>
           <Block size={[1.1, 0.03, 0.32]} position={[0, 0.015, 0]} {...wood} radius={0.005} paint />
+          {/* slatted crate walls: two boards front and back with a gap between, solid ends */}
+          {[-1, 1].flatMap((s) =>
+            [0.035, 0.085].map((y) => <Block key={`${s}${y}`} size={[1.1, 0.04, 0.02]} position={[0, y, s * 0.15]} {...wood} radius={0.006} paint />),
+          )}
           {[-1, 1].map((s) => (
-            <Block key={s} size={[1.1, 0.1, 0.02]} position={[0, 0.05, s * 0.15]} {...wood} radius={0.004} paint />
+            <Block key={s} size={[0.02, 0.1, 0.32]} position={[s * 0.54, 0.05, 0]} {...wood} radius={0.006} paint />
           ))}
+          {/* the name card pinned to the front */}
+          <mesh position={[0.36, 0.06, 0.161]}>
+            <planeGeometry args={[0.22, 0.082]} />
+            <meshStandardMaterial map={tags[i]} roughness={0.6} />
+          </mesh>
           {/* the swaps touch one crate each: cube oranges, lemons with faces */}
           <Instanced geometry={fruit === 'cubes' && i === 1 ? FRUIT_CUBE : FRUIT_ROUND} material={FRUIT_MATS[i]} items={crate.fruitAt} />
           {fruit === 'faces' && i === 2 && (
@@ -488,25 +569,40 @@ export function VegStand({ fruit }: { fruit: 'normal' | 'faces' | 'cubes' }) {
 // Newspapers and magazines
 // ---------------------------------------------------------------------------
 
-/** A wire stand of newspapers, three tiers of two piles. */
+/** A wire stand of newspapers, three tiers of two piles, under a NEWS board. */
 export function PaperStand({ mode }: { mode: 'normal' | 'weird' | 'blank' }) {
   const pages = useMemo(
     () => PAPERS.map((p) => newspaperTexture(p.masthead, mode === 'weird' ? p.weird : p.normal, p.colour, mode === 'blank')),
     [mode],
   )
+  const header = useMemo(() => plaqueTexture('NEWS', '#ffde21', '#1a1a1a'), [])
   const metal = { color: '#3b3f45', metalness: 0.7, roughness: 0.4 }
   return (
     <>
-      {[-1, 1].map((s) => (
-        <Block key={s} size={[0.03, 1.1, 0.5]} position={[s * 0.36, 0.55, 0]} {...metal} radius={0.008} />
+      {/* an open frame: four posts (the back pair taller, to carry the board) and rails along each side */}
+      {[-1, 1].map((sx) => (
+        <group key={sx} position={[sx * 0.36, 0, 0]}>
+          <Block size={[0.025, 1.1, 0.025]} position={[0, 0.55, 0.235]} {...metal} radius={0.006} />
+          <Block size={[0.025, 1.34, 0.025]} position={[0, 0.67, -0.235]} {...metal} radius={0.006} />
+          {[0.04, 0.62, 1.09].map((y) => (
+            <Block key={y} size={[0.02, 0.02, 0.49]} position={[0, y, 0]} {...metal} radius={0.005} />
+          ))}
+        </group>
       ))}
+      <Block size={[0.74, 0.22, 0.02]} position={[0, 1.23, -0.235]} {...metal} radius={0.006} />
+      <mesh position={[0, 1.23, -0.224]}>
+        <planeGeometry args={[0.58, 0.2]} />
+        <meshStandardMaterial map={header} roughness={0.5} />
+      </mesh>
       {[0, 1, 2].map((t) => (
         <group key={t} position={[0, 0.42 + t * 0.28, 0.12 - t * 0.12]} rotation={[0.55, 0, 0]}>
           <Block size={[0.7, 0.02, 0.3]} position={[0, 0, 0]} {...metal} radius={0.005} />
+          {/* a lip along the front edge so the papers don't slide off */}
+          <Block size={[0.7, 0.05, 0.015]} position={[0, 0.02, 0.145]} {...metal} radius={0.004} />
           {[-0.17, 0.17].map((x, k) => (
-            <group key={x} position={[x, 0.035, 0]}>
-              <Block size={[0.3, 0.05, 0.26]} position={[0, 0, 0]} color="#ece6d6" roughness={0.9} radius={0.004} />
-              <mesh position={[0, 0.026, 0]} rotation={[-PI / 2, 0, 0]} userData={{ paint: true }}>
+            <group key={x} position={[x, 0.03, -0.005]}>
+              <Block size={[0.215, 0.04, 0.275]} position={[0, 0, 0]} color="#ece6d6" roughness={0.9} radius={0.004} />
+              <mesh position={[0, 0.0205, 0]} rotation={[-PI / 2, 0, 0]} userData={{ paint: true }}>
                 <planeGeometry args={[0.2, 0.265]} />
                 <meshStandardMaterial map={pages[(t + k) % pages.length]} roughness={0.9} />
               </mesh>
@@ -518,15 +614,19 @@ export function PaperStand({ mode }: { mode: 'normal' | 'weird' | 'blank' }) {
   )
 }
 
-const MAG = new PlaneGeometry(0.2, 0.27)
+/** A magazine: a thin block, cover on the front, page edges round the sides and a plain back. */
+const MAG = new BoxGeometry(0.2, 0.27, 0.007)
+const MAG_PAGES = new MeshStandardMaterial({ color: '#f4f1ea', roughness: 0.9 })
+// box faces: +x, -x, +y, -y, +z (cover), -z
+const magazine = (cover: MeshStandardMaterial) => [MAG_PAGES, MAG_PAGES, MAG_PAGES, MAG_PAGES, cover, MAG_PAGES]
 
 /** Magazines that turn into staring eyes, as "ledge:slot". */
 const EYE_SLOTS = ['0:4', '1:1', '2:3', '3:0']
 
 /** Wall-mounted magazine rack (1.5 wide); a few covers can become staring eyes, or one row goes sideways. */
 export function MagazineRack({ mode }: { mode: 'normal' | 'eyes' | 'sideways' }) {
-  const covers = useMemo(() => Array.from({ length: 6 }, (_, i) => new MeshStandardMaterial({ map: magazineCover(i, false), roughness: 0.35 })), [])
-  const eye = useMemo(() => new MeshStandardMaterial({ map: magazineCover(1, true), roughness: 0.35 }), [])
+  const covers = useMemo(() => Array.from({ length: 6 }, (_, i) => magazine(new MeshStandardMaterial({ map: magazineCover(i, false), roughness: 0.35 }))), [])
+  const eye = useMemo(() => magazine(new MeshStandardMaterial({ map: magazineCover(1, true), roughness: 0.35 })), [])
   const ledges = [0.6, 0.9, 1.2, 1.5]
   return (
     <>
@@ -535,15 +635,19 @@ export function MagazineRack({ mode }: { mode: 'normal' | 'eyes' | 'sideways' })
         <group key={y}>
           <Block size={[1.5, 0.02, 0.1]} position={[0, y, 0.06]} color="#c9ced6" metalness={0.6} roughness={0.35} radius={0.004} />
           <Block size={[1.5, 0.04, 0.01]} position={[0, y + 0.02, 0.11]} color="#c9ced6" metalness={0.6} roughness={0.35} radius={0.003} />
-          {Array.from({ length: 6 }, (_, i) => (
-            <mesh
-              key={i}
-              geometry={MAG}
-              material={mode === 'eyes' && EYE_SLOTS.includes(`${row}:${i}`) ? eye : covers[(i + row * 2) % covers.length]}
-              position={[-0.6 + i * 0.24, y + 0.14, 0.07]}
-              rotation={[-0.18, 0, mode === 'sideways' && row === 2 ? PI / 2 : 0]}
-            />
-          ))}
+          {Array.from({ length: 6 }, (_, i) => {
+            // on its side a magazine is wider than its slot, so every other one sits a page in front of its neighbours
+            const sideways = mode === 'sideways' && row === 2
+            return (
+              <mesh
+                key={i}
+                geometry={MAG}
+                material={mode === 'eyes' && EYE_SLOTS.includes(`${row}:${i}`) ? eye : covers[(i + row * 2) % covers.length]}
+                position={[-0.6 + i * 0.24, y + (sideways ? 0.112 : 0.145), sideways ? 0.068 + (i % 2) * 0.009 : 0.07]}
+                rotation={[-0.18, 0, sideways ? PI / 2 : 0]}
+              />
+            )
+          })}
         </group>
       ))}
     </>
@@ -553,6 +657,8 @@ export function MagazineRack({ mode }: { mode: 'normal' | 'eyes' | 'sideways' })
 // ---------------------------------------------------------------------------
 // Wet floor sign, staff door, bread rack, card reader
 // ---------------------------------------------------------------------------
+
+const SIGN_HANDLE = new TorusGeometry(0.06, 0.014, 10, 24, PI)
 
 export function WetFloorSign({ lines }: { lines: string[] }) {
   const map = useMemo(() => warningSignTexture(lines), [lines])
@@ -568,9 +674,17 @@ export function WetFloorSign({ lines }: { lines: string[] }) {
           </mesh>
         </group>
       ))}
+      {/* the hinge where the boards meet, and a carry handle */}
+      <Block size={[0.3, 0.03, 0.045]} position={[0, 0.634, 0]} color="#f2c200" roughness={0.5} radius={0.012} paint />
+      <mesh geometry={SIGN_HANDLE} position={[0, 0.645, 0]} userData={{ paint: true }}>
+        <meshStandardMaterial color="#ffd21f" roughness={0.5} />
+      </mesh>
     </>
   )
 }
+
+const HINGE = new CylinderGeometry(0.011, 0.011, 0.09, 12)
+const HINGE_MAT = new MeshStandardMaterial({ color: '#c9ced6', metalness: 0.9, roughness: 0.25 })
 
 /** "Staff only" door, hinged on its left; `ajar`, something waits in the dark behind it. */
 export function StaffDoor({ ajar }: { ajar: boolean }) {
@@ -598,7 +712,14 @@ export function StaffDoor({ ajar }: { ajar: boolean }) {
           <planeGeometry args={[0.36, 0.135]} />
           <meshStandardMaterial map={plaque} roughness={0.5} />
         </mesh>
-        <Block size={[0.12, 0.03, 0.05]} position={[0.76, 1.0, 0.04]} color="#c9ced6" metalness={0.9} roughness={0.25} radius={0.01} />
+        {/* lever handle on its back plate, a scuffed kick plate, three hinges */}
+        <Block size={[0.045, 0.17, 0.008]} position={[0.79, 1.0, 0.022]} color="#c9ced6" metalness={0.9} roughness={0.25} radius={0.003} />
+        <Block size={[0.024, 0.024, 0.04]} position={[0.79, 1.03, 0.04]} color="#c9ced6" metalness={0.9} roughness={0.25} radius={0.008} />
+        <Block size={[0.13, 0.024, 0.024]} position={[0.735, 1.03, 0.065]} color="#c9ced6" metalness={0.9} roughness={0.25} radius={0.01} />
+        <Block size={[0.78, 0.2, 0.006]} position={[0.43, 0.13, 0.022]} color="#b8bec4" metalness={0.7} roughness={0.45} radius={0.002} />
+        {[0.28, 1.0, 1.72].map((y) => (
+          <mesh key={y} geometry={HINGE} material={HINGE_MAT} position={[0.004, y, 0.02]} />
+        ))}
       </group>
       {/* frame */}
       {[-1, 1].map((s) => (
@@ -671,15 +792,30 @@ export function BreadRack() {
   )
 }
 
-/** Card machine sitting on the counter, facing the customer (+z). */
+const KEY = new BoxGeometry(0.017, 0.006, 0.012)
+const KEY_MAT = new MeshStandardMaterial({ color: '#d9dde2', roughness: 0.5 })
+const KEYS: Placement[] = [0, 1, 2, 3].flatMap((r) => [-1, 0, 1].map((c): Placement => ({ at: [c * 0.022, 0.026, -0.03 - r * 0.017] })))
+const ACTION_KEYS = ['#e0262a', '#ffde21', '#2fbf71']
+
+/** Card machine in its cradle on the counter, leaning back towards whoever is paying (+z). */
 export function CardReader() {
   return (
-    <group rotation={[-0.5, 0, 0]}>
-      <Block size={[0.08, 0.02, 0.15]} position={[0, 0.01, 0]} color="#1c1c1f" roughness={0.4} radius={0.008} />
-      <mesh position={[0, 0.021, -0.03]} rotation={[-PI / 2, 0, 0]}>
-        <planeGeometry args={[0.06, 0.05]} />
-        <meshStandardMaterial color="#3fd0ff" emissive="#3fd0ff" emissiveIntensity={0.6} />
-      </mesh>
-    </group>
+    <>
+      <Block size={[0.09, 0.02, 0.12]} position={[0, 0.01, -0.07]} color="#2a2a2e" roughness={0.5} radius={0.006} />
+      <Block size={[0.06, 0.056, 0.02]} position={[0, 0.048, -0.083]} color="#2a2a2e" roughness={0.5} radius={0.005} />
+      {/* the terminal, hinged at its bottom edge: keypad near the payer, screen and card slot further up */}
+      <group position={[0, 0.02, 0]} rotation={[0.6, 0, 0]}>
+        <Block size={[0.08, 0.025, 0.165]} position={[0, 0.0125, -0.0825]} color="#1c1c1f" roughness={0.4} radius={0.01} />
+        <Instanced geometry={KEY} material={KEY_MAT} items={KEYS} />
+        {ACTION_KEYS.map((color, i) => (
+          <Block key={color} size={[0.017, 0.006, 0.01]} position={[(i - 1) * 0.022, 0.026, -0.012]} color={color} roughness={0.5} radius={0.002} />
+        ))}
+        <mesh position={[0, 0.0255, -0.125]} rotation={[-PI / 2, 0, 0]}>
+          <planeGeometry args={[0.062, 0.042]} />
+          <meshStandardMaterial color="#3fd0ff" emissive="#3fd0ff" emissiveIntensity={0.6} />
+        </mesh>
+        <Block size={[0.07, 0.008, 0.012]} position={[0, 0.023, -0.155]} color="#050505" roughness={0.6} radius={0.003} />
+      </group>
+    </>
   )
 }

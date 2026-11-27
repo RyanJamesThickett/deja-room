@@ -2,15 +2,16 @@ import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef, type ReactNode } from 'react'
 import {
   BoxGeometry,
-  CapsuleGeometry,
   CatmullRomCurve3,
   CircleGeometry,
   ConeGeometry,
   CylinderGeometry,
   DoubleSide,
+  Euler,
   MeshPhysicalMaterial,
   MeshStandardMaterial,
   QuadraticBezierCurve3,
+  Quaternion,
   SphereGeometry,
   TorusGeometry,
   TubeGeometry,
@@ -18,6 +19,7 @@ import {
   type Group,
   type Texture,
 } from 'three'
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { Block, Instanced, PI, type Placement } from '../../kit'
 import { Model } from '../../Model'
 import type { Vec3 } from '../../mutations'
@@ -40,7 +42,20 @@ const NOTE = new MeshStandardMaterial({ color: '#8f6db8', roughness: 0.8 })
 const NOTE2 = new MeshStandardMaterial({ color: '#c47a3a', roughness: 0.8 })
 
 const COIN_GEO = new CylinderGeometry(0.012, 0.012, 0.003, 20)
-const TOOTH_GEO = new CapsuleGeometry(0.006, 0.012, 3, 8)
+/** A molar: a knobbly rounded crown on two pointed roots. */
+const TOOTH_GEO = (() => {
+  const crown = new SphereGeometry(0.01, 12, 8)
+  crown.scale(1, 0.85, 0.9)
+  crown.translate(0, 0.006, 0)
+  const roots = [-1, 1].map((s) => {
+    const r = new ConeGeometry(0.0045, 0.016, 8)
+    r.rotateX(Math.PI)
+    r.rotateZ(s * 0.18)
+    r.translate(s * 0.0045, -0.006, 0)
+    return r
+  })
+  return mergeGeometries([crown, ...roots])
+})()
 const NOTE_GEO = new BoxGeometry(0.13, 0.002, 0.065)
 const STANCHION_POLE = new CylinderGeometry(0.022, 0.022, 0.86, 20)
 const STANCHION_BASE = new CylinderGeometry(0.15, 0.16, 0.03, 32)
@@ -68,8 +83,33 @@ const LOOSE = (() => {
   const dz = (z1 - z0) / Math.hypot(x1 - x0, z1 - z0)
   const at = (along: number, side: number, y: number) => new Vector3(x0 + dx * along - dz * side, y, z0 + dz * along + dx * side)
   const curve = new CatmullRomCurve3([at(0, 0, HOOK), at(0.02, 0.04, 0.6), at(0.08, 0.1, 0.25), at(0.2, 0.18, 0.02), at(0.5, 0.22, 0.02), at(0.75, 0.12, 0.02)])
-  return new TubeGeometry(curve, 48, 0.018, 8)
+  return { geo: new TubeGeometry(curve, 48, 0.018, 8), curve }
 })()
+
+const SLEEVE_GEO = new CylinderGeometry(0.024, 0.024, 0.05, 16)
+const UP = new Vector3(0, 1, 0)
+/** A brass end on a rope: just off the pole (or the rope's free end) at `p`, running along `dir`. */
+function sleeve(p: Vector3, dir: Vector3, gap = 0.022): Placement {
+  const d = dir.clone().normalize()
+  const at = p.clone().addScaledVector(d, gap + 0.025)
+  const e = new Euler().setFromQuaternion(new Quaternion().setFromUnitVectors(UP, d))
+  return { at: [at.x, at.y, at.z], rot: [e.x, e.y, e.z] }
+}
+/** The brass ends of every rope, where they clip on to the stanchions: both ends of each, in order round the loop. */
+const SLEEVES = STANCHIONS.map(([x0, z0], i) => {
+  const [x1, z1] = STANCHIONS[(i + 1) % STANCHIONS.length]
+  const a = new Vector3(x0, HOOK, z0)
+  const b = new Vector3(x1, HOOK, z1)
+  const sag = new Vector3((x0 + x1) / 2, HOOK - 0.3, (z0 + z1) / 2)
+  return [sleeve(a, sag.clone().sub(a)), sleeve(b, sag.clone().sub(b))]
+})
+const SLEEVES_TIGHT = SLEEVES.flat()
+const SLEEVES_LOOSE = SLEEVES.flatMap((pair, i) =>
+  // still clipped on at the top, hanging straight down; its other end lying loose on the floor
+  i === LOOSE_ROPE
+    ? [sleeve(LOOSE.curve.getPointAt(0.03), LOOSE.curve.getTangentAt(0.03), -0.025), sleeve(LOOSE.curve.getPointAt(1), LOOSE.curve.getTangentAt(1), -0.045)]
+    : pair,
+)
 
 // ---------------------------------------------------------------------------
 // Animated helpers
@@ -407,7 +447,8 @@ export function Barrier({ loose }: { loose: boolean }) {
       {ROPES.map((geo, i) =>
         loose && i === LOOSE_ROPE ? null : <mesh key={i} geometry={geo} material={ROPE_MAT} castShadow userData={{ paint: true }} />,
       )}
-      {loose && <mesh geometry={LOOSE} material={ROPE_MAT} castShadow userData={{ paint: true }} />}
+      {loose && <mesh geometry={LOOSE.geo} material={ROPE_MAT} castShadow userData={{ paint: true }} />}
+      <Instanced geometry={SLEEVE_GEO} material={BRASS} items={loose ? SLEEVES_LOOSE : SLEEVES_TIGHT} />
     </>
   )
 }
@@ -435,7 +476,7 @@ export function DoorRope({ width }: { width: number }) {
 /** "Please do not touch" on a little brass post. */
 export function Notice({ touch }: { touch: boolean }) {
   const map = useMemo(
-    () => cardTexture(touch ? ['PLEASE TOUCH', 'the exhibits'] : ['PLEASE DO NOT', 'TOUCH THE EXHIBITS'], { w: 512, h: 340, size: 58 }),
+    () => cardTexture(touch ? ['PLEASE TOUCH', 'THE EXHIBITS'] : ['PLEASE DO NOT', 'TOUCH THE', 'EXHIBITS'], { w: 512, h: 340, size: 52, even: true }),
     [touch],
   )
   return (
@@ -480,8 +521,9 @@ export function Vitrine({ horse }: { horse: 'inside' | 'escaped' | 'fallen' }) {
       {horse === 'inside' && <Model id="horse_statue_01" position={[0, base + 0.06, 0]} rotation={[0, 0.5, 0]} scale={1.3} />}
       {horse === 'escaped' && <Model id="horse_statue_01" position={[0.02, base + glass + 0.025, 0.02]} rotation={[0, 0.9, 0]} scale={1.3} />}
       {horse === 'fallen' && (
+        // tipped over onto its side, base towards the wall, so from the room you see the horse and not the bottom of its base
         <group position={[0, base + 0.06 + 0.07, 0]} rotation={[0, 0.5, 0]}>
-          <group rotation={[PI / 2, 0, 0]} position={[0, 0, -0.14]}>
+          <group rotation={[-PI / 2, 0, 0]} position={[0, 0, 0.14]}>
             <Model id="horse_statue_01" scale={1.3} />
           </group>
         </group>
@@ -490,19 +532,111 @@ export function Vitrine({ horse }: { horse: 'inside' | 'escaped' | 'fallen' }) {
   )
 }
 
-/** A Roman oil lamp in red clay. */
+/** A Roman oil lamp in red clay: a round body, a spout with its wick hole, a filling hole on top and a loop handle. */
 function OilLamp() {
+  const clay = { color: '#a8532e', roughness: 0.85 }
   return (
     <group>
-      <mesh position={[0, 0.018, 0]} scale={[1, 0.45, 0.75]} castShadow>
-        <sphereGeometry args={[0.045, 20, 14]} />
-        <meshStandardMaterial color="#a8532e" roughness={0.85} />
+      <mesh position={[0, 0.018, 0]} scale={[1, 0.45, 0.85]} castShadow>
+        <sphereGeometry args={[0.045, 24, 14]} />
+        <meshStandardMaterial {...clay} />
       </mesh>
-      <mesh position={[0.055, 0.016, 0]} rotation={[0, 0, PI / 2]} scale={[1, 1, 0.8]}>
-        <cylinderGeometry args={[0.012, 0.018, 0.04, 12]} />
-        <meshStandardMaterial color="#a8532e" roughness={0.85} />
+      {/* the sunken top disc and its filling hole */}
+      <mesh position={[0, 0.036, 0]} rotation={[-PI / 2, 0, 0]}>
+        <ringGeometry args={[0.008, 0.026, 24]} />
+        <meshStandardMaterial color="#94472a" roughness={0.9} />
+      </mesh>
+      <mesh position={[0, 0.0355, 0]} rotation={[-PI / 2, 0, 0]}>
+        <circleGeometry args={[0.008, 16]} />
+        <meshStandardMaterial color="#2a140b" roughness={1} />
+      </mesh>
+      {/* the spout, rounded off at its tip, with the wick hole */}
+      <mesh position={[0.05, 0.016, 0]} rotation={[0, 0, PI / 2]} scale={[1, 1, 0.8]}>
+        <cylinderGeometry args={[0.013, 0.018, 0.04, 16]} />
+        <meshStandardMaterial {...clay} />
+      </mesh>
+      <mesh position={[0.07, 0.016, 0]} scale={[0.6, 1, 0.8]}>
+        <sphereGeometry args={[0.013, 14, 10]} />
+        <meshStandardMaterial {...clay} />
+      </mesh>
+      <mesh position={[0.072, 0.0275, 0]} rotation={[-PI / 2, 0, 0]}>
+        <circleGeometry args={[0.005, 12]} />
+        <meshStandardMaterial color="#1a0d07" roughness={1} />
+      </mesh>
+      {/* a loop handle at the back */}
+      <mesh position={[-0.046, 0.026, 0]} rotation={[0, 0, 0.3]}>
+        <torusGeometry args={[0.012, 0.0045, 8, 16]} />
+        <meshStandardMaterial {...clay} />
       </mesh>
     </group>
+  )
+}
+
+const CASE_TRIM = { color: '#6a4a2a', metalness: 0.6, roughness: 0.4 }
+
+/**
+ * A glass hood `w` × `d` × `h` with its bottom at `y`: the glass, and a thin
+ * metal frame along every edge so its shape reads although the glass barely shows.
+ */
+export function CaseHood({ w, d, h, y, trim = CASE_TRIM }: { w: number; d: number; h: number; y: number; trim?: typeof CASE_TRIM }) {
+  const t = 0.014
+  const mid = y + h / 2
+  return (
+    <>
+      <mesh material={GLASS} position={[0, mid, 0]}>
+        <boxGeometry args={[w, h, d]} />
+      </mesh>
+      {[
+        [-1, -1],
+        [-1, 1],
+        [1, -1],
+        [1, 1],
+      ].map(([sx, sz], i) => (
+        <Block key={i} size={[t, h, t]} position={[sx * (w / 2 - t / 2), mid, sz * (d / 2 - t / 2)]} {...trim} radius={0.003} />
+      ))}
+      {[y + t / 2, y + h - t / 2].map((ry) => (
+        <group key={ry}>
+          {[-1, 1].map((s) => (
+            <Block key={`x${s}`} size={[w, t, t]} position={[0, ry, s * (d / 2 - t / 2)]} {...trim} radius={0.003} />
+          ))}
+          {[-1, 1].map((s) => (
+            <Block key={`z${s}`} size={[t, t, d - t * 2]} position={[s * (w / 2 - t / 2), ry, 0]} {...trim} radius={0.003} />
+          ))}
+        </group>
+      ))}
+    </>
+  )
+}
+
+/**
+ * A wooden cabinet `w` × `d`, its top at `top`: a recessed plinth at the
+ * floor, raised panels front and back, and a moulded lip round the top.
+ */
+export function CaseCabinet({ w, d, top, felt = '#1c2b3a' }: { w: number; d: number; top: number; felt?: string }) {
+  const wood = { color: '#3b2a1e', roughness: 0.55 }
+  const kick = 0.08
+  const lip = 0.04
+  const body = top - kick - lip
+  const panelW = (w - 0.18) / 2
+  return (
+    <>
+      <Block size={[w - 0.06, kick, d - 0.06]} position={[0, kick / 2, 0]} color="#1e150e" roughness={0.6} />
+      <Block size={[w, body, d]} position={[0, kick + body / 2, 0]} {...wood} radius={0.008} />
+      <Block size={[w + 0.03, lip, d + 0.03]} position={[0, top - lip / 2, 0]} color="#4a3424" roughness={0.45} radius={0.012} />
+      {[-1, 1].map((sz) =>
+        [-1, 1].map((sx) => (
+          <Block
+            key={`${sz}${sx}`}
+            size={[panelW, body - 0.14, 0.014]}
+            position={[sx * (panelW / 2 + 0.03), kick + body / 2, sz * (d / 2 + 0.005)]}
+            color="#4a3626"
+            roughness={0.5}
+            radius={0.005}
+          />
+        )),
+      )}
+      <Block size={[w - 0.08, 0.02, d - 0.08]} position={[0, top + 0.01, 0]} color={felt} roughness={0.95} />
+    </>
   )
 }
 
@@ -525,22 +659,8 @@ export function TableCase({ mode }: { mode: 'normal' | 'phone' | 'missing' }) {
   }, [])
   return (
     <>
-      <Block size={[1.4, top, 0.7]} position={[0, top / 2, 0]} color="#3b2a1e" roughness={0.55} />
-      <Block size={[1.32, 0.02, 0.62]} position={[0, top + 0.01, 0]} color="#1c2b3a" roughness={0.95} />
-      <mesh material={GLASS} position={[0, top + hood / 2 + 0.02, 0]}>
-        <boxGeometry args={[1.38, hood, 0.68]} />
-      </mesh>
-      {[
-        [-1, -1],
-        [-1, 1],
-        [1, -1],
-        [1, 1],
-      ].map(([sx, sz], i) => (
-        <Block key={i} size={[0.014, hood, 0.014]} position={[sx * 0.69, top + hood / 2 + 0.02, sz * 0.335]} color="#6a4a2a" metalness={0.6} roughness={0.4} />
-      ))}
-      {[-1, 1].map((sz) => (
-        <Block key={sz} size={[1.4, 0.014, 0.014]} position={[0, top + hood + 0.02, sz * 0.335]} color="#6a4a2a" metalness={0.6} roughness={0.4} />
-      ))}
+      <CaseCabinet w={1.4} d={0.7} top={top} />
+      <CaseHood w={1.38} d={0.68} h={hood + 0.02} y={top} />
       {coins.map((at, i) => (
         <mesh key={i} geometry={COIN_GEO} material={i % 3 ? BRONZE : GOLD} position={at} rotation={[0, 0, (i % 2) * 0.1]} />
       ))}
@@ -575,9 +695,19 @@ export function DonationBox({ contents }: { contents: 'coins' | 'teeth' | 'empty
   const pile = useMemo(() => {
     const rng = mulberry32(contents === 'teeth' ? 8 : 5)
     const out: Placement[] = []
+    if (contents === 'teeth') {
+      // a heap of them, well up the box, highest in the middle
+      for (let i = 0; i < 170; i++) {
+        const x = (rng() - 0.5) * 0.27
+        const z = (rng() - 0.5) * 0.27
+        const heap = 1 - 0.55 * Math.min(1, Math.hypot(x, z) / 0.19)
+        out.push({ at: [x, 0.014 + rng() * 0.15 * heap, z], rot: [rng() * PI, rng() * PI, rng() * PI] })
+      }
+      return out
+    }
     for (let i = 0; i < 46; i++) {
       out.push({
-        at: [(rng() - 0.5) * 0.24, 0.006 + rng() * (contents === 'teeth' ? 0.06 : 0.035), (rng() - 0.5) * 0.24],
+        at: [(rng() - 0.5) * 0.24, 0.006 + rng() * 0.035, (rng() - 0.5) * 0.24],
         rot: [rng() * PI, rng() * PI, rng() * PI],
       })
     }
@@ -593,10 +723,10 @@ export function DonationBox({ contents }: { contents: 'coins' | 'teeth' | 'empty
           <meshStandardMaterial map={card} roughness={0.8} />
         </mesh>
       </group>
-      <mesh material={GLASS} position={[0, top + 0.16, 0]}>
-        <boxGeometry args={[0.32, 0.32, 0.32]} />
-      </mesh>
+      <CaseHood w={0.32} d={0.32} h={0.32} y={top} trim={{ color: '#2a2522', metalness: 0.1, roughness: 0.5 }} />
       <Block size={[0.34, 0.02, 0.34]} position={[0, top + 0.33, 0]} color="#2a2522" roughness={0.5} />
+      {/* a padlock on the lid */}
+      <Block size={[0.04, 0.035, 0.012]} position={[0, top + 0.31, 0.176]} color="#c39a45" metalness={0.85} roughness={0.3} radius={0.004} />
       <Block size={[0.12, 0.004, 0.015]} position={[0, top + 0.342, 0]} color="#050505" />
       <group position={[0, top, 0]}>
         {contents === 'coins' && (
@@ -654,6 +784,12 @@ export function GuardChair({ cap }: { cap: boolean }) {
       {[-1, 1].map((sx) => (
         <Block key={sx} size={[0.035, 0.48, 0.035]} position={[sx * 0.19, 0.71, -0.18]} {...wood} />
       ))}
+      {/* stretchers between the legs: low along each side, and one across the front */}
+      {[-1, 1].map((sx) => (
+        <Block key={sx} size={[0.022, 0.022, 0.34]} position={[sx * 0.19, 0.14, 0]} {...wood} />
+      ))}
+      <Block size={[0.36, 0.022, 0.022]} position={[0, 0.2, 0.18]} {...wood} />
+      <Block size={[0.36, 0.022, 0.022]} position={[0, 0.17, -0.18]} {...wood} />
       <Block size={[0.42, 0.14, 0.025]} position={[0, 0.86, -0.185]} {...wood} paint />
       <Block size={[0.42, 0.05, 0.025]} position={[0, 0.62, -0.185]} {...wood} paint />
       {cap && (
@@ -678,8 +814,14 @@ export function GuardCap() {
         <cylinderGeometry args={[0.115, 0.115, 0.008, 28]} />
         <meshStandardMaterial color="#1a2236" roughness={0.7} />
       </mesh>
-      <mesh position={[0, 0.008, 0.1]} rotation={[0.25, 0, 0]} scale={[1, 0.12, 0.6]}>
-        <sphereGeometry args={[0.09, 20, 10, 0, PI * 2, 0, PI / 2]} />
+      {/* the peak: a whole flattened lens, so it has an underside when you look up at it */}
+      <mesh position={[0, 0.006, 0.1]} rotation={[0.25, 0, 0]} scale={[1, 0.1, 0.6]}>
+        <sphereGeometry args={[0.09, 24, 12]} />
+        <meshStandardMaterial color="#0a0a0a" roughness={0.3} />
+      </mesh>
+      {/* the chin strap along the front of the band */}
+      <mesh position={[0, 0.014, 0]} rotation={[PI / 2, 0, 0]}>
+        <torusGeometry args={[0.093, 0.004, 6, 28, PI]} />
         <meshStandardMaterial color="#0a0a0a" roughness={0.3} />
       </mesh>
       <Block size={[0.07, 0.02, 0.004]} position={[0, 0.04, 0.105]} color="#d8b04a" metalness={0.9} roughness={0.3} />

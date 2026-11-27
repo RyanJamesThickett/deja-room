@@ -2,17 +2,25 @@ import { useFrame } from '@react-three/fiber'
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import {
   AdditiveBlending,
+  CapsuleGeometry,
   Color,
+  ConeGeometry,
   CylinderGeometry,
+  DoubleSide,
   LatheGeometry,
+  MeshBasicMaterial,
+  MeshPhysicalMaterial,
   MeshStandardMaterial,
   Object3D,
+  SphereGeometry,
+  TorusGeometry,
   Vector2,
   type Group,
   type InstancedMesh,
   type Mesh,
   type RectAreaLight,
 } from 'three'
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
 import { Block, Instanced, PanelLight, PI, type Placement } from '../../kit'
 import { Model } from '../../Model'
 import type { Vec3 } from '../../mutations'
@@ -25,7 +33,7 @@ import { FRIDGE_SHELVES, type FridgeKind } from './fridgeLayout'
 import { SHOP_DOOR } from './front'
 import { FridgeStock } from './fridgeStock'
 import { rowZ, slots, type ShelfSpec } from './shelving'
-import { BOX_DESIGNS, boxCover, CAN_DESIGNS, canLabel, matTexture, neonText, nightStreet } from './textures'
+import { BOX_DESIGNS, boxCover, CAN_DESIGNS, canLabel, matTexture, neonText, nightStreet, plaqueTexture } from './textures'
 
 // ---------------------------------------------------------------------------
 // Shelving and stock
@@ -52,6 +60,11 @@ export function Shelving({ spec }: { spec: ShelfSpec }) {
       {[-1, 1].map((s) => (
         <Block key={s} size={[0.03, h, d]} position={[s * (w / 2 - 0.015), h / 2, 0]} {...metal} radius={0.005} paint />
       ))}
+      {/* a rounded cap along the top of the unit, and a kick plate under the bottom shelf of each stocked face */}
+      <Block size={[w, 0.03, double ? 0.07 : d - 0.004]} position={[0, h + 0.015, 0]} color="#c7cdd3" metalness={0.4} roughness={0.5} radius={0.012} paint />
+      {faces.map((f) => (
+        <Block key={f} size={[w - 0.06, 0.07, 0.012]} position={[0, 0.045, f * (d / 2 + 0.002)]} color="#1d6b63" roughness={0.5} radius={0.004} />
+      ))}
       {levels.map((y) => (
         <group key={y}>
           <Block size={[w - 0.06, 0.025, d - 0.02]} position={[0, y, 0]} {...metal} radius={0.004} paint />
@@ -67,6 +80,8 @@ export function Shelving({ spec }: { spec: ShelfSpec }) {
 
 const CAN_GEO = new CylinderGeometry(0.038, 0.038, 0.11, 28)
 const CAN_TOP = new MeshStandardMaterial({ color: '#c9ced6', metalness: 0.9, roughness: 0.3 })
+/** The rolled rim round the top of a tin. */
+const CAN_RIM = new TorusGeometry(0.0365, 0.0028, 6, 28)
 
 function useCanMaterials() {
   return useMemo(
@@ -78,8 +93,9 @@ function useCanMaterials() {
 /** Rows of tins on every shelf of one face, apart from any shelves in `skip`. */
 export function Tins({ spec, face = 1, skip = [] }: { spec: ShelfSpec; face?: 1 | -1; skip?: number[] }) {
   const materials = useCanMaterials()
-  const byDesign = useMemo(() => {
+  const { byDesign, rims } = useMemo(() => {
     const out: Placement[][] = CAN_DESIGNS.map(() => [])
+    const rims: Placement[] = []
     const rng = mulberry32(21 + face)
     const z = rowZ(spec, 0.07)
     slots(spec, 0.086).forEach(({ y, xs }, row) => {
@@ -89,16 +105,20 @@ export function Tins({ spec, face = 1, skip = [] }: { spec: ShelfSpec; face?: 1 
         // the name is printed a quarter of the way round the label, so turn it to face the aisle
         const rot = -PI / 2 + (rng() - 0.5) * 0.3
         // two tins deep, the back row slightly hidden
-        for (const dz of [0, -0.09]) out[m].push({ at: [x, y + 0.055, z + dz], rot: [0, rot, 0] })
+        for (const dz of [0, -0.09]) {
+          out[m].push({ at: [x, y + 0.055, z + dz], rot: [0, rot, 0] })
+          rims.push({ at: [x, y + 0.109, z + dz], rot: [PI / 2, 0, 0] })
+        }
       })
     })
-    return out
+    return { byDesign: out, rims }
   }, [spec, face, skip])
   return (
     <group rotation={[0, face === 1 ? 0 : PI, 0]}>
       {byDesign.map((items, m) => (
         <Instanced key={m} geometry={CAN_GEO} material={materials[m]} items={items} />
       ))}
+      <Instanced geometry={CAN_RIM} material={CAN_TOP} items={rims} />
     </group>
   )
 }
@@ -120,6 +140,9 @@ export function DuckStock({ spec, face = 1, only }: { spec: ShelfSpec; face?: 1 
     </group>
   )
 }
+
+/** A cereal box, its card edges just softened (one geometry shared by every box). */
+const CEREAL_BOX = new RoundedBoxGeometry(0.19, 0.28, 0.07, 2, 0.004)
 
 function useBoxMaterials() {
   return useMemo(
@@ -159,9 +182,7 @@ export function CerealBoxes({
     <group rotation={[0, face === 1 ? 0 : PI, 0]}>
       {boxes.map((b, i) => (
         <group key={i} position={b.at} scale={tiny && b.odd ? 0.4 : 1}>
-          <mesh material={materials[b.m]} position={[0, 0.14, 0]} rotation={[0, 0, upside && b.odd ? PI : 0]}>
-            <boxGeometry args={[0.19, 0.28, 0.07]} />
-          </mesh>
+          <mesh geometry={CEREAL_BOX} material={materials[b.m]} position={[0, 0.14, 0]} rotation={[0, 0, upside && b.odd ? PI : 0]} />
         </group>
       ))}
     </group>
@@ -194,7 +215,6 @@ export function PopBottles({ spec, face = 1 }: { spec: ShelfSpec; face?: 1 | -1 
 // Counter, till, lucky cat, jars
 // ---------------------------------------------------------------------------
 
-/** Long shop counter, built along local x, customer side facing +z. */
 /**
  * Shop counter built along local x. The customer side (striped panel) faces +z;
  * the cashier side faces -z and is open, with two under-counter shelves.
@@ -203,7 +223,9 @@ export function Counter({ length }: { length: number }) {
   return (
     <>
       {/* customer-facing panel, ends and kick plinth */}
-      <Block size={[length, 0.9, 0.04]} position={[0, 0.45, 0.255]} color="#c0392b" roughness={0.45} radius={0.01} paint />
+      <Block size={[length, 0.82, 0.04]} position={[0, 0.49, 0.255]} color="#c0392b" roughness={0.45} radius={0.01} paint />
+      {/* recessed kick plinth along the customer's side */}
+      <Block size={[length - 0.06, 0.08, 0.03]} position={[0, 0.04, 0.235]} color="#3a2a22" roughness={0.7} radius={0.004} />
       {[-1, 1].map((s) => (
         <Block key={s} size={[0.04, 0.9, 0.55]} position={[s * (length / 2 - 0.02), 0.45, 0]} color="#c0392b" roughness={0.45} radius={0.01} />
       ))}
@@ -215,13 +237,34 @@ export function Counter({ length }: { length: number }) {
       {[0.1, 0.45].map((y) => (
         <Block key={y} size={[length - 0.08, 0.025, 0.48]} position={[0, y, 0]} color="#e8e2d6" roughness={0.6} radius={0.004} />
       ))}
-      {[-0.55, -0.15, 0.3].map((x, i) => (
-        <Block key={x} size={[0.22, 0.16, 0.3]} position={[x * (length / 2), 0.55, -0.02]} color={['#f4f1ea', '#7a8f9c', '#d9c49a'][i]} roughness={0.8} radius={0.01} />
-      ))}
-      <Block size={[length + 0.06, 0.05, 0.62]} position={[0, 0.925, 0.02]} color="#f2efe8" roughness={0.25} radius={0.01} />
+      {/* receipt rolls, the cash float tin and a stack of carrier bags */}
+      <group position={[-0.55 * (length / 2), 0.4625, -0.02]}>
+        {[-0.09, 0, 0.09].map((x) => (
+          <mesh key={x} geometry={ROLL_PAPER} material={ROLL_MAT} position={[x, 0.04, 0]} rotation={[PI / 2, 0, 0]} />
+        ))}
+      </group>
+      <group position={[-0.15 * (length / 2), 0.4625, -0.02]}>
+        <Block size={[0.26, 0.1, 0.2]} position={[0, 0.05, 0]} color="#7a8f9c" metalness={0.5} roughness={0.4} radius={0.01} />
+        <Block size={[0.27, 0.02, 0.21]} position={[0, 0.1, 0]} color="#5f7380" metalness={0.5} roughness={0.4} radius={0.006} />
+        <Block size={[0.08, 0.015, 0.02]} position={[0, 0.115, 0]} color="#2a2f35" roughness={0.5} radius={0.006} />
+      </group>
+      <group position={[0.3 * (length / 2), 0.4625, -0.02]}>
+        {[0, 1, 2].map((k) => (
+          <group key={k} position={[(k % 2) * 0.012, 0.012 + k * 0.024, 0]} rotation={[0, (k - 1) * 0.08, 0]}>
+            <Block size={[0.26, 0.022, 0.3]} color="#f4f1ea" roughness={0.8} radius={0.008} />
+            <Block size={[0.08, 0.023, 0.3]} position={[0.04, 0, 0]} color="#1f6bff" roughness={0.8} radius={0.004} />
+          </group>
+        ))}
+      </group>
+      {/* the top overhangs the open end and the customer's side, but stops at the wall */}
+      <Block size={[length + 0.03, 0.05, 0.62]} position={[-0.015, 0.925, 0.02]} color="#f2efe8" roughness={0.25} radius={0.01} />
     </>
   )
 }
+
+const ROLL_PAPER = new CylinderGeometry(0.04, 0.04, 0.08, 24)
+const ROLL_MAT = new MeshStandardMaterial({ color: '#f7f5ef', roughness: 0.9 })
+const SPOKE = new CylinderGeometry(0.006, 0.006, 0.13, 8)
 
 /** The cashier's stool. */
 export function Stool() {
@@ -239,6 +282,15 @@ export function Stool() {
         <torusGeometry args={[0.15, 0.012, 8, 32]} />
         <meshStandardMaterial color="#b8bec4" metalness={0.9} roughness={0.25} />
       </mesh>
+      {/* spokes holding the foot ring to the pole */}
+      {[0, 1, 2].map((i) => {
+        const a = (i * 2 * PI) / 3
+        return (
+          <mesh key={i} geometry={SPOKE} position={[Math.cos(a) * 0.085, 0.3, Math.sin(a) * 0.085]} rotation={[0, -a, PI / 2]}>
+            <meshStandardMaterial color="#b8bec4" metalness={0.9} roughness={0.25} />
+          </mesh>
+        )
+      })}
       <mesh position={[0, 0.02, 0]}>
         <cylinderGeometry args={[0.2, 0.22, 0.04, 32]} />
         <meshStandardMaterial color="#b8bec4" metalness={0.9} roughness={0.25} />
@@ -247,136 +299,194 @@ export function Stool() {
   )
 }
 
-/** Maneki-neko, built facing +z, with a paw that waves. */
+// lucky cat parts, shared by every cat (the pair swap draws two)
+const CAT_BODY = new LatheGeometry(
+  [
+    [0, 0],
+    [0.062, 0],
+    [0.071, 0.008],
+    [0.077, 0.035],
+    [0.074, 0.075],
+    [0.062, 0.11],
+    [0.045, 0.135],
+    [0.026, 0.15],
+    [0, 0.156],
+  ].map(([x, y]) => new Vector2(x, y)),
+  32,
+)
+const CAT_HEAD = new SphereGeometry(0.078, 32, 24)
+const CAT_EAR = new ConeGeometry(0.028, 0.052, 16)
+const CAT_EAR_INNER = new ConeGeometry(0.017, 0.034, 12)
+const CAT_BALL = new SphereGeometry(1, 16, 12)
+const CAT_ARM = new CapsuleGeometry(0.019, 0.05, 6, 16)
+const CAT_WHISKER = new CylinderGeometry(0.0012, 0.0012, 0.05, 6)
+const CAT_COLLAR = new TorusGeometry(0.05, 0.009, 10, 36)
+const CAT_COIN = new CylinderGeometry(1, 1, 0.008, 32)
+const CAT_TAIL = new TorusGeometry(0.03, 0.011, 8, 20, PI * 1.2)
+const CAT_WHITE = new MeshStandardMaterial({ color: '#fbf7ee', roughness: 0.3 })
+const CAT_PINK = new MeshStandardMaterial({ color: '#ff8aa8', roughness: 0.4 })
+const CAT_RED = new MeshStandardMaterial({ color: '#e0262a', roughness: 0.4 })
+const CAT_GOLD = new MeshStandardMaterial({ color: '#e2b13c', metalness: 0.9, roughness: 0.25 })
+const CAT_INK = new MeshBasicMaterial({ color: '#1a1a1a' })
+const CAT_SHINE = new MeshBasicMaterial({ color: '#ffffff' })
+
+/** Maneki-neko on its cushion, built facing +z, with a paw that waves and a koban coin held to its tummy. */
 export function LuckyCat({ mirrored = false, staring = false }: { mirrored?: boolean; staring?: boolean }) {
   const paw = useRef<Group>(null)
   useFrame(({ clock }) => {
     if (paw.current) paw.current.rotation.z = (mirrored ? -1 : 1) * (0.25 + Math.sin(clock.elapsedTime * 4) * 0.35)
   })
-  const white = <meshStandardMaterial color="#fbf7ee" roughness={0.3} />
   const head = (
     <group>
-      <mesh castShadow>
-        <sphereGeometry args={[0.075, 32, 24]} />
-        {white}
-      </mesh>
+      <mesh geometry={CAT_HEAD} material={CAT_WHITE} castShadow userData={{ paint: true }} />
       {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * 0.045, 0.06, 0]} rotation={[0, 0, -s * 0.3]}>
-          <coneGeometry args={[0.025, 0.05, 12]} />
-          {white}
-        </mesh>
+        <group key={s} position={[s * 0.047, 0.062, -0.006]} rotation={[0, 0, -s * 0.35]}>
+          <mesh geometry={CAT_EAR} material={CAT_WHITE} userData={{ paint: true }} />
+          <mesh geometry={CAT_EAR_INNER} material={CAT_PINK} position={[0, -0.006, 0.012]} rotation={[0.25, 0, 0]} />
+        </group>
       ))}
+      {/* big round eyes with a glint, a pink nose, whiskers out of the cheeks */}
       {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * 0.028, 0.012, 0.068]}>
-          <sphereGeometry args={[0.009, 10, 8]} />
-          <meshBasicMaterial color="#111" />
-        </mesh>
+        <group key={s}>
+          <mesh geometry={CAT_BALL} material={CAT_INK} position={[s * 0.03, 0.014, 0.0705]} scale={[0.012, 0.015, 0.0055]} />
+          <mesh geometry={CAT_BALL} material={CAT_SHINE} position={[s * 0.03 + 0.004, 0.019, 0.0755]} scale={0.0035} />
+          {[-1, 0, 1].map((k) => (
+            <mesh
+              key={k}
+              geometry={CAT_WHISKER}
+              material={CAT_INK}
+              position={[s * 0.066, -0.014 + k * 0.009, 0.046]}
+              rotation={[0, s * 0.5, PI / 2 + s * k * 0.18]}
+            />
+          ))}
+        </group>
       ))}
-      <mesh position={[0, -0.01, 0.073]}>
-        <sphereGeometry args={[0.007, 8, 6]} />
-        <meshStandardMaterial color="#ff8aa8" />
-      </mesh>
+      <mesh geometry={CAT_BALL} material={CAT_PINK} position={[0, -0.008, 0.0765]} scale={[0.01, 0.007, 0.005]} />
     </group>
   )
   return (
     <group scale={[mirrored ? -1 : 1, 1, 1]}>
-      <mesh position={[0, 0.08, 0]} scale={[1, 1.15, 0.9]} castShadow userData={{ paint: true }}>
-        <sphereGeometry args={[0.075, 32, 24]} />
-        <meshStandardMaterial color="#fbf7ee" roughness={0.3} />
-      </mesh>
-      {/* collar and coin */}
-      <mesh position={[0, 0.145, 0.02]} rotation={[PI / 2, 0, 0]}>
-        <torusGeometry args={[0.05, 0.008, 8, 32]} />
-        <meshStandardMaterial color="#ff3131" roughness={0.4} />
-      </mesh>
-      <mesh position={[0, 0.08, 0.068]} rotation={[PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.03, 0.03, 0.006, 24]} />
-        <meshStandardMaterial color="#e2b13c" metalness={0.9} roughness={0.25} />
-      </mesh>
-      {staring ? <FacesYou position={[0, 0.21, 0]}>{head}</FacesYou> : <group position={[0, 0.21, 0]}>{head}</group>}
-      {/* waving paw */}
-      <group ref={paw} position={[0.065, 0.14, 0.02]}>
-        <mesh position={[0.01, 0.05, 0]} castShadow>
-          <capsuleGeometry args={[0.018, 0.06, 6, 12]} />
-          {white}
-        </mesh>
+      {/* the red cushion it sits on, with gold tassels */}
+      <Block size={[0.18, 0.03, 0.16]} position={[0, 0.015, 0]} color="#d81e1e" roughness={0.6} radius={0.012} />
+      {[-1, 1].flatMap((sx) => [-1, 1].map((sz) => <mesh key={`${sx}${sz}`} geometry={CAT_BALL} material={CAT_GOLD} position={[sx * 0.086, 0.015, sz * 0.076]} scale={0.009} />))}
+      <group position={[0, 0.028, 0]}>
+        <mesh geometry={CAT_BODY} material={CAT_WHITE} scale={[1, 1, 0.88]} castShadow userData={{ paint: true }} />
+        {/* front feet */}
+        {[-1, 1].map((s) => (
+          <mesh key={s} geometry={CAT_BALL} material={CAT_WHITE} position={[s * 0.034, 0.012, 0.058]} scale={[0.022, 0.014, 0.024]} userData={{ paint: true }} />
+        ))}
+        {/* collar with a bell */}
+        <mesh geometry={CAT_COLLAR} material={CAT_RED} position={[0, 0.137, 0.003]} rotation={[PI / 2 + 0.08, 0, 0]} />
+        <mesh geometry={CAT_BALL} material={CAT_GOLD} position={[0, 0.122, 0.052]} scale={0.013} />
+        {/* the koban, held to the tummy by the other paw */}
+        <mesh geometry={CAT_COIN} material={CAT_GOLD} position={[0.006, 0.064, 0.07]} rotation={[PI / 2 - 0.12, 0, 0]} scale={[0.03, 1, 0.042]} />
+        <Block size={[0.014, 0.034, 0.004]} position={[0.006, 0.064, 0.0745]} rotation={[-0.12, 0, 0]} color="#d81e1e" roughness={0.5} radius={0.0015} />
+        <mesh geometry={CAT_BALL} material={CAT_WHITE} position={[-0.034, 0.075, 0.072]} scale={[0.021, 0.024, 0.02]} userData={{ paint: true }} />
+        {/* a curl of tail at the back */}
+        <mesh geometry={CAT_TAIL} material={CAT_WHITE} position={[0.03, 0.035, -0.066]} rotation={[0, -0.5, 0.6]} userData={{ paint: true }} />
+      </group>
+      {staring ? <FacesYou position={[0, 0.24, 0]}>{head}</FacesYou> : <group position={[0, 0.24, 0]}>{head}</group>}
+      {/* waving paw: arm up from the shoulder, round paw with a pink pad */}
+      <group ref={paw} position={[0.058, 0.16, 0.03]}>
+        <mesh geometry={CAT_ARM} material={CAT_WHITE} position={[0.006, 0.035, 0]} castShadow userData={{ paint: true }} />
+        <mesh geometry={CAT_BALL} material={CAT_WHITE} position={[0.006, 0.075, 0.004]} scale={0.024} userData={{ paint: true }} />
+        <mesh geometry={CAT_BALL} material={CAT_PINK} position={[0.006, 0.074, 0.025]} scale={[0.011, 0.01, 0.004]} />
       </group>
     </group>
   )
 }
 
+const JAR = new LatheGeometry(
+  [
+    [0, 0],
+    [0.054, 0],
+    [0.062, 0.012],
+    [0.064, 0.03],
+    [0.064, 0.158],
+    [0.056, 0.182],
+    [0.05, 0.188],
+    [0.05, 0.204],
+    [0, 0.204],
+  ].map(([x, y]) => new Vector2(x, y)),
+  32,
+)
+const JAR_LID = new CylinderGeometry(0.055, 0.055, 0.026, 28)
+const JAR_LID_RIM = new TorusGeometry(0.055, 0.0035, 6, 32)
+const JAR_BRINE = new CylinderGeometry(0.059, 0.059, 0.15, 28)
+const JAR_LABEL = new CylinderGeometry(0.0655, 0.0655, 0.03, 32, 1, true)
+const PICKLE = new SphereGeometry(0.0145, 12, 8)
+const JAR_EYE = new SphereGeometry(0.019, 14, 10)
+const JAR_PUPIL = new SphereGeometry(0.0085, 10, 8)
+const JAR_GLASS = new MeshPhysicalMaterial({ color: '#eafff4', transparent: true, opacity: 0.28, roughness: 0.05, clearcoat: 1, depthWrite: false })
+const JAR_RED = new MeshStandardMaterial({ color: '#d43a2c', metalness: 0.5, roughness: 0.4 })
+// a paper label all the way round, so it's seen through the glass from behind too
+const JAR_PAPER = new MeshStandardMaterial({ color: '#f7ecc8', roughness: 0.8, side: DoubleSide })
+const JAR_EYE_WHITE = new MeshStandardMaterial({ color: '#fffbe6', roughness: 0.2 })
+const JAR_IRIS = new MeshBasicMaterial({ color: '#1f6bff' })
+const JAR_XS = [-0.5, -0.25, 0, 0.25, 0.5]
+
 /** A row of jars on a shelf: pickles, eyeballs, or something glowing. */
 export function Jars({ contents }: { contents: 'pickles' | 'eyes' | 'glow' }) {
-  const jar = useMemo(
-    () =>
-      new LatheGeometry(
-        [
-          [0, 0],
-          [0.05, 0],
-          [0.055, 0.02],
-          [0.055, 0.15],
-          [0.045, 0.17],
-          [0.045, 0.19],
-          [0, 0.19],
-        ].map(([x, y]) => new Vector2(x, y)),
-        32,
-      ),
-    [],
-  )
+  const glow = contents === 'glow'
   const fill = useMemo(() => {
     const rng = mulberry32(contents.length)
-    return Array.from({ length: 5 }, () => Array.from({ length: 6 }, () => [(rng() - 0.5) * 0.06, 0.03 + rng() * 0.11, (rng() - 0.5) * 0.06] as Vec3))
+    const pieces: Placement[] = []
+    const whites: Placement[] = []
+    const pupils: Placement[] = []
+    for (const x of JAR_XS)
+      for (let i = 0; i < 16; i++) {
+        const a = rng() * PI * 2
+        const r = rng() * 0.028
+        // packed in from the bottom of the jar to the top of the brine
+        const at: Vec3 = [x + Math.cos(a) * r, 0.036 + rng() * 0.094, Math.sin(a) * r]
+        pieces.push({ at, rot: [rng() * PI, rng() * PI, 0.4 + rng()], scale: [1, 2.3, 1] })
+        whites.push({ at })
+        pupils.push({ at: [at[0], at[1], at[2] + 0.015] })
+      }
+    return { pieces, whites, pupils }
   }, [contents])
+  const brine = useMemo(
+    () =>
+      new MeshStandardMaterial({
+        color: glow ? '#ff4fd8' : '#c9d86a',
+        emissive: glow ? '#ff4fd8' : '#000000',
+        emissiveIntensity: glow ? 1.2 : 0,
+        transparent: true,
+        opacity: 0.5,
+        depthWrite: false,
+      }),
+    [glow],
+  )
+  const pickle = useMemo(
+    () =>
+      new MeshStandardMaterial({
+        color: glow ? '#fff0fb' : '#4f6b22',
+        emissive: glow ? '#ff4fd8' : '#000000',
+        emissiveIntensity: glow ? 1.5 : 0,
+        roughness: 0.5,
+      }),
+    [glow],
+  )
   return (
     <>
-      {fill.map((pieces, j) => (
-        <group key={j} position={[-0.5 + j * 0.25, 0, 0]}>
-          <mesh geometry={jar} renderOrder={2}>
-            <meshPhysicalMaterial color="#eafff4" transparent opacity={0.28} roughness={0.05} clearcoat={1} depthWrite={false} />
-          </mesh>
-          <mesh position={[0, 0.2, 0]}>
-            <cylinderGeometry args={[0.048, 0.048, 0.02, 24]} />
-            <meshStandardMaterial color="#d43a2c" metalness={0.5} roughness={0.4} />
-          </mesh>
-          {/* brine */}
-          <mesh position={[0, 0.085, 0]} userData={{ paint: true }}>
-            <cylinderGeometry args={[0.05, 0.05, 0.15, 24]} />
-            <meshStandardMaterial
-              color={contents === 'glow' ? '#ff4fd8' : '#c9d86a'}
-              emissive={contents === 'glow' ? '#ff4fd8' : '#000000'}
-              emissiveIntensity={contents === 'glow' ? 1.2 : 0}
-              transparent
-              opacity={0.5}
-              depthWrite={false}
-            />
-          </mesh>
-          {pieces.map((p, i) =>
-            contents === 'eyes' ? (
-              <group key={i} position={p}>
-                <mesh>
-                  <sphereGeometry args={[0.018, 14, 10]} />
-                  <meshStandardMaterial color="#fffbe6" roughness={0.2} />
-                </mesh>
-                <mesh position={[0, 0, 0.016]}>
-                  <sphereGeometry args={[0.007, 10, 8]} />
-                  <meshBasicMaterial color="#1f6bff" />
-                </mesh>
-              </group>
-            ) : (
-              <mesh key={i} position={p} scale={[1, 2.2, 1]} rotation={[0.3 * i, 0, 0.5]}>
-                <sphereGeometry args={[0.012, 12, 8]} />
-                <meshStandardMaterial
-                  color={contents === 'glow' ? '#fff0fb' : '#4f6b22'}
-                  emissive={contents === 'glow' ? '#ff4fd8' : '#000000'}
-                  emissiveIntensity={contents === 'glow' ? 1.5 : 0}
-                  roughness={0.5}
-                />
-              </mesh>
-            ),
-          )}
+      {JAR_XS.map((x) => (
+        <group key={x} position={[x, 0, 0]}>
+          <mesh geometry={JAR} material={JAR_GLASS} renderOrder={2} />
+          <mesh geometry={JAR_LID} material={JAR_RED} position={[0, 0.215, 0]} />
+          <mesh geometry={JAR_LID_RIM} material={JAR_RED} position={[0, 0.204, 0]} rotation={[PI / 2, 0, 0]} />
+          <mesh geometry={JAR_LABEL} material={JAR_PAPER} position={[0, 0.032, 0]} />
+          <mesh geometry={JAR_BRINE} material={brine} position={[0, 0.088, 0]} userData={{ paint: true }} />
         </group>
       ))}
-      {contents === 'glow' && <pointLight position={[0, 0.15, 0.25]} intensity={1} distance={2} decay={2} color="#ff4fd8" />}
+      {contents === 'eyes' ? (
+        <>
+          <Instanced geometry={JAR_EYE} material={JAR_EYE_WHITE} items={fill.whites} />
+          <Instanced geometry={JAR_PUPIL} material={JAR_IRIS} items={fill.pupils} />
+        </>
+      ) : (
+        <Instanced geometry={PICKLE} material={pickle} items={fill.pieces} />
+      )}
+      {glow && <pointLight position={[0, 0.15, 0.25]} intensity={1} distance={2} decay={2} color="#ff4fd8" />}
     </>
   )
 }
@@ -386,6 +496,28 @@ export function Jars({ contents }: { contents: 'pickles' | 'eyes' | 'glow' }) {
 // ---------------------------------------------------------------------------
 
 const GUM_COLOURS = ['#ff3131', '#1f6bff', '#ffde21', '#2fbf71', '#ff3fa4', '#ff8a1f']
+const GUM_FOOT = new CylinderGeometry(0.16, 0.19, 0.05, 32)
+const GUM_POLE = new CylinderGeometry(0.03, 0.04, 0.56, 20)
+const GUM_COLLAR = new CylinderGeometry(0.06, 0.05, 0.05, 24)
+const GUM_BODY = new LatheGeometry(
+  [
+    [0, 0],
+    [0.07, 0],
+    [0.084, 0.02],
+    [0.1, 0.1],
+    [0.118, 0.2],
+    [0.135, 0.25],
+    [0.142, 0.268],
+    [0.134, 0.285],
+    [0, 0.285],
+  ].map(([x, y]) => new Vector2(x, y)),
+  32,
+)
+const GUM_KNOB = new CylinderGeometry(0.032, 0.032, 0.022, 24)
+const GUM_LID = new CylinderGeometry(0.07, 0.085, 0.04, 28)
+const GUM_TOP = new SphereGeometry(0.03, 20, 12, 0, PI * 2, 0, PI / 2)
+const GUM_RED = new MeshStandardMaterial({ color: '#e0262a', metalness: 0.4, roughness: 0.35 })
+const GUM_CHROME = new MeshStandardMaterial({ color: '#c9ced6', metalness: 0.9, roughness: 0.25 })
 
 export function GumballMachine({ fill }: { fill: 'gum' | 'eyes' | 'empty' }) {
   const balls = useRef<InstancedMesh>(null)
@@ -422,18 +554,17 @@ export function GumballMachine({ fill }: { fill: 'gum' | 'eyes' | 'empty' }) {
   }, [spots, fill])
   return (
     <>
-      <mesh position={[0, 0.4, 0]} castShadow userData={{ paint: true }}>
-        <cylinderGeometry args={[0.09, 0.16, 0.8, 32]} />
-        <meshStandardMaterial color="#e0262a" metalness={0.4} roughness={0.35} />
-      </mesh>
-      <mesh position={[0, 0.85, 0]} castShadow userData={{ paint: true }}>
-        <cylinderGeometry args={[0.13, 0.11, 0.1, 32]} />
-        <meshStandardMaterial color="#e0262a" metalness={0.4} roughness={0.35} />
-      </mesh>
-      <mesh position={[0, 0.82, 0.12]} rotation={[PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.03, 0.03, 0.02, 20]} />
-        <meshStandardMaterial color="#c9ced6" metalness={0.9} roughness={0.25} />
-      </mesh>
+      {/* a weighted foot, a chrome pole, and the bell-shaped body with the coin mechanism */}
+      <mesh geometry={GUM_FOOT} material={GUM_RED} position={[0, 0.025, 0]} castShadow receiveShadow userData={{ paint: true }} />
+      <mesh geometry={GUM_POLE} material={GUM_CHROME} position={[0, 0.33, 0]} castShadow />
+      <mesh geometry={GUM_COLLAR} material={GUM_CHROME} position={[0, 0.62, 0]} />
+      <mesh geometry={GUM_BODY} material={GUM_RED} position={[0, 0.62, 0]} castShadow userData={{ paint: true }} />
+      <Block size={[0.13, 0.12, 0.03]} position={[0, 0.8, 0.108]} rotation={[-0.2, 0, 0]} color="#c9ced6" metalness={0.9} roughness={0.25} radius={0.01} />
+      <mesh geometry={GUM_KNOB} material={GUM_CHROME} position={[0, 0.8, 0.135]} rotation={[PI / 2 - 0.2, 0, 0]} />
+      <Block size={[0.08, 0.016, 0.016]} position={[0, 0.8, 0.152]} rotation={[-0.2, 0, 0.6]} color="#c9ced6" metalness={0.9} roughness={0.25} radius={0.006} />
+      {/* the chute the gumball drops out of */}
+      <Block size={[0.08, 0.055, 0.05]} position={[0, 0.69, 0.092]} color="#c9ced6" metalness={0.9} roughness={0.25} radius={0.012} />
+      <Block size={[0.056, 0.03, 0.01]} position={[0, 0.692, 0.115]} color="#1a1a1a" roughness={0.6} radius={0.004} />
       <group position={[0, 1.06, 0]}>
         {fill !== 'empty' && (
           <instancedMesh ref={balls} args={[undefined, undefined, spots.length]} key={fill}>
@@ -451,10 +582,9 @@ export function GumballMachine({ fill }: { fill: 'gum' | 'eyes' | 'empty' }) {
           <sphereGeometry args={[0.16, 40, 28]} />
           <meshPhysicalMaterial color="#ffffff" transparent opacity={0.22} roughness={0.03} clearcoat={1} depthWrite={false} />
         </mesh>
-        <mesh position={[0, 0.16, 0]}>
-          <sphereGeometry args={[0.05, 24, 12, 0, PI * 2, 0, PI / 2]} />
-          <meshStandardMaterial color="#e0262a" metalness={0.4} roughness={0.35} />
-        </mesh>
+        {/* lid and knob on top */}
+        <mesh geometry={GUM_LID} material={GUM_RED} position={[0, 0.158, 0]} userData={{ paint: true }} />
+        <mesh geometry={GUM_TOP} material={GUM_RED} position={[0, 0.178, 0]} userData={{ paint: true }} />
       </group>
     </>
   )
@@ -479,12 +609,18 @@ const BOTTLE = new LatheGeometry(
 const BOTTLE_COLOURS = ['#ff3131', '#2fbf71', '#ff8a1f', '#16d0ff', '#8a4dff']
 const BOTTLE_MATS = BOTTLE_COLOURS.map((color) => new MeshStandardMaterial({ color, roughness: 0.15, transparent: true, opacity: 0.88 }))
 
+const EYEBALL = new SphereGeometry(0.27, 48, 32)
+const IRIS = new SphereGeometry(0.2715, 40, 8, 0, PI * 2, 0, 0.46)
+const PUPIL_CAP = new SphereGeometry(0.273, 32, 4, 0, PI * 2, 0, 0.2)
+const FRIDGE_SIGNS: Record<FridgeKind, string> = { fizzy: 'ICE COLD', water: 'WATER', dairy: 'MILK' }
+
 export function Fridge({ contents, kind = 'fizzy' }: { contents: 'drinks' | 'empty' | 'eye'; kind?: FridgeKind }) {
   const eye = useRef<Group>(null)
   useFrame(({ camera }) => {
     if (eye.current) eye.current.lookAt(camera.position)
   })
   const rows = FRIDGE_SHELVES
+  const sign = useMemo(() => plaqueTexture(FRIDGE_SIGNS[kind], '#1f6bff', '#ffffff'), [kind])
   return (
     <>
       {/* a hollow cabinet: back, sides, base and header around a glass door */}
@@ -499,23 +635,27 @@ export function Fridge({ contents, kind = 'fizzy' }: { contents: 'drinks' | 'emp
         <planeGeometry args={[1.08, 1.58]} />
         <meshStandardMaterial color="#cfe9ff" emissive="#9fd6ff" emissiveIntensity={0.55} />
       </mesh>
-      {rows.map((y) => (
-        <Block key={y} size={[1.08, 0.02, 0.6]} position={[0, y - 0.02, 0]} color="#c9ced6" metalness={0.7} roughness={0.3} radius={0.004} />
-      ))}
+      {/* the eye has shoved the shelves out of its way */}
+      {contents !== 'eye' &&
+        rows.map((y) => (
+          <Block key={y} size={[1.08, 0.02, 0.6]} position={[0, y - 0.02, 0]} color="#c9ced6" metalness={0.7} roughness={0.3} radius={0.004} />
+        ))}
       {contents === 'drinks' && <FridgeStock kind={kind} />}
       {contents === 'eye' && (
         <group ref={eye} position={[0, 0.95, 0]}>
-          <mesh>
-            <sphereGeometry args={[0.28, 48, 32]} />
+          <mesh geometry={EYEBALL} castShadow>
             <meshStandardMaterial color="#fffbe6" roughness={0.15} />
           </mesh>
-          <mesh position={[0, 0, 0.26]}>
-            <circleGeometry args={[0.12, 40]} />
+          {/* iris and pupil are caps of the eyeball itself, so they sit on its curve */}
+          <mesh geometry={IRIS} rotation={[PI / 2, 0, 0]}>
             <meshStandardMaterial color="#2fbf71" roughness={0.3} />
           </mesh>
-          <mesh position={[0, 0, 0.265]}>
-            <circleGeometry args={[0.055, 32]} />
+          <mesh geometry={PUPIL_CAP} rotation={[PI / 2, 0, 0]}>
             <meshBasicMaterial color="#050505" />
+          </mesh>
+          <mesh position={[0.045, 0.05, 0.262]}>
+            <sphereGeometry args={[0.018, 12, 8]} />
+            <meshBasicMaterial color="#ffffff" />
           </mesh>
         </group>
       )}
@@ -524,8 +664,23 @@ export function Fridge({ contents, kind = 'fizzy' }: { contents: 'drinks' | 'emp
         <planeGeometry args={[1.08, 1.68]} />
         <meshPhysicalMaterial color="#ffffff" transparent opacity={0.15} roughness={0.05} clearcoat={1} depthWrite={false} />
       </mesh>
-      <Block size={[0.04, 0.6, 0.04]} position={[0.5, 1.0, 0.39]} color="#c9ced6" metalness={0.9} roughness={0.25} radius={0.01} />
+      {/* the door's frame round the glass */}
+      {[-1, 1].map((s) => (
+        <Block key={`v${s}`} size={[0.05, 1.68, 0.035]} position={[s * 0.515, 0.95, 0.365]} color="#e6e6e0" roughness={0.35} radius={0.01} paint />
+      ))}
+      {[0.135, 1.765].map((y) => (
+        <Block key={`h${y}`} size={[1.08, 0.05, 0.035]} position={[0, y, 0.365]} color="#e6e6e0" roughness={0.35} radius={0.01} paint />
+      ))}
+      {/* bar handle on two stand-offs */}
+      <Block size={[0.03, 0.62, 0.03]} position={[0.47, 1.0, 0.425]} color="#c9ced6" metalness={0.9} roughness={0.25} radius={0.012} />
+      {[0.75, 1.25].map((y) => (
+        <Block key={y} size={[0.022, 0.03, 0.05]} position={[0.47, y, 0.395]} color="#c9ced6" metalness={0.9} roughness={0.25} radius={0.008} />
+      ))}
       <Block size={[1.1, 0.2, 0.02]} position={[0, 1.87, 0.36]} color="#1f6bff" emissive="#1f6bff" emissiveIntensity={0.4} radius={0.01} />
+      <mesh position={[0, 1.87, 0.3715]}>
+        <planeGeometry args={[0.56, 0.21]} />
+        <meshStandardMaterial map={sign} emissive="#ffffff" emissiveMap={sign} emissiveIntensity={0.35} />
+      </mesh>
       <pointLight position={[0, 1.0, 0.8]} intensity={1} distance={3} decay={2} color="#bfe6ff" />
     </>
   )
@@ -534,6 +689,8 @@ export function Fridge({ contents, kind = 'fizzy' }: { contents: 'drinks' | 'emp
 // ---------------------------------------------------------------------------
 // Neon sign, security camera, strip lights
 // ---------------------------------------------------------------------------
+
+const NEON_STUD = new CylinderGeometry(0.014, 0.014, 0.012, 16)
 
 export function NeonSign({ text, colour }: { text: string; colour: string }) {
   const map = useMemo(() => neonText(text, colour), [text, colour])
@@ -545,6 +702,10 @@ export function NeonSign({ text, colour }: { text: string; colour: string }) {
   return (
     <>
       <Block size={[1.7, 0.5, 0.03]} position={[0, 0, 0.015]} color="#151515" roughness={0.6} radius={0.01} />
+      {/* chrome stand-offs holding the board to the wall */}
+      {[-1, 1].flatMap((sx) =>
+        [-1, 1].map((sy) => <mesh key={`${sx}${sy}`} geometry={NEON_STUD} material={GUM_CHROME} position={[sx * 0.8, sy * 0.2, 0.034]} rotation={[PI / 2, 0, 0]} />),
+      )}
       <mesh ref={ref} position={[0, 0, 0.035]} userData={{ paint: true }}>
         <planeGeometry args={[1.6, 0.4]} />
         <meshBasicMaterial map={map} transparent blending={AdditiveBlending} depthWrite={false} toneMapped={false} />
@@ -554,29 +715,45 @@ export function NeonSign({ text, colour }: { text: string; colour: string }) {
   )
 }
 
+const CAM_PLATE = new CylinderGeometry(0.035, 0.035, 0.012, 24)
+const CAM_STEM = new CylinderGeometry(0.012, 0.012, 0.13, 12)
+const CAM_KNUCKLE = new SphereGeometry(0.02, 16, 12)
+const CAM_BEZEL = new CylinderGeometry(0.042, 0.046, 0.04, 28)
+const CAM_GLASS = new SphereGeometry(0.033, 24, 12, 0, PI * 2, 0, PI / 2)
+const CAM_CABLE = new CylinderGeometry(0.008, 0.008, 0.04, 10)
+const CAM_METAL = new MeshStandardMaterial({ color: '#9aa3ad', metalness: 0.8, roughness: 0.35 })
+const CAM_BLACK = new MeshStandardMaterial({ color: '#141414', roughness: 0.35 })
+const CAM_LENS = new MeshStandardMaterial({ color: '#16305e', metalness: 0.6, roughness: 0.08 })
+
 /** Ceiling-mounted CCTV camera; points at you unless `away`. Built with the lens facing +z. */
 export function SecurityCamera({ away = false }: { away?: boolean }) {
   const head = (
     <>
-      <Block size={[0.12, 0.11, 0.26]} position={[0, 0, 0.05]} color="#e8e8e2" roughness={0.4} radius={0.02} paint />
-      <mesh position={[0, 0, 0.19]} rotation={[PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.04, 0.045, 0.03, 24]} />
-        <meshStandardMaterial color="#111" roughness={0.2} />
-      </mesh>
-      <mesh position={[0.04, 0.035, 0.18]}>
-        <sphereGeometry args={[0.008, 8, 6]} />
+      {/* ball joint, the bracket up to it, the housing under its sun hood */}
+      <mesh geometry={CAM_KNUCKLE} material={CAM_METAL} />
+      <Block size={[0.05, 0.03, 0.08]} position={[0, -0.03, 0.02]} color="#9aa3ad" metalness={0.8} roughness={0.35} radius={0.008} />
+      <Block size={[0.12, 0.11, 0.26]} position={[0, -0.07, 0.05]} color="#e8e8e2" roughness={0.4} radius={0.025} paint />
+      <Block size={[0.15, 0.014, 0.31]} position={[0, -0.008, 0.07]} color="#e8e8e2" roughness={0.4} radius={0.006} paint />
+      {[-1, 1].map((s) => (
+        <Block key={s} size={[0.012, 0.04, 0.3]} position={[s * 0.07, -0.025, 0.07]} color="#e8e8e2" roughness={0.4} radius={0.005} paint />
+      ))}
+      {/* lens: a black bezel with blue glass, and the red recording light */}
+      <mesh geometry={CAM_BEZEL} material={CAM_BLACK} position={[0, -0.07, 0.19]} rotation={[PI / 2, 0, 0]} />
+      <mesh geometry={CAM_GLASS} material={CAM_LENS} position={[0, -0.07, 0.205]} rotation={[PI / 2, 0, 0]} scale={[1, 0.5, 1]} />
+      <mesh position={[0.042, -0.03, 0.181]}>
+        <sphereGeometry args={[0.008, 10, 8]} />
         <meshStandardMaterial color="#ff2020" emissive="#ff2020" emissiveIntensity={3} />
       </mesh>
+      {/* the cable out of the back */}
+      <mesh geometry={CAM_CABLE} material={CAM_BLACK} position={[0, -0.07, -0.1]} rotation={[PI / 2, 0, 0]} />
     </>
   )
   return (
     <group scale={1.8}>
-      <mesh position={[0, 0.07, 0]}>
-        <cylinderGeometry args={[0.012, 0.012, 0.14, 10]} />
-        <meshStandardMaterial color="#9aa3ad" metalness={0.8} />
-      </mesh>
+      <mesh geometry={CAM_PLATE} material={CAM_METAL} position={[0, 0.134, 0]} />
+      <mesh geometry={CAM_STEM} material={CAM_METAL} position={[0, 0.065, 0]} />
       {away ? (
-        <group rotation={[0.5, PI * 0.75, 0]}>{head}</group>
+        <group rotation={[0.9, PI * 0.75, 0, 'YXZ']}>{head}</group>
       ) : (
         <FacesYou position={[0, 0, 0]}>{head}</FacesYou>
       )}
@@ -687,7 +864,8 @@ export function ShopWindow({ width, height, y, ...slice }: { width: number; heig
       {[-1, 0, 1].map((sx) => (
         <Block key={sx} size={[0.07, height, 0.08]} position={[sx * (width / 2 + 0.025) * (sx === 0 ? 0 : 1), 0, 0.04]} color="#f2efe8" roughness={0.45} radius={0.01} />
       ))}
-      <Block size={[width + 0.2, 0.04, 0.25]} position={[0, -height / 2 - 0.08, 0.12]} color="#f2efe8" roughness={0.45} radius={0.01} />
+      {/* a narrow sill, so it clears the freezer and the fruit stand below */}
+      <Block size={[width + 0.2, 0.04, 0.12]} position={[0, -height / 2 - 0.08, 0.06]} color="#f2efe8" roughness={0.45} radius={0.01} />
     </>
   )
 }

@@ -162,12 +162,33 @@ export function Hologram({ shape }: { shape: 'planet' | 'cube' | 'knot' }) {
 export function HologramPedestal() {
   return (
     <>
-      <mesh position={[0, 0.375, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.18, 0.26, 0.75, 32]} />
+      {/* a dark plinth on the deck, with a glowing ring round its foot */}
+      <mesh position={[0, 0.04, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.31, 0.33, 0.08, 40]} />
+        <meshStandardMaterial color="#2b2f36" metalness={0.7} roughness={0.4} />
+      </mesh>
+      <mesh position={[0, 0.082, 0]}>
+        <cylinderGeometry args={[0.285, 0.3, 0.008, 40]} />
+        <meshStandardMaterial color="#3dfcff" emissive="#3dfcff" emissiveIntensity={1.6} />
+      </mesh>
+      <mesh position={[0, 0.42, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.18, 0.25, 0.68, 32]} />
         <meshStandardMaterial color="#9aa3ad" metalness={0.85} roughness={0.3} />
       </mesh>
-      <mesh position={[0, 0.76, 0]}>
-        <cylinderGeometry args={[0.16, 0.18, 0.03, 32]} />
+      {/* collar bands, so the column reads as machined rather than a plain cone */}
+      {[0.22, 0.58].map((y) => (
+        <mesh key={y} position={[0, y, 0]}>
+          <cylinderGeometry args={[0.24 - (y - 0.22) * 0.12 + 0.012, 0.24 - (y - 0.22) * 0.12 + 0.012, 0.035, 32]} />
+          <meshStandardMaterial color="#2b2f36" metalness={0.8} roughness={0.35} />
+        </mesh>
+      ))}
+      {/* the emitter head: a lip and a glowing lens */}
+      <mesh position={[0, 0.77, 0]} castShadow>
+        <cylinderGeometry args={[0.2, 0.185, 0.04, 32]} />
+        <meshStandardMaterial color="#c9ced6" metalness={0.85} roughness={0.25} />
+      </mesh>
+      <mesh position={[0, 0.792, 0]}>
+        <cylinderGeometry args={[0.15, 0.15, 0.008, 32]} />
         <meshStandardMaterial color="#3dfcff" emissive="#3dfcff" emissiveIntensity={2} />
       </mesh>
     </>
@@ -263,10 +284,22 @@ export function Tank() {
         <cylinderGeometry args={[0.44, 0.42, 0.18, 40]} />
         <meshStandardMaterial color="#5d6670" metalness={0.85} roughness={0.35} />
       </mesh>
+      {/* clamp rings where the glass meets the base and the lid */}
+      {[0.27, 1.85].map((y) => (
+        <mesh key={y} position={[0, y, 0]} rotation={[PI / 2, 0, 0]}>
+          <torusGeometry args={[0.39, 0.022, 10, 48]} />
+          <meshStandardMaterial color="#c9ced6" metalness={0.85} roughness={0.3} />
+        </mesh>
+      ))}
+      {/* a feed hose from the lid up into the ceiling */}
+      <mesh position={[0.18, 2.32, 0]}>
+        <cylinderGeometry args={[0.045, 0.045, 0.56, 16]} />
+        <meshStandardMaterial color="#2b2f36" metalness={0.6} roughness={0.45} />
+      </mesh>
       {/* liquid */}
       <mesh position={[0, 1.04, 0]} userData={{ paint: true }}>
         <cylinderGeometry args={[0.36, 0.36, 1.58, 40]} />
-        <meshStandardMaterial color="#6dffb0" emissive="#1fae6a" emissiveIntensity={0.7} transparent opacity={0.45} depthWrite={false} />
+        <meshStandardMaterial color="#6dffb0" emissive="#1fae6a" emissiveIntensity={0.8} transparent opacity={0.55} depthWrite={false} />
       </mesh>
       {/* glass */}
       <mesh position={[0, 1.04, 0]} renderOrder={2}>
@@ -367,7 +400,7 @@ export function Drone({ asleep }: { asleep: boolean }) {
     if (eye.current) eye.current.intensity = 0.6 + Math.sin(t * 4) * 0.1
   })
   return (
-    <group ref={body} position={asleep ? [0, -1.22, 0] : [0, 0, 0]} rotation={asleep ? [0.5, 0.4, 0.3] : [0, 0, 0]}>
+    <group ref={body} position={asleep ? [0, -1.32, 0] : [0, 0, 0]} rotation={asleep ? [0.5, 0.4, 0.3] : [0, 0, 0]}>
       <mesh castShadow userData={{ paint: true }}>
         <sphereGeometry args={[0.18, 40, 28]} />
         <meshStandardMaterial color="#f2f4f7" metalness={0.3} roughness={0.25} />
@@ -612,8 +645,15 @@ export function CaptainChair() {
       <RoundedBox args={[0.34, 0.18, 0.1]} radius={0.04} smoothness={4} position={[0, 1.47, -0.33]} castShadow userData={{ paint: true }}>
         <meshStandardMaterial color="#7a1e2b" roughness={0.45} />
       </RoundedBox>
+      {/* the swivel hub under the seat */}
+      <mesh position={[0, 0.435, 0]} castShadow>
+        <cylinderGeometry args={[0.16, 0.12, 0.04, 32]} />
+        <meshStandardMaterial {...metal} />
+      </mesh>
       {[-1, 1].map((s) => (
         <group key={s} position={[s * 0.38, 0.7, 0.02]}>
+          {/* the post that holds the arm up off the side of the seat */}
+          <Block size={[0.07, 0.24, 0.08]} position={[-s * 0.035, -0.14, -0.1]} color={metal.color} metalness={metal.metalness} roughness={metal.roughness} radius={0.015} />
           <Block size={[0.12, 0.08, 0.5]} color={metal.color} metalness={metal.metalness} roughness={metal.roughness} radius={0.02} />
           <mesh position={[0, 0.045, 0.1]} rotation={[-PI / 2, 0, 0]}>
             <planeGeometry args={[0.08, 0.18]} />
@@ -639,6 +679,8 @@ export function CeilingLights({ alert, height, length }: { alert: boolean; heigh
     <>
       {[-1.25, 1.25].map((x) => (
         <group key={x}>
+          {/* a metal trough the strip sits in, so it has a rim from below */}
+          <Block size={[0.24, 0.035, length + 0.08]} position={[x, height - 0.0175, 0]} color="#5d6670" metalness={0.8} roughness={0.35} radius={0.008} />
           <Block
             size={[0.16, 0.04, length]}
             position={[x, height - 0.03, 0]}

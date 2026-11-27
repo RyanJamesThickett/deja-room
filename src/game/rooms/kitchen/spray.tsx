@@ -107,7 +107,9 @@ export function ThrashingSpray({ anchor, head }: { anchor: Vec3; head: ReactNode
       let z = from[i * 3 + 2] + vel[i * 3 + 2] * age
       // splat on whatever it hits: the sink, the wall behind, the floor
       const overSink = Math.abs(x) < 0.43 && z < 0.33
-      const floor = overSink ? BENCH + 0.004 : 0.004
+      // the basin is sunk into the worktop (see PotSink): inside it they fall on down to its floor
+      const inBasin = Math.abs(x) < 0.35 && z > -0.23 && z < 0.27
+      const floor = inBasin ? BENCH - 0.276 : overSink ? BENCH + 0.004 : 0.004
       const hit = y <= floor || z <= -0.335
       z = Math.max(z, -0.335)
       y = Math.max(y, floor)

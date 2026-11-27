@@ -160,6 +160,13 @@ function Shell() {
 
       {/* helmet shelf on the right wall */}
       <Block size={[0.36, 0.04, 0.6]} position={[halfX - 0.18, 1.1, -1.2]} color={RIB} metalness={0.8} roughness={0.35} radius={0.01} />
+      {/* brackets under it, back to the wall, so it doesn't just hang there */}
+      {[-0.22, 0.22].map((dz) => (
+        <group key={dz}>
+          <Block size={[0.03, 0.2, 0.03]} position={[halfX - 0.015, 0.98, -1.2 + dz]} color={RIB} metalness={0.8} roughness={0.35} radius={0.006} />
+          <Block size={[0.33, 0.03, 0.03]} position={[halfX - 0.16, 0.99, -1.2 + dz]} rotation={[0, 0, -0.54]} color={RIB} metalness={0.8} roughness={0.35} radius={0.006} />
+        </group>
+      ))}
     </group>
   )
 }
@@ -235,6 +242,11 @@ function Furnishings() {
 
       <Item id="console" position={[0, 0, -halfZ + 0.45]}>
         <Block size={[2.7, 0.85, 0.55]} position={[0, 0.425, 0]} color="#4a525c" metalness={0.75} roughness={0.35} radius={0.03} paint />
+        {/* a dark kick plate along the foot, and service-panel seams on the front */}
+        <Block size={[2.62, 0.09, 0.02]} position={[0, 0.06, 0.28]} color="#2b3038" metalness={0.7} roughness={0.4} radius={0.005} />
+        {[-0.45, 0.45].map((x) => (
+          <Block key={x} size={[0.012, 0.6, 0.01]} position={[x, 0.44, 0.277]} color="#2b3038" metalness={0.7} roughness={0.4} radius={0.003} />
+        ))}
         {/* sloped control surface */}
         {/* tilted towards whoever is sitting in the chair */}
         <group position={[0, 0.92, 0.12]} rotation={[0.45, 0, 0]}>
@@ -254,6 +266,11 @@ function Furnishings() {
         <mesh position={[0, 0.015, 0]} castShadow>
           <cylinderGeometry args={[0.09, 0.1, 0.03, 32]} />
           <meshStandardMaterial color="#2b2f36" metalness={0.8} roughness={0.3} />
+        </mesh>
+        {/* the skirt under the dome: closes the gap down to the base */}
+        <mesh position={[0, 0.04, 0]} userData={{ paint: true }}>
+          <cylinderGeometry args={[0.07, 0.07, 0.022, 32]} />
+          <meshStandardMaterial color="#ff2020" emissive="#ff2020" emissiveIntensity={0.6} roughness={0.3} />
         </mesh>
         <mesh position={[0, 0.05, 0]} castShadow userData={{ paint: true }}>
           <sphereGeometry args={[0.07, 32, 16, 0, PI * 2, 0, PI / 2]} />

@@ -38,9 +38,22 @@ export function Workbench() {
       {/* on the shelf underneath: boxes, a bucket, oil bottles */}
       <Block size={[0.45, 0.3, 0.4]} position={[-1.4, 0.365, -0.05]} color="#b08a5a" roughness={0.9} />
       <Block size={[0.38, 0.22, 0.36]} position={[-0.9, 0.325, 0.02]} color="#a27d50" roughness={0.9} />
+      {/* a bucket of rags: rolled rim, rags showing at the top, a wire handle */}
       <mesh position={[0.4, 0.36, 0]} castShadow>
-        <cylinderGeometry args={[0.15, 0.12, 0.3, 20]} />
+        <cylinderGeometry args={[0.15, 0.12, 0.3, 24]} />
         <meshStandardMaterial color="#d8342c" roughness={0.6} />
+      </mesh>
+      <mesh position={[0.4, 0.51, 0]} rotation={[PI / 2, 0, 0]}>
+        <torusGeometry args={[0.15, 0.01, 8, 28]} />
+        <meshStandardMaterial color="#d8342c" roughness={0.6} />
+      </mesh>
+      <mesh position={[0.4, 0.512, 0]} scale={[1, 0.25, 1]}>
+        <sphereGeometry args={[0.14, 18, 10, 0, PI * 2, 0, PI / 2]} />
+        <meshStandardMaterial color="#c9b48a" roughness={1} />
+      </mesh>
+      <mesh position={[0.4, 0.51, 0]}>
+        <torusGeometry args={[0.15, 0.004, 6, 20, PI]} />
+        <meshStandardMaterial color="#8a9096" metalness={0.7} roughness={0.35} />
       </mesh>
       {[0.95, 1.08, 1.21, 1.34].map((x, i) => (
         <Block key={x} size={[0.1, 0.26, 0.07]} position={[x, 0.345, 0.1]} color={['#1f8f4e', '#1f8f4e', '#f2c230', '#1f6bff'][i]} roughness={0.4} radius={0.012} />
@@ -53,10 +66,21 @@ export function Workbench() {
 export function BenchClutter() {
   return (
     <>
-      <mesh position={[0.9, 0.045, 0.1]} castShadow>
-        <cylinderGeometry args={[0.04, 0.04, 0.09, 16]} />
-        <meshStandardMaterial color="#f4f1ea" roughness={0.4} />
-      </mesh>
+      {/* a tea-stained mug: rim, dark tea inside, handle */}
+      <group position={[0.9, 0, 0.1]}>
+        <mesh position={[0, 0.045, 0]} castShadow>
+          <cylinderGeometry args={[0.04, 0.037, 0.09, 20]} />
+          <meshStandardMaterial color="#f4f1ea" roughness={0.4} />
+        </mesh>
+        <mesh position={[0, 0.0905, 0]}>
+          <cylinderGeometry args={[0.034, 0.034, 0.002, 20]} />
+          <meshStandardMaterial color="#5a3a22" roughness={0.3} />
+        </mesh>
+        <mesh position={[0.036, 0.048, 0]} rotation={[0, 0, -PI / 2]}>
+          <torusGeometry args={[0.024, 0.006, 8, 16, PI]} />
+          <meshStandardMaterial color="#f4f1ea" roughness={0.4} />
+        </mesh>
+      </group>
       <Block size={[0.3, 0.02, 0.22]} position={[0.3, 0.01, 0.12]} rotation={[0, 0.4, 0]} color="#8a2d22" roughness={1} radius={0.008} />
       <group position={[-0.3, 0.035, 0.05]} rotation={[0, 0.3, PI / 2]}>
         <mesh castShadow>
@@ -339,10 +363,19 @@ export function Vice({ holds }: { holds: 'pipe' | 'duck' | 'teeth' }) {
       {holds === 'duck' ? (
         <Model id="rubber_duck_toy" position={[0, 0.125, 0]} rotation={[0, PI / 2, 0]} scale={[0.32, 0.62, 0.62]} paint={false} />
       ) : (
-        <mesh position={[0.05, 0.17, 0]} rotation={[0, 0, PI / 2]} castShadow>
-          <cylinderGeometry args={[0.022, 0.022, 0.42, 16]} />
-          <meshStandardMaterial color="#8b6f4e" metalness={0.6} roughness={0.5} />
-        </mesh>
+        <group position={[0.05, 0.17, 0]} rotation={[0, 0, PI / 2]}>
+          <mesh castShadow>
+            <cylinderGeometry args={[0.022, 0.022, 0.42, 20]} />
+            <meshStandardMaterial color="#8b6f4e" metalness={0.6} roughness={0.5} />
+          </mesh>
+          {/* the bore, dark at each cut end */}
+          {[-1, 1].map((s) => (
+            <mesh key={s} position={[0, s * 0.2105, 0]}>
+              <cylinderGeometry args={[0.016, 0.016, 0.002, 16]} />
+              <meshStandardMaterial color="#1c1a18" roughness={0.9} />
+            </mesh>
+          ))}
+        </group>
       )}
     </group>
   )
@@ -659,13 +692,27 @@ export function Compressor() {
         <capsuleGeometry args={[0.2, 0.5, 8, 24]} />
         <meshStandardMaterial color="#22508a" metalness={0.4} roughness={0.4} />
       </mesh>
+      {/* wheels on an axle under the back of the tank, hung from a welded bracket, and a rubber-footed stand at the front */}
       {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * 0.2, 0.09, -0.3]} rotation={[0, 0, PI / 2]}>
-          <cylinderGeometry args={[0.09, 0.09, 0.05, 20]} />
-          <meshStandardMaterial color="#1c1c1e" roughness={0.8} />
-        </mesh>
+        <group key={s}>
+          <mesh position={[s * 0.24, 0.1, -0.3]} rotation={[0, 0, PI / 2]} castShadow>
+            <cylinderGeometry args={[0.1, 0.1, 0.05, 24]} />
+            <meshStandardMaterial color="#1c1c1e" roughness={0.8} />
+          </mesh>
+          <mesh position={[s * 0.268, 0.1, -0.3]} rotation={[0, 0, PI / 2]}>
+            <cylinderGeometry args={[0.05, 0.05, 0.01, 16]} />
+            <meshStandardMaterial color="#c9ced6" metalness={0.7} roughness={0.35} />
+          </mesh>
+          <Block size={[0.03, 0.12, 0.06]} position={[s * 0.15, 0.13, -0.3]} color="#2a2b2d" metalness={0.5} roughness={0.5} />
+          <Block size={[0.03, 0.12, 0.04]} position={[s * 0.1, 0.07, 0.33]} color="#2a2b2d" metalness={0.5} roughness={0.5} />
+          <Block size={[0.05, 0.02, 0.06]} position={[s * 0.1, 0.01, 0.33]} color="#111" roughness={0.9} radius={0.006} />
+        </group>
       ))}
-      <Block size={[0.24, 0.13, 0.05]} position={[0, 0.065, 0.32]} color="#1c1c1e" roughness={0.8} />
+      <mesh position={[0, 0.1, -0.3]} rotation={[0, 0, PI / 2]}>
+        <cylinderGeometry args={[0.014, 0.014, 0.5, 10]} />
+        <meshStandardMaterial color="#8a9096" metalness={0.7} roughness={0.35} />
+      </mesh>
+      <Block size={[0.24, 0.03, 0.06]} position={[0, 0.135, 0.33]} color="#2a2b2d" metalness={0.5} roughness={0.5} />
       {/* handle */}
       <Block size={[0.03, 0.5, 0.03]} position={[-0.14, 0.62, 0.42]} color="#1c1c1e" roughness={0.6} />
       <Block size={[0.03, 0.5, 0.03]} position={[0.14, 0.62, 0.42]} color="#1c1c1e" roughness={0.6} />
@@ -978,8 +1025,20 @@ export function DrainPan({ fish }: { fish: boolean }) {
 export function TyreChanger() {
   return (
     <>
-      <Block size={[0.65, 0.8, 0.95]} position={[0, 0.4, 0]} color="#c4231d" roughness={0.45} metalness={0.3} />
-      <Block size={[0.66, 0.08, 0.96]} position={[0, 0.06, 0]} color="#2a2b2d" roughness={0.6} />
+      <Block size={[0.65, 0.8, 0.95]} position={[0, 0.4, 0]} color="#c4231d" roughness={0.45} metalness={0.3} radius={0.025} />
+      <Block size={[0.67, 0.08, 0.97]} position={[0, 0.06, 0]} color="#2a2b2d" roughness={0.6} radius={0.01} />
+      {/* maker's badge on the operator side, and the bead breaker: a lever and its paddle down the left flank */}
+      <Block size={[0.3, 0.08, 0.01]} position={[0, 0.62, 0.476]} color="#f4f1e8" roughness={0.5} radius={0.004} />
+      <Block size={[0.24, 0.025, 0.012]} position={[0, 0.62, 0.482]} color="#1c1c1e" roughness={0.5} />
+      <Block size={[0.05, 0.05, 0.12]} position={[-0.35, 0.55, -0.25]} color="#3a3d40" metalness={0.6} roughness={0.4} radius={0.006} />
+      <group position={[-0.36, 0.55, -0.2]} rotation={[-0.35, 0, 0]}>
+        <Block size={[0.04, 0.04, 0.62]} position={[0, 0, 0.31]} color="#3a3d40" metalness={0.6} roughness={0.4} radius={0.006} />
+        <Block size={[0.06, 0.05, 0.14]} position={[0, 0, 0.64]} color="#1c1c1e" roughness={0.7} radius={0.015} />
+      </group>
+      <Block size={[0.02, 0.2, 0.14]} position={[-0.42, 0.44, 0.05]} color="#c9ced6" metalness={0.8} roughness={0.3} radius={0.006} />
+      {/* a customer's tyre clamped on the turntable, the mount head down in its bead */}
+      <mesh geometry={TYRE_GEO} material={TYRE} position={[0, 0.975, 0.05]} castShadow receiveShadow />
+      <Block size={[0.06, 0.07, 0.09]} position={[0, 1.05, 0.05]} color="#3a3d40" metalness={0.6} roughness={0.4} radius={0.01} />
       <mesh position={[0, 0.83, 0.05]} castShadow>
         <cylinderGeometry args={[0.3, 0.3, 0.05, 32]} />
         <meshStandardMaterial color="#3a3d40" metalness={0.6} roughness={0.4} />

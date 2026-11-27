@@ -1,8 +1,8 @@
 import { Environment } from '@react-three/drei'
 import { memo, useMemo } from 'react'
-import { DoubleSide, LatheGeometry, Object3D, Path, PlaneGeometry, Shape, ShapeGeometry, Vector2, Vector3 } from 'three'
+import { DoubleSide, LatheGeometry, MeshStandardMaterial, Object3D, Path, PlaneGeometry, Shape, ShapeGeometry, TorusGeometry, Vector2, Vector3 } from 'three'
 import { useSurface, type Surface } from '../../assets'
-import { Block, Decoy, Item, PanelLight, PI, Variant, Wallpaper } from '../../kit'
+import { Block, Decoy, Instanced, Item, PanelLight, PI, Variant, Wallpaper, type Placement } from '../../kit'
 import { Model } from '../../Model'
 import type { Vec3 } from '../../mutations'
 import { dimCorridorTexture } from '../../doorway'
@@ -20,7 +20,7 @@ import {
   OutsideWorld,
   RainCloud,
   Shark,
-  TigerTail,
+  TigerRug,
   TvScreen,
   WallEye,
 } from './oddities'
@@ -78,6 +78,10 @@ function WindowWall({ width, z, hole }: { width: number; z: number; hole: { x: n
 }
 
 const WINDOW = { x: 1.8, y: 1.5, w: 1.4, h: 1.1 }
+/** Centre of the doorway along the right-hand wall. */
+const DOOR_Z = -1.3
+/** The curtain pole: its height, and how far it stands off the window wall. */
+const RAIL = { y: 2.32, z: 0.15 }
 
 function Structure() {
   const { halfX, halfZ, height } = ROOM
@@ -105,27 +109,60 @@ function Structure() {
         { size: [w, 0.12, 0.018] as Vec3, at: [0, 0, -halfZ + 0.009] as Vec3 },
         { size: [w, 0.12, 0.018] as Vec3, at: [0, 0, halfZ - 0.009] as Vec3 },
         { size: [0.018, 0.12, d] as Vec3, at: [-halfX + 0.009, 0, 0] as Vec3 },
-        { size: [0.018, 0.12, d] as Vec3, at: [halfX - 0.009, 0, 0] as Vec3 },
-      ].map(({ size, at }, i) => (
+        { size: [0.018, 0.12, d] as Vec3, at: [halfX - 0.009, 0, 0] as Vec3, door: true },
+      ].map(({ size, at, door }, i) => (
         <group key={i}>
-          <Block size={size} position={[at[0], 0.06, at[2]]} color={TRIM} roughness={0.5} radius={0.004} />
+          {door ? (
+            // the skirting stops at the door's architrave rather than running across the doorway
+            [
+              [-halfZ, DOOR_Z - 0.52],
+              [DOOR_Z + 0.52, halfZ],
+            ].map(([z0, z1]) => (
+              <Block key={z0} size={[size[0], 0.12, z1 - z0]} position={[at[0], 0.06, (z0 + z1) / 2]} color={TRIM} roughness={0.5} radius={0.004} />
+            ))
+          ) : (
+            <Block size={size} position={[at[0], 0.06, at[2]]} color={TRIM} roughness={0.5} radius={0.004} />
+          )}
           <Block size={[size[0], 0.06, size[2]]} position={[at[0], height - 0.03, at[2]]} color={TRIM} roughness={0.6} radius={0.004} />
         </group>
       ))}
 
       {/* window onto somewhere that isn't here */}
-      <group position={[1.8, 1.5, -halfZ]}>
+      <group position={[WINDOW.x, WINDOW.y, -halfZ]}>
         <Block size={[1.56, 0.08, 0.08]} position={[0, 0.59, 0.04]} color={TRIM} roughness={0.4} />
         <Block size={[1.56, 0.08, 0.08]} position={[0, -0.59, 0.04]} color={TRIM} roughness={0.4} />
         <Block size={[0.08, 1.26, 0.08]} position={[-0.74, 0, 0.04]} color={TRIM} roughness={0.4} />
         <Block size={[0.08, 1.26, 0.08]} position={[0.74, 0, 0.04]} color={TRIM} roughness={0.4} />
         <Block size={[0.04, 1.1, 0.04]} position={[0, 0, 0.03]} color={TRIM} roughness={0.4} />
         <Block size={[1.54, 0.045, 0.2]} position={[0, -0.64, 0.1]} color={TRIM} roughness={0.4} />
-        {/* curtain rail */}
-        <mesh position={[0, 0.82, 0.12]} rotation={[0, 0, PI / 2]}>
-          <cylinderGeometry args={[0.014, 0.014, 2.3, 16]} />
+        {/* the reveal: the hole is lined back into the wall's thickness, so from an angle you see a deep sill and jambs, not a void */}
+        {[-1, 1].map((s) => (
+          <group key={s}>
+            <Block size={[WINDOW.w + 0.04, 0.02, 0.16]} position={[0, s * (WINDOW.h / 2 + 0.01), -0.08]} color={TRIM} roughness={0.5} radius={0.003} />
+            <Block size={[0.02, WINDOW.h, 0.16]} position={[s * (WINDOW.w / 2 + 0.01), 0, -0.08]} color={TRIM} roughness={0.5} radius={0.003} />
+          </group>
+        ))}
+        {/* curtain rail: a pole on two wall brackets, with a ball on each end */}
+        <mesh position={[0, RAIL.y - WINDOW.y, RAIL.z]} rotation={[0, 0, PI / 2]}>
+          <cylinderGeometry args={[0.016, 0.016, 2.6, 20]} />
           <meshStandardMaterial color="#2b2622" metalness={0.8} roughness={0.35} />
         </mesh>
+        {[-1, 1].map((s) => (
+          <group key={s}>
+            <mesh position={[s * 1.33, RAIL.y - WINDOW.y, RAIL.z]}>
+              <sphereGeometry args={[0.035, 24, 16]} />
+              <meshStandardMaterial color="#2b2622" metalness={0.8} roughness={0.35} />
+            </mesh>
+            <mesh position={[s * 1.22, RAIL.y - WINDOW.y, RAIL.z / 2]} rotation={[PI / 2, 0, 0]}>
+              <cylinderGeometry args={[0.01, 0.01, RAIL.z, 12]} />
+              <meshStandardMaterial color="#2b2622" metalness={0.8} roughness={0.35} />
+            </mesh>
+            <mesh position={[s * 1.22, RAIL.y - WINDOW.y, 0.005]} rotation={[PI / 2, 0, 0]}>
+              <cylinderGeometry args={[0.03, 0.03, 0.01, 20]} />
+              <meshStandardMaterial color="#2b2622" metalness={0.8} roughness={0.35} />
+            </mesh>
+          </group>
+        ))}
       </group>
 
       {/* light switch by the door */}
@@ -227,68 +264,147 @@ function BookRow({ y, start, count, seed }: { y: number; start: number; count: n
 }
 
 const SHELF_TOPS = [0.0525, 0.6325, 1.2125]
+/** The top of the bookshelf, where the ornament ends up when it moves (SHELF_TOPS[2] + 0.58). */
+const SHELF_TOP_Y = 1.7925
 
 function Bookshelf() {
   const oak = useSurface('oak_veneer_01', 1, 2)
+  // the sides stop under an overhanging top board whose upper face is the top of the shelf (1.7925)
+  const side = SHELF_TOP_Y - 0.03
   return (
     <>
-      <Block size={[0.03, 1.8, 0.35]} position={[-0.485, 0.9, 0]} color="#c8a47e" surface={oak} paint />
-      <Block size={[0.03, 1.8, 0.35]} position={[0.485, 0.9, 0]} color="#c8a47e" surface={oak} paint />
-      <Block size={[1.0, 1.8, 0.02]} position={[0, 0.9, -0.165]} color="#b8946e" surface={oak} paint />
-      {[0.04, 0.62, 1.2, 1.78].map((y) => (
-        <Block key={y} size={[0.94, 0.025, 0.33]} position={[0, y, 0]} color="#c8a47e" surface={oak} paint />
+      <Block size={[0.03, side, 0.35]} position={[-0.485, side / 2, 0]} color="#c8a47e" surface={oak} paint />
+      <Block size={[0.03, side, 0.35]} position={[0.485, side / 2, 0]} color="#c8a47e" surface={oak} paint />
+      <Block size={[0.94, side, 0.02]} position={[0, side / 2, -0.165]} color="#b8946e" surface={oak} paint />
+      <Block size={[1.05, 0.03, 0.37]} position={[0, SHELF_TOP_Y - 0.015, 0.01]} color="#c8a47e" surface={oak} radius={0.008} paint />
+      {[0.04, 0.62, 1.2].map((y) => (
+        <group key={y}>
+          <Block size={[0.94, 0.025, 0.33]} position={[0, y, 0]} color="#c8a47e" surface={oak} paint />
+          {/* a darker lipping along each shelf's front edge */}
+          <Block size={[0.94, 0.027, 0.012]} position={[0, y, 0.169]} color="#8a5f3c" roughness={0.55} radius={0.004} paint />
+        </group>
       ))}
+      {/* recessed kick board under the bottom shelf, so it doesn't look hollow at floor level */}
+      <Block size={[0.94, 0.028, 0.02]} position={[0, 0.014, 0.14]} color="#8a5f3c" roughness={0.55} radius={0.004} paint />
+    </>
+  )
+}
+
+const LAMP_BASE = new LatheGeometry(
+  [
+    [0, 0],
+    [0.16, 0],
+    [0.165, 0.008],
+    [0.162, 0.016],
+    [0.12, 0.032],
+    [0.05, 0.048],
+    [0.022, 0.056],
+    [0.02, 0.07],
+    [0, 0.07],
+  ].map(([x, y]) => new Vector2(x, y)),
+  48,
+)
+const LAMP_SHADE = new LatheGeometry(
+  [
+    [0.24, 0],
+    [0.235, 0.02],
+    [0.16, 0.3],
+    [0.15, 0.32],
+  ].map(([x, y]) => new Vector2(x, y)),
+  64,
+)
+/** A thin brass ring: the wire frame showing at the shade's top and bottom edges. */
+const SHADE_RIM_BOTTOM = new TorusGeometry(0.241, 0.006, 8, 64).rotateX(PI / 2)
+const SHADE_RIM_TOP = new TorusGeometry(0.151, 0.005, 8, 48).rotateX(PI / 2)
+/** Where the pole stops and the bulb socket starts. */
+const POLE_TOP = 1.33
+
+function LampMetal() {
+  return <meshStandardMaterial color="#2b2622" metalness={0.7} roughness={0.35} />
+}
+function Brass() {
+  return <meshStandardMaterial color="#c9a25a" metalness={0.85} roughness={0.3} />
+}
+
+/** The shade, its wire rims, the harp that holds it over the bulb, the socket and the bulb, all upright with the shade's bottom at y = 0. */
+function LampHead({ glow }: { glow: string }) {
+  return (
+    <>
+      <mesh geometry={LAMP_SHADE} castShadow userData={{ paint: true }}>
+        <meshStandardMaterial color="#efe0c0" emissive={glow} emissiveIntensity={0.45} roughness={0.9} side={DoubleSide} />
+      </mesh>
+      <mesh geometry={SHADE_RIM_BOTTOM}>
+        <Brass />
+      </mesh>
+      <mesh geometry={SHADE_RIM_TOP} position={[0, 0.32, 0]}>
+        <Brass />
+      </mesh>
+      {/* the harp: two uprights from the socket, three spokes out to the top rim, a finial on top */}
+      {[-1, 1].map((s) => (
+        <mesh key={s} position={[s * 0.065, 0.19, 0]}>
+          <cylinderGeometry args={[0.0035, 0.0035, 0.26, 8]} />
+          <Brass />
+        </mesh>
+      ))}
+      <mesh position={[0, 0.06, 0]} rotation={[0, 0, PI / 2]}>
+        <cylinderGeometry args={[0.004, 0.004, 0.13, 8]} />
+        <Brass />
+      </mesh>
+      {[0, 1, 2].map((i) => (
+        <mesh key={i} position={[0, 0.31, 0]} rotation={[0, (i / 3) * PI * 2, PI / 2]}>
+          <cylinderGeometry args={[0.003, 0.003, 0.3, 6]} />
+          <Brass />
+        </mesh>
+      ))}
+      <mesh position={[0, 0.325, 0]}>
+        <sphereGeometry args={[0.014, 16, 12]} />
+        <Brass />
+      </mesh>
+      <mesh position={[0, 0.06, 0]}>
+        <cylinderGeometry args={[0.02, 0.022, 0.06, 20]} />
+        <LampMetal />
+      </mesh>
+      <mesh position={[0, 0.13, 0]}>
+        <sphereGeometry args={[0.045, 24, 16]} />
+        <meshStandardMaterial color="#fff3d6" emissive={glow} emissiveIntensity={3} />
+      </mesh>
     </>
   )
 }
 
 function FloorLamp() {
-  const base = useMemo(
-    () =>
-      new LatheGeometry(
-        [
-          [0, 0],
-          [0.16, 0],
-          [0.165, 0.012],
-          [0.12, 0.03],
-          [0.02, 0.05],
-          [0, 0.05],
-        ].map(([x, y]) => new Vector2(x, y)),
-        48,
-      ),
-    [],
-  )
-  const shade = useMemo(
-    () =>
-      new LatheGeometry(
-        [
-          [0.24, 0],
-          [0.235, 0.02],
-          [0.16, 0.3],
-          [0.15, 0.32],
-        ].map(([x, y]) => new Vector2(x, y)),
-        64,
-      ),
-    [],
-  )
   return (
     <>
-      <mesh geometry={base} castShadow receiveShadow>
-        <meshStandardMaterial color="#2b2622" metalness={0.7} roughness={0.35} />
+      <mesh geometry={LAMP_BASE} castShadow receiveShadow>
+        <LampMetal />
       </mesh>
-      <mesh position={[0, 0.75, 0]} castShadow>
-        <cylinderGeometry args={[0.012, 0.012, 1.4, 16]} />
-        <meshStandardMaterial color="#2b2622" metalness={0.7} roughness={0.35} />
+      <mesh position={[0, (0.07 + POLE_TOP) / 2, 0]} castShadow>
+        <cylinderGeometry args={[0.012, 0.012, POLE_TOP - 0.07, 16]} />
+        <LampMetal />
+      </mesh>
+      {/* a little foot switch on the cable side of the base */}
+      <mesh position={[0.1, 0.034, 0.06]} rotation={[0, -0.5, 0]}>
+        <cylinderGeometry args={[0.016, 0.018, 0.014, 16]} />
+        <meshStandardMaterial color="#c9a25a" metalness={0.85} roughness={0.3} />
       </mesh>
       <Variant of="lamp" name="watching">
-        {/* the shade swivels on top of the pole to point at you */}
+        {/* the pole carries on up to a knuckle, and the head swivels on it to point at you */}
+        <mesh position={[0, (POLE_TOP + 1.45) / 2, 0]}>
+          <cylinderGeometry args={[0.012, 0.012, 1.45 - POLE_TOP, 16]} />
+          <LampMetal />
+        </mesh>
         <FacesYou position={[0, 1.45, 0]}>
-          <mesh geometry={shade} position={[0, 0, 0.22]} rotation={[-PI / 2, 0, 0]} castShadow userData={{ paint: true }}>
-            <meshStandardMaterial color="#efe0c0" emissive="#ffcf8a" emissiveIntensity={0.45} roughness={0.9} side={DoubleSide} />
+          <mesh>
+            <sphereGeometry args={[0.024, 20, 14]} />
+            <Brass />
           </mesh>
-          <mesh position={[0, 0, 0.12]}>
-            <sphereGeometry args={[0.045, 24, 16]} />
-            <meshStandardMaterial color="#fff3d6" emissive="#ffcf8a" emissiveIntensity={3} />
+          <group position={[0, 0, 0.22]} rotation={[-PI / 2, 0, 0]}>
+            <LampHead glow="#ffcf8a" />
+          </group>
+          {/* the neck from the knuckle to the socket */}
+          <mesh position={[0, 0, 0.09]} rotation={[PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.01, 0.01, 0.18, 12]} />
+            <LampMetal />
           </mesh>
           <pointLight position={[0, 0, 0.3]} intensity={2.2} distance={6} decay={1.6} color="#ffc983" />
         </FacesYou>
@@ -300,13 +416,9 @@ function FloorLamp() {
         ] as const
       ).map(([name, glow, light]) => (
         <Variant key={name} of="lamp" name={name}>
-          <mesh geometry={shade} position={[0, 1.3, 0]} castShadow userData={{ paint: true }}>
-            <meshStandardMaterial color="#efe0c0" emissive={glow} emissiveIntensity={0.45} roughness={0.9} side={DoubleSide} />
-          </mesh>
-          <mesh position={[0, 1.4, 0]}>
-            <sphereGeometry args={[0.045, 24, 16]} />
-            <meshStandardMaterial color="#fff3d6" emissive={glow} emissiveIntensity={3} />
-          </mesh>
+          <group position={[0, 1.3, 0]}>
+            <LampHead glow={glow} />
+          </group>
           <pointLight position={[0, 1.35, 0]} intensity={2.2} distance={6} decay={1.6} color={light} />
         </Variant>
       ))}
@@ -315,19 +427,31 @@ function FloorLamp() {
 }
 
 /** Top of the curtains (just under the rail) and top of the windowsill, in room height. */
-const CURTAIN_TOP = 2.275
+const CURTAIN_TOP = 2.29
 const SILL_TOP = 0.89
 
 /** Pleated curtain panel: a plane with folds pushed in and out, hanging from CURTAIN_TOP down to `bottom`. */
 function CurtainPanel({ width, x, bottom, velvet }: { width: number; x: number; bottom: number; velvet: Surface }) {
   const height = CURTAIN_TOP - bottom
-  const geometry = useMemo(() => new PlaneGeometryWithFolds(width, height, Math.round(width * 22)), [width, height])
+  const geometry = useMemo(() => new PlaneGeometryWithFolds(width, height, Math.round(width * 14)), [width, height])
+  // one ring on the pole at the top of each fold
+  const rings = useMemo(() => {
+    const n = Math.round(width * 14) + 1
+    return Array.from({ length: n }, (_, i): Placement => ({ at: [x - width / 2 + 0.015 + (i / (n - 1)) * (width - 0.03), RAIL.y, 0] }))
+  }, [width, x])
   return (
-    <mesh geometry={geometry} position={[x, bottom + height / 2, 0]} castShadow receiveShadow userData={{ paint: true }}>
-      <meshStandardMaterial color="#8c2f45" roughness={0.9} side={DoubleSide} {...velvet} />
-    </mesh>
+    <>
+      <mesh geometry={geometry} position={[x, bottom + height / 2, 0]} castShadow receiveShadow userData={{ paint: true }}>
+        <meshStandardMaterial color="#8c2f45" roughness={0.9} side={DoubleSide} {...velvet} />
+      </mesh>
+      <Instanced geometry={CURTAIN_RING} material={RING_METAL} items={rings} />
+    </>
   )
 }
+
+/** A curtain ring round the pole, on its side so the pole runs through it. */
+const CURTAIN_RING = new TorusGeometry(0.026, 0.005, 8, 20).rotateY(PI / 2)
+const RING_METAL = new MeshStandardMaterial({ color: '#2b2622', metalness: 0.8, roughness: 0.35 })
 
 class PlaneGeometryWithFolds extends PlaneGeometry {
   constructor(width: number, height: number, folds: number) {
@@ -337,7 +461,7 @@ class PlaneGeometryWithFolds extends PlaneGeometry {
       const x = pos.getX(i)
       const y = pos.getY(i)
       // deeper folds lower down, where the fabric hangs free
-      const depth = 0.025 + 0.02 * (1 - (y + height / 2) / height)
+      const depth = 0.028 + 0.016 * (1 - (y + height / 2) / height)
       pos.setZ(i, Math.sin((x / width) * folds * Math.PI * 2) * depth)
     }
     this.computeVertexNormals()
@@ -392,11 +516,35 @@ function Door() {
           <group position={[-0.45, 0, 0]} rotation={[0, name === 'open' ? -0.22 : 0, 0]}>
             <group position={[0.45, 0, 0]}>
               <Block size={[0.9, 2.04, 0.045]} position={[0, 1.02, 0.0225]} color="#e9e1d3" roughness={0.45} paint />
-              <Block size={[0.62, 0.78, 0.02]} position={[0, 1.5, 0.05]} color="#e4dccd" roughness={0.45} radius={0.01} paint />
-              <Block size={[0.62, 0.78, 0.02]} position={[0, 0.55, 0.05]} color="#e4dccd" roughness={0.45} radius={0.01} paint />
+              {[1.5, 0.55].map((y) => (
+                <group key={y} position={[0, y, 0]}>
+                  <Block size={[0.6, 0.76, 0.012]} position={[0, 0, 0.05]} color="#e4dccd" roughness={0.45} radius={0.005} paint />
+                  {/* a moulded bead framing the panel */}
+                  {[-1, 1].map((s) => (
+                    <group key={s}>
+                      <Block size={[0.66, 0.02, 0.016]} position={[0, s * 0.39, 0.052]} color="#e9e1d3" roughness={0.4} radius={0.006} paint />
+                      <Block size={[0.02, 0.8, 0.016]} position={[s * 0.32, 0, 0.052]} color="#e9e1d3" roughness={0.4} radius={0.006} paint />
+                    </group>
+                  ))}
+                </group>
+              ))}
               <mesh geometry={handle} position={[0.36, 1.0, 0.045]} rotation={[PI / 2, 0, 0]} castShadow>
                 <meshStandardMaterial color="#b08d57" metalness={0.9} roughness={0.25} />
               </mesh>
+              {/* back plate for the knob and a keyhole below it */}
+              <mesh position={[0.36, 1.0, 0.046]} rotation={[PI / 2, 0, 0]}>
+                <cylinderGeometry args={[0.036, 0.036, 0.003, 24]} />
+                <meshStandardMaterial color="#b08d57" metalness={0.9} roughness={0.25} />
+              </mesh>
+              <Block size={[0.03, 0.07, 0.004]} position={[0.36, 0.9, 0.047]} color="#b08d57" metalness={0.9} roughness={0.25} radius={0.0015} />
+              <Block size={[0.007, 0.022, 0.002]} position={[0.36, 0.895, 0.0495]} color="#2b2622" roughness={0.6} radius={0.0008} />
+              {/* hinge knuckles on the hinge edge */}
+              {[0.25, 1.02, 1.8].map((y) => (
+                <mesh key={y} position={[-0.452, y, 0.045]}>
+                  <cylinderGeometry args={[0.008, 0.008, 0.09, 12]} />
+                  <meshStandardMaterial color="#b08d57" metalness={0.9} roughness={0.25} />
+                </mesh>
+              ))}
             </group>
           </group>
           {name === 'open' && (
@@ -438,77 +586,105 @@ function CabinetEggs() {
   )
 }
 
-function WineGlass() {
-  const glass = useMemo(
-    () =>
-      new LatheGeometry(
-        [
-          [0, 0],
-          [0.034, 0],
-          [0.034, 0.004],
-          [0.005, 0.01],
-          [0.004, 0.09],
-          [0.03, 0.115],
-          [0.04, 0.16],
-          [0.036, 0.21],
-        ].map(([x, y]) => new Vector2(x, y)),
-        40,
-      ),
-    [],
+const lathe = (points: [number, number][], segments: number) =>
+  new LatheGeometry(
+    points.map(([x, y]) => new Vector2(x, y)),
+    segments,
   )
+
+const GLASS = lathe(
+  [
+    [0, 0],
+    [0.034, 0],
+    [0.035, 0.002],
+    [0.034, 0.004],
+    [0.005, 0.01],
+    [0.004, 0.09],
+    [0.03, 0.115],
+    [0.04, 0.16],
+    [0.036, 0.21],
+  ],
+  40,
+)
+/** The wine follows the inside of the bowl, so it doesn't hang in it as a flat-bottomed puck. */
+const WINE = lathe(
+  [
+    [0, 0.093],
+    [0.012, 0.1],
+    [0.026, 0.113],
+    [0.0335, 0.14],
+    [0, 0.14],
+  ],
+  32,
+)
+
+function WineGlass() {
   return (
     <>
-      <mesh geometry={glass} castShadow>
+      <mesh geometry={GLASS} castShadow>
         <meshPhysicalMaterial color="#ffffff" transparent opacity={0.3} roughness={0.05} clearcoat={1} side={DoubleSide} depthWrite={false} />
       </mesh>
-      <mesh position={[0, 0.13, 0]} userData={{ paint: true }}>
-        <cylinderGeometry args={[0.034, 0.027, 0.03, 32]} />
+      <mesh geometry={WINE} userData={{ paint: true }}>
         <meshStandardMaterial color="#7a0f2a" roughness={0.1} />
       </mesh>
     </>
   )
 }
 
-function Mug() {
-  const body = useMemo(
-    () =>
-      new LatheGeometry(
-        [
-          [0, 0],
-          [0.036, 0],
-          [0.04, 0.004],
-          [0.041, 0.095],
-          [0.038, 0.098],
-          [0.036, 0.095],
-          [0.035, 0.012],
-          [0, 0.012],
-        ].map(([x, y]) => new Vector2(x, y)),
-        48,
-      ),
-    [],
-  )
+/** The mug's body: a rounded foot, straight sides, a rolled lip and the inside wall down to the bottom. */
+const MUG_BODY = lathe(
+  [
+    [0, 0],
+    [0.034, 0],
+    [0.038, 0.002],
+    [0.04, 0.006],
+    [0.041, 0.095],
+    [0.0402, 0.0985],
+    [0.0375, 0.0985],
+    [0.036, 0.095],
+    [0.035, 0.012],
+    [0, 0.012],
+  ],
+  40,
+)
+/** A loop handle whose two ends sink into the side of the mug. */
+const MUG_HANDLE = new TorusGeometry(0.025, 0.0075, 12, 32, PI * 1.25).rotateZ(-PI * 0.625).scale(1, 1.2, 1)
+
+function Mug({ empty = false }: { empty?: boolean }) {
   return (
     <>
-      <mesh geometry={body} castShadow receiveShadow userData={{ paint: true }}>
+      <mesh geometry={MUG_BODY} castShadow receiveShadow userData={{ paint: true }}>
         <meshStandardMaterial color="#f0ebe1" roughness={0.2} side={DoubleSide} />
       </mesh>
-      <mesh position={[0.046, 0.05, 0]} castShadow userData={{ paint: true }}>
-        <torusGeometry args={[0.026, 0.007, 12, 32, PI * 1.2]} />
+      <mesh geometry={MUG_HANDLE} position={[0.046, 0.052, 0]} castShadow userData={{ paint: true }}>
         <meshStandardMaterial color="#f0ebe1" roughness={0.2} />
       </mesh>
-      <mesh position={[0, 0.08, 0]} rotation={[-PI / 2, 0, 0]}>
-        <circleGeometry args={[0.035, 32]} />
-        <meshStandardMaterial color="#3b2416" roughness={0.1} />
-      </mesh>
+      {!empty && (
+        <mesh position={[0, 0.08, 0]} rotation={[-PI / 2, 0, 0]}>
+          <circleGeometry args={[0.0358, 40]} />
+          <meshStandardMaterial color="#3b2416" roughness={0.1} />
+        </mesh>
+      )}
     </>
   )
 }
 
+/**
+ * A hardback lying flat: two boards and a spine wrapped round a block of
+ * pages that's set back from the edges, so you can see it's a book.
+ */
 function TableBook({ w, h, d, colour, position, rotation }: { w: number; h: number; d: number; colour: string; position: Vec3; rotation?: Vec3 }) {
+  const board = 0.004
   return (
     <group position={position} rotation={rotation}>
-      <Block size={[w, h, d]} position={[0, h / 2, 0]} color={colour} roughness={0.6} radius={0.003} paint />
-      <Block size={[w * 0.97, h * 0.8, d * 0.95]} position={[0.004, h / 2, 0]} color="#f1ead8" roughness={0.9} radius={0.001} />
+      <Block size={[w, board, d]} position={[0, board / 2, 0]} color={colour} roughness={0.6} radius={0.0015} paint />
+      <Block size={[w, board, d]} position={[0, h - board / 2, 0]} color={colour} roughness={0.6} radius={0.0015} paint />
+      <Block size={[0.007, h, d]} position={[-w / 2 + 0.0035, h / 2, 0]} color={colour} roughness={0.6} radius={0.003} paint />
+      <Block size={[w - 0.012, h - board * 2 + 0.001, d - 0.008]} position={[0.0015, h / 2, 0]} color="#f1ead8" roughness={0.9} radius={0.001} />
+      {/* gilt title bands on the spine */}
+      {[-0.3, 0.3].map((t) => (
+        <Block key={t} size={[0.002, h * 0.5, 0.006]} position={[-w / 2 - 0.0002, h / 2, d * t]} color="#d9b35a" metalness={0.8} roughness={0.35} radius={0.0008} />
+      ))}
     </group>
   )
 }
@@ -535,9 +711,8 @@ function Furniture() {
         {/* the usual rug, with a tiger's tail poking out from under one end */}
         <Variant of="rug" name="tiger">
           <Block size={[2.6, 0.01, 1.7]} position={[0, 0.005, 0]} color="#ffffff" roughness={1} radius={0.004} surface={rug} paint />
-          <group position={[1.26, 0, 0.3]}>
-            <TigerTail />
-          </group>
+          {/* the top of the rug humps up over whatever is under it, and the tail comes out from under the lifted edge */}
+          <TigerRug surface={rug} />
         </Variant>
       </Item>
 
@@ -560,7 +735,7 @@ function Furniture() {
         </Variant>
         <Variant of="mug" name="spilled">
           <group position={[0.04, 0.041, 0]} rotation={[0, 0, PI / 2]}>
-            <Mug />
+            <Mug empty />
           </group>
           <CoffeePuddle />
         </Variant>
@@ -780,11 +955,11 @@ function Furniture() {
         </Variant>
       </Item>
 
-      <Item id="door" position={[halfX, 0, -1.3]} rotation={[0, -PI / 2, 0]}>
+      <Item id="door" position={[halfX, 0, DOOR_Z]} rotation={[0, -PI / 2, 0]}>
         <Door />
       </Item>
 
-      <Item id="curtains" position={[1.8, 0, -halfZ + 0.1]}>
+      <Item id="curtains" position={[WINDOW.x, 0, -halfZ + RAIL.z]}>
         <Curtains />
       </Item>
 

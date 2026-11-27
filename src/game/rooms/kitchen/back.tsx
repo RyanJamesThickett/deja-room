@@ -1,9 +1,12 @@
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
-import { CylinderGeometry, MeshStandardMaterial, TorusGeometry, type Group, type Mesh } from 'three'
+import { CylinderGeometry, DoubleSide, MeshStandardMaterial, Quaternion, TorusGeometry, Vector3, type BufferGeometry, type Group, type Mesh } from 'three'
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { Block, Instanced, PI, type Placement } from '../../kit'
+import { once } from '../../outsideLayers'
 import type { Vec3 } from '../../mutations'
-import { BENCH, BRUSHED, DARK_STEEL, POT_SHELF, STAINLESS, STEEL_MAT, WHITE_CHINA } from './layout'
+import { BENCH, BRUSHED, DARK_STEEL, POT_SHELF, STAINLESS, STEEL_MAT, STEEL_OPEN, WHITE_CHINA } from './layout'
+import { Sack } from './prep'
 import { ThrashingSpray } from './spray'
 import { signTexture, walkInWindowTexture, whiteboardTexture } from './textures'
 
@@ -139,6 +142,16 @@ function Pot({ r, h, at }: { r: number; h: number; at: Vec3 }) {
       <mesh position={[0, h / 2, 0]} material={STEEL_MAT} castShadow>
         <cylinderGeometry args={[r, r, h, 28]} />
       </mesh>
+      {/* the lid's rolled edge and its knob */}
+      <mesh position={[0, h, 0]} rotation={[PI / 2, 0, 0]} material={STEEL_MAT} scale={[r, r, 0.1]}>
+        <torusGeometry args={[1, 0.035, 6, 32]} />
+      </mesh>
+      <mesh position={[0, h + 0.006, 0]} material={STEEL_MAT}>
+        <cylinderGeometry args={[r * 0.8, r * 0.97, 0.012, 28]} />
+      </mesh>
+      <mesh position={[0, h + 0.022, 0]} material={DARK_PAN}>
+        <cylinderGeometry args={[0.022, 0.016, 0.02, 14]} />
+      </mesh>
       {[-1, 1].map((s) => (
         <mesh key={s} position={[s * (r + 0.02), h - 0.04, 0]} rotation={[0, 0, PI / 2]} material={STEEL_MAT}>
           <torusGeometry args={[0.02, 0.006, 6, 12, PI]} />
@@ -193,9 +206,22 @@ export function PotStock({ mode, ceiling }: { mode: 'normal' | 'missing' | 'towe
       <Block size={[0.5, 0.025, 0.36]} position={[0.6, high + 0.046, 0]} color="#b8bec4" metalness={0.7} roughness={0.35} radius={0.003} />
       {/* top: two wide rondeaux and a colander */}
       <Pot r={0.18} h={0.12} at={[-0.5, top + 0.006, 0]} />
-      <mesh position={[0.05, top + 0.08, 0]} material={STEEL_MAT}>
-        <sphereGeometry args={[0.14, 20, 12, 0, PI * 2, PI / 2, PI / 2]} />
-      </mesh>
+      <group position={[0.05, top + 0.006, 0]}>
+        <mesh position={[0, 0.13, 0]} material={STEEL_OPEN}>
+          <sphereGeometry args={[0.14, 28, 12, 0, PI * 2, PI / 2, PI / 2]} />
+        </mesh>
+        <mesh position={[0, 0.13, 0]} rotation={[PI / 2, 0, 0]} material={STEEL_MAT}>
+          <torusGeometry args={[0.14, 0.006, 6, 36]} />
+        </mesh>
+        <mesh position={[0, 0.012, 0]} material={STEEL_OPEN}>
+          <cylinderGeometry args={[0.07, 0.08, 0.024, 24, 1, true]} />
+        </mesh>
+        {[-1, 1].map((s) => (
+          <mesh key={s} position={[s * 0.15, 0.12, 0]} rotation={[0, 0, PI / 2]} material={STEEL_MAT}>
+            <torusGeometry args={[0.025, 0.005, 6, 12, PI]} />
+          </mesh>
+        ))}
+      </group>
       {mode === 'tower' ? (
         <Instanced geometry={SHELF_PAN} material={DARK_PAN} items={tower} castShadow />
       ) : (
@@ -232,8 +258,8 @@ export function ReachInFridge() {
 }
 
 const FOOT = new CylinderGeometry(0.025, 0.03, 0.1, 10)
-const SACK = new MeshStandardMaterial({ color: '#d9c9a0', roughness: 0.95 })
-const ONION_SACK = new MeshStandardMaterial({ color: '#b5462a', roughness: 0.9 })
+const SACK = '#d9c9a0'
+const ONION_SACK = '#b5462a'
 
 /** Dry store shelving: flour, rice and onions in sacks, tins and tubs. */
 export function DryStore() {
@@ -241,14 +267,9 @@ export function DryStore() {
   return (
     <>
       <WireShelf {...spec} />
-      {[-0.32, 0.05].map((x, i) => (
-        <mesh key={x} material={i ? ONION_SACK : SACK} position={[x, 0.3, 0]} scale={[0.17, 0.18, 0.15]}>
-          <sphereGeometry args={[1, 18, 12]} />
-        </mesh>
-      ))}
-      <mesh material={SACK} position={[0.38, 0.28, 0]} scale={[0.15, 0.16, 0.14]}>
-        <sphereGeometry args={[1, 18, 12]} />
-      </mesh>
+      <Sack at={[-0.36, 0.126, 0]} size={[0.32, 0.38, 0.3]} colour={SACK} band="#2a5fc6" rotation={[0, 0.1, 0]} />
+      <Sack at={[0.03, 0.126, 0]} size={[0.3, 0.36, 0.28]} colour={ONION_SACK} rotation={[0, -0.15, 0]} />
+      <Sack at={[0.39, 0.126, 0]} size={[0.28, 0.32, 0.26]} colour={SACK} band="#c8302c" rotation={[0, 0.2, 0]} />
       {[-0.42, -0.28, -0.14, 0, 0.14, 0.28, 0.42].map((x, i) => (
         <mesh key={x} position={[x, 0.62, 0.05]}>
           <cylinderGeometry args={[0.055, 0.055, 0.14, 16]} />
@@ -315,7 +336,7 @@ export function GlassRack() {
 }
 
 const GLASS = new CylinderGeometry(0.035, 0.03, 0.12, 14, 1, true)
-const GLASS_MAT = new MeshStandardMaterial({ color: '#e6f2f6', roughness: 0.05, transparent: true, opacity: 0.45 })
+const GLASS_MAT = new MeshStandardMaterial({ color: '#e6f2f6', roughness: 0.05, transparent: true, opacity: 0.45, side: DoubleSide })
 
 /** Clean plates standing in a dish rack. */
 export function PlateRack() {
@@ -381,13 +402,34 @@ export function PotSink({ mode }: { mode: 'normal' | 'thrash' | 'bubbles' }) {
   )
   return (
     <>
-      {/* bowl: four walls and a floor, and the front apron */}
-      <Block size={[0.9, 0.04, 0.7]} position={[0, BENCH - 0.02, 0]} {...STAINLESS} radius={0.006} />
-      <mesh position={[0, BENCH - 0.019, 0.02]} rotation={[-PI / 2, 0, 0]}>
+      {/* the worktop round a deep basin: strips front, back and sides */}
+      <Block size={[0.9, 0.04, 0.08]} position={[0, BENCH - 0.02, 0.31]} {...STAINLESS} radius={0.006} />
+      <Block size={[0.9, 0.04, 0.12]} position={[0, BENCH - 0.02, -0.29]} {...STAINLESS} radius={0.006} />
+      {[-1, 1].map((s) => (
+        <Block key={`t${s}`} size={[0.1, 0.04, 0.5]} position={[s * 0.4, BENCH - 0.02, BASIN.z]} {...STAINLESS} radius={0.004} />
+      ))}
+      {/* the basin: four walls down to a floor with a drain */}
+      {[-1, 1].map((s) => (
+        <Block key={`bx${s}`} size={[0.015, BASIN.depth, 0.5]} position={[s * 0.3575, BENCH - BASIN.depth / 2, BASIN.z]} color="#9aa1a8" metalness={0.8} roughness={0.3} radius={0.004} />
+      ))}
+      {[-1, 1].map((s) => (
+        <Block key={`bz${s}`} size={[0.7, BASIN.depth, 0.015]} position={[0, BENCH - BASIN.depth / 2, BASIN.z + s * 0.2425]} color="#9aa1a8" metalness={0.8} roughness={0.3} radius={0.004} />
+      ))}
+      <mesh position={[0, BENCH - BASIN.depth + 0.001, BASIN.z]} rotation={[-PI / 2, 0, 0]}>
         <planeGeometry args={[0.7, 0.5]} />
         <meshStandardMaterial color="#5d646a" metalness={0.85} roughness={0.25} />
       </mesh>
-      <Block size={[0.9, 0.5, 0.68]} position={[0, 0.6, 0]} {...BRUSHED} radius={0.01} />
+      <mesh position={[0, BENCH - BASIN.depth + 0.003, BASIN.z - 0.05]} rotation={[-PI / 2, 0, 0]}>
+        <circleGeometry args={[0.035, 20]} />
+        <meshStandardMaterial color="#22252a" metalness={0.6} roughness={0.4} />
+      </mesh>
+      {/* the cabinet under it: the base, an apron all round up to the worktop */}
+      <Block size={[0.9, BENCH - BASIN.depth - 0.35, 0.68]} position={[0, (0.35 + BENCH - BASIN.depth) / 2, 0]} {...BRUSHED} radius={0.01} />
+      <Block size={[0.9, BASIN.depth, 0.02]} position={[0, BENCH - BASIN.depth / 2 - 0.02, 0.33]} {...BRUSHED} radius={0.006} />
+      <Block size={[0.9, BASIN.depth, 0.02]} position={[0, BENCH - BASIN.depth / 2 - 0.02, -0.33]} {...BRUSHED} radius={0.006} />
+      {[-1, 1].map((s) => (
+        <Block key={`a${s}`} size={[0.02, BASIN.depth, 0.68]} position={[s * 0.44, BENCH - BASIN.depth / 2 - 0.02, 0]} {...BRUSHED} radius={0.006} />
+      ))}
       <Block size={[0.9, 0.14, 0.02]} position={[0, BENCH + 0.07, -0.34]} {...STAINLESS} radius={0.004} />
       {[-1, 1].flatMap((sx) =>
         [-1, 1].map((sz) => <mesh key={`${sx}${sz}`} geometry={FOOT} material={STEEL_MAT} position={[sx * 0.38, 0.175, sz * 0.28]} scale={[1, 3.5, 1]} />),
@@ -425,6 +467,11 @@ export function PotSink({ mode }: { mode: 'normal' | 'thrash' | 'bubbles' }) {
       )}
       {mode === 'bubbles' && (
         <group ref={bubbles}>
+          {/* the basin brimming with foam */}
+          <mesh position={[0, BENCH - 0.03, BASIN.z]} scale={[0.36, 0.08, 0.26]}>
+            <sphereGeometry args={[1, 24, 12]} />
+            <meshStandardMaterial color="#f6fbff" roughness={0.15} />
+          </mesh>
           {Array.from({ length: 22 }, (_, k) => {
             const a = k * 2.4
             const r = 0.06 + (k % 5) * 0.06
@@ -449,6 +496,8 @@ export function PotSink({ mode }: { mode: 'normal' | 'thrash' | 'bubbles' }) {
 }
 
 const COIL = new TorusGeometry(0.035, 0.005, 6, 18)
+/** The pot-wash sink's basin: how deep it goes below the worktop, and its centre front to back. */
+const BASIN = { depth: 0.28, z: 0.02 }
 
 /** Hood-type pass-through dishwasher, 0.75 wide, 0.7 deep; `open` lifts the hood. */
 export function Dishwasher({ open }: { open: boolean }) {
@@ -504,15 +553,39 @@ export function Dishwasher({ open }: { open: boolean }) {
   )
 }
 
+const MOP_STRANDS = new MeshStandardMaterial({ color: '#d9d2bd', roughness: 1 })
+const MOP_CLAMP_MAT = new MeshStandardMaterial({ color: '#2a5fc6', roughness: 0.5 })
+const MOP_CLAMP = new CylinderGeometry(0.03, 0.04, 0.05, 14)
+
+/** A string mop's head: thick strands splaying down and out from the clamp (origin), reaching 0.155 below it. */
+const mopHead = once(() => {
+  const parts: BufferGeometry[] = []
+  const strand = (a: number, out: number, len: number) => {
+    const dir = new Vector3(Math.cos(a) * out, -1, Math.sin(a) * out).normalize()
+    const g = new CylinderGeometry(0.012, 0.01, len, 6)
+    g.applyQuaternion(new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), dir))
+    g.translate((dir.x * len) / 2, (dir.y * len) / 2, (dir.z * len) / 2)
+    parts.push(g)
+  }
+  for (let k = 0; k < 14; k++) strand((k / 14) * PI * 2, 0.5, 0.17)
+  for (let k = 0; k < 10; k++) strand((k / 10) * PI * 2 + 0.3, 1.1, 0.19)
+  for (let k = 0; k < 5; k++) strand((k / 5) * PI * 2 + 0.6, 0.15, 0.155)
+  return mergeGeometries(parts)
+})
+
 /** Yellow mop bucket on castors; the mop leans on the wall, or stands up by itself. */
 export function MopBucket({ standing }: { standing: boolean }) {
   return (
     <>
       <Block size={[0.42, 0.3, 0.3]} position={[0, 0.2, 0]} color="#f2c21f" roughness={0.5} radius={0.04} paint />
-      <mesh position={[0, 0.33, 0]} rotation={[-PI / 2, 0, 0]}>
-        <planeGeometry args={[0.36, 0.24]} />
+      {/* a rolled rim round the top, and the dirty water inside it */}
+      <Block size={[0.44, 0.03, 0.32]} position={[0, 0.345, 0]} color="#f2c21f" roughness={0.5} radius={0.012} paint />
+      <mesh position={[0, 0.362, 0]} rotation={[-PI / 2, 0, 0]}>
+        <planeGeometry args={[0.38, 0.26]} />
         <meshStandardMaterial color="#6a7a6a" roughness={0.2} />
       </mesh>
+      {/* a WET FLOOR stripe on the front */}
+      <Block size={[0.26, 0.05, 0.006]} position={[-0.04, 0.2, 0.152]} color="#1b1c1f" roughness={0.6} radius={0.002} />
       {/* wringer on one end */}
       <Block size={[0.16, 0.16, 0.26]} position={[0.14, 0.43, 0]} color="#2a2b2e" roughness={0.6} radius={0.02} />
       <Block size={[0.03, 0.3, 0.03]} position={[0.2, 0.62, 0]} rotation={[0, 0, -0.3]} color="#2a2b2e" roughness={0.6} radius={0.01} />
@@ -527,11 +600,9 @@ export function MopBucket({ standing }: { standing: boolean }) {
       {standing ? (
         // upright, on its own, next to the bucket
         <group position={[-0.34, 0, 0.0]}>
-          <mesh position={[0, 0.06, 0]} scale={[0.12, 0.07, 0.12]}>
-            <sphereGeometry args={[1, 16, 10]} />
-            <meshStandardMaterial color="#d9d2bd" roughness={1} />
-          </mesh>
-          <mesh position={[0, 0.72, 0]}>
+          <mesh geometry={mopHead()} material={MOP_STRANDS} position={[0, 0.155, 0]} />
+          <mesh geometry={MOP_CLAMP} material={MOP_CLAMP_MAT} position={[0, 0.17, 0]} />
+          <mesh position={[0, 0.83, 0]}>
             <cylinderGeometry args={[0.013, 0.013, 1.3, 10]} />
             <meshStandardMaterial color="#2a5fc6" roughness={0.5} />
           </mesh>
@@ -542,10 +613,8 @@ export function MopBucket({ standing }: { standing: boolean }) {
             <cylinderGeometry args={[0.013, 0.013, 1.3, 10]} />
             <meshStandardMaterial color="#2a5fc6" roughness={0.5} />
           </mesh>
-          <mesh position={[0, 0.0, 0]} scale={[0.1, 0.08, 0.1]}>
-            <sphereGeometry args={[1, 16, 10]} />
-            <meshStandardMaterial color="#d9d2bd" roughness={1} />
-          </mesh>
+          <mesh geometry={mopHead()} material={MOP_STRANDS} />
+          <mesh geometry={MOP_CLAMP} material={MOP_CLAMP_MAT} position={[0, 0.015, 0]} />
         </group>
       )}
     </>

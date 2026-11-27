@@ -5,6 +5,7 @@ import { Instanced, PI, type Placement } from '../../kit'
 import { once } from '../../outsideLayers'
 import { FacesYou, MeltedClock } from '../living/oddities'
 import { Bar } from './Bar'
+import { cached } from './build'
 import { GROUND, PAWN, signPanel, STALL_SIGNS, STOREY } from './cityPlan'
 import { cityMaterials, MAT } from './materials'
 import { awningMaterials, BALL, DISC, lathe, matteMaterial, PLANE, UNIT_BOX } from './stallParts'
@@ -149,6 +150,9 @@ export function FireEscape({ mode }: { mode: 'default' | 'ladder' | 'washing' })
   )
 }
 
+/** Washing is cloth: it shows from both sides. */
+const laundry = cached((colour: string) => new MeshStandardMaterial({ color: colour, roughness: 0.9, side: DoubleSide }))
+
 /** A washing line strung along the second-floor platform, with the week's laundry on it. */
 function Washing({ y }: { y: number }) {
   const items = [
@@ -163,7 +167,13 @@ function Washing({ y }: { y: number }) {
     <group position={[0, y + 1.75, FE.d + 0.05]}>
       <mesh geometry={UNIT_BOX} material={MAT.string} scale={[3.7, 0.01, 0.01]} />
       {items.map((it) => (
-        <mesh key={it.x} geometry={PLANE} material={matteMaterial(it.c)} position={[it.x, -it.h / 2, 0]} scale={[it.w, it.h, 1]} />
+        <group key={it.x}>
+          <mesh geometry={PLANE} material={laundry(it.c)} position={[it.x, -it.h / 2, 0]} scale={[it.w, it.h, 1]} />
+          {/* a peg at each top corner */}
+          {[-1, 1].map((s) => (
+            <mesh key={s} geometry={UNIT_BOX} material={MAT.paleWood} position={[it.x + s * (it.w / 2 - 0.04), -0.02, 0]} scale={[0.018, 0.08, 0.025]} />
+          ))}
+        </group>
       ))}
     </group>
   )

@@ -1,15 +1,16 @@
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
-import { BufferGeometry, CapsuleGeometry, DoubleSide, ExtrudeGeometry, Float32BufferAttribute, LineBasicMaterial, MeshStandardMaterial, Shape, type Group } from 'three'
+import { BufferGeometry, CapsuleGeometry, ConeGeometry, CylinderGeometry, DoubleSide, ExtrudeGeometry, Float32BufferAttribute, LineBasicMaterial, MeshStandardMaterial, Shape, TorusGeometry, type Group } from 'three'
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
 import { Instanced, PI, type Placement } from '../../kit'
 import { Model } from '../../Model'
 import { once } from '../../outsideLayers'
 import { mulberry32 } from '../../rng'
 import { Bar } from './Bar'
-import { Builder, type Vec3 } from './build'
+import { Builder, cached, type Vec3 } from './build'
 import { MAT } from './materials'
 import { BALL, CRATE_MAT, crateGeometry, DISC, glossMaterial, HATS, heap, lathe, matteMaterial, PLANE, UNIT_BOX } from './stallParts'
-import { BALLOON, BALLOON_COLOURS, balloonSpots, flockLayout, guitarParts, moneyIn, pigeonGeometry, rod, sunkSpots } from './squareParts'
+import { BALLOON, BALLOON_COLOURS, balloonSpots, flockLayout, guitarParts, leafBall, moneyIn, pigeonGeometry, rod, shadeBelow, sunkSpots, taper } from './squareParts'
 import { cardboardTexture, chalkTexture } from './textures'
 import { Tinted } from './Tinted'
 import { Watching } from './Watching'
@@ -149,6 +150,11 @@ export function Flock({ index }: { index: number }) {
 // ---------------------------------------------------------------------------
 
 const STRING_MAT = new LineBasicMaterial({ color: '#f4f4f0' })
+const CART_BODY = new RoundedBoxGeometry(0.6, 0.36, 0.46, 3, 0.04)
+const CART_LID = new RoundedBoxGeometry(0.66, 0.035, 0.52, 2, 0.015)
+const CART_TYRE = new TorusGeometry(0.18, 0.03, 8, 24).rotateX(PI / 2)
+/** The knot at the bottom of a balloon, its point up into it. */
+const KNOT = new ConeGeometry(0.022, 0.035, 8)
 const TIE: Vec3 = [0, 1.72, 0]
 
 /** Strings from the tie to each balloon. */
@@ -174,27 +180,35 @@ export function BalloonCart({ mode = 'default' }: { mode?: 'default' | 'sinking'
   })
   return (
     <group>
-      {/* the cart: a box on two wheels, a handle, and a pole to tie to */}
-      <mesh geometry={UNIT_BOX} material={matteMaterial('#2a6ab0')} position={[0, 0.55, 0]} scale={[0.6, 0.36, 0.46]} castShadow />
-      <mesh geometry={UNIT_BOX} material={MAT.white} position={[0, 0.74, 0]} scale={[0.64, 0.03, 0.5]} />
+      {/* the cart: a rounded box on two spoked wheels, a handle with a grip, a leg to stand on, and a pole to tie to */}
+      <mesh geometry={CART_BODY} material={matteMaterial('#2a6ab0')} position={[0, 0.55, 0]} castShadow receiveShadow />
+      <mesh geometry={CART_LID} material={MAT.white} position={[0, 0.745, 0]} castShadow />
+      <mesh geometry={UNIT_BOX} material={MAT.white} position={[0, 0.47, 0]} scale={[0.605, 0.04, 0.465]} />
       {[-1, 1].map((s) => (
-        <mesh key={s} geometry={DISC} material={MAT.rubber} position={[s * 0.33, 0.2, 0]} rotation={[0, 0, PI / 2]} scale={[0.2, 0.05, 0.2]} castShadow />
+        <group key={s} position={[s * 0.335, 0.2, 0]} rotation={[0, 0, PI / 2]}>
+          <mesh geometry={CART_TYRE} material={MAT.rubber} castShadow />
+          <mesh geometry={DISC} material={MAT.steel} scale={[0.05, 0.06, 0.05]} />
+          {[0, 1, 2, 3, 4, 5].map((k) => (
+            <mesh key={k} geometry={UNIT_BOX} material={MAT.steel} rotation={[0, (k * PI) / 6, 0]} scale={[0.33, 0.01, 0.012]} />
+          ))}
+        </group>
       ))}
+      <mesh geometry={DISC} material={MAT.steel} position={[0, 0.2, 0]} rotation={[0, 0, PI / 2]} scale={[0.012, 0.7, 0.012]} />
       <Bar a={[0, 0.37, -0.23]} b={[0, 0.05, -0.5]} r={0.015} material={MAT.steel} />
+      <Bar a={[0, 0.62, -0.23]} b={[0, 0.82, -0.6]} r={0.015} material={MAT.steel} />
+      <mesh geometry={DISC} material={MAT.black} position={[0, 0.82, -0.6]} rotation={[0, 0, PI / 2]} scale={[0.022, 0.2, 0.022]} />
       <Bar a={[0, 0.74, 0.2]} b={[0, TIE[1], 0.02]} r={0.018} material={MAT.steel} />
       <group ref={sway} position={[0, 0, 0]}>
         <lineSegments geometry={strings} material={STRING_MAT} />
-        {ends.map((e, i) => (
-          <mesh
-            key={i}
-            geometry={BALLOON}
-            material={glossMaterial(BALLOON_COLOURS[i % BALLOON_COLOURS.length])}
-            position={e}
-            scale={mode === 'huge' && i === 3 ? 4.5 : 1}
-            castShadow
-            userData={{ paint: true }}
-          />
-        ))}
+        {ends.map((e, i) => {
+          const m = glossMaterial(BALLOON_COLOURS[i % BALLOON_COLOURS.length])
+          return (
+            <group key={i} position={e} scale={mode === 'huge' && i === 3 ? 4.5 : 1}>
+              <mesh geometry={BALLOON} material={m} castShadow userData={{ paint: true }} />
+              <mesh geometry={KNOT} material={m} position={[0, -0.2, 0]} userData={{ paint: true }} />
+            </group>
+          )
+        })}
       </group>
     </group>
   )
@@ -277,18 +291,33 @@ function Chair() {
   return <mesh geometry={chair()} material={MAT.shell} castShadow receiveShadow />
 }
 
-const CUP = lathe([[0, 0], [0.035, 0], [0.042, 0.06], [0.038, 0.06], [0.03, 0.006], [0, 0.006]], 16)
-const SAUCER = lathe([[0, 0], [0.07, 0.004], [0.075, 0.012]], 16)
+const CUP = lathe([[0, 0], [0.035, 0], [0.042, 0.06], [0.038, 0.06], [0.03, 0.006], [0, 0.006]], 28)
+/** The cup's handle: a loop standing out from its side along +x. */
+const CUP_HANDLE = new TorusGeometry(0.016, 0.0045, 8, 16, PI * 1.25).rotateZ(-PI * 0.625)
+const TABLE_TOP = new CylinderGeometry(1, 1, 1, 40)
+
+/** A teacup on its saucer, at the saucer's foot. */
+function CupAndSaucer({ shadow = false }: { shadow?: boolean }) {
+  return (
+    <>
+      <mesh geometry={SAUCER} material={MAT.white} castShadow={shadow} />
+      <mesh geometry={CUP} material={MAT.white} position={[0, 0.008, 0]} castShadow={shadow} />
+      <mesh geometry={CUP_HANDLE} material={MAT.white} position={[0.044, 0.04, 0]} castShadow={shadow} />
+    </>
+  )
+}
+const SAUCER = lathe([[0, 0], [0.07, 0.004], [0.075, 0.012], [0.07, 0.013], [0.032, 0.007], [0, 0.007]], 24)
 
 /** A bistro table for two, chairs either side along x. `stacked`: chairs up on the table, legs in the air. `cup`: a giant teacup. */
 export function CafeTable({ mode = 'default' }: { mode?: 'default' | 'stacked' | 'cup' }) {
   return (
     <group>
       <mesh geometry={TABLE_BASE} material={MAT.black} castShadow />
-      <mesh geometry={DISC} material={MARBLE} position={[0, 0.745, 0]} scale={[0.32, 0.03, 0.32]} castShadow receiveShadow />
+      <mesh geometry={TABLE_TOP} material={MARBLE} position={[0, 0.745, 0]} scale={[0.32, 0.03, 0.32]} castShadow receiveShadow />
       {mode === 'stacked' ? (
         [-1, 1].map((s) => (
-          <group key={s} position={[s * 0.1, 0.76 + 0.46 + (s > 0 ? 0.06 : 0), 0]} rotation={[PI, s * 0.3, 0]}>
+          // seat down on the table, legs in the air, each back hanging over the edge
+          <group key={s} position={[s * 0.04, 0.76 + 0.46, s * 0.2]} rotation={[PI, (s > 0 ? 0 : PI) + s * 0.15, 0]}>
             <Chair />
           </group>
         ))
@@ -301,15 +330,13 @@ export function CafeTable({ mode = 'default' }: { mode?: 'default' | 'stacked' |
           ))}
           {mode === 'cup' ? (
             <group position={[0, 0.76, 0]} scale={6}>
-              <mesh geometry={SAUCER} material={MAT.white} castShadow />
-              <mesh geometry={CUP} material={MAT.white} position={[0, 0.008, 0]} castShadow />
+              <CupAndSaucer shadow />
               <mesh geometry={DISC} material={matteMaterial('#5a3a22')} position={[0, 0.05, 0]} scale={[0.036, 0.001, 0.036]} />
             </group>
           ) : (
             [-0.12, 0.12].map((x) => (
-              <group key={x} position={[x, 0.76, 0.05]}>
-                <mesh geometry={SAUCER} material={MAT.white} />
-                <mesh geometry={CUP} material={MAT.white} position={[0, 0.008, 0]} />
+              <group key={x} position={[x, 0.76, 0.05]} rotation={[0, x * 8, 0]}>
+                <CupAndSaucer />
               </group>
             ))
           )}
@@ -366,6 +393,12 @@ function EmptyHanger({ x, phase }: { x: number; phase: number }) {
   )
 }
 
+/** Cloth you can see both faces of: up inside a coat's skirt, and in through its collar. */
+const clothInside = cached((colour: string) => new MeshStandardMaterial({ color: colour, roughness: 0.85, side: DoubleSide }))
+const COAT_SKIRT = lathe([[0.2, 0], [0.24, 0.3], [0.2, 0.62]], 20)
+const COLLAR = lathe([[0.09, 0], [0.1, 0.08]], 16)
+const DUMMY_SKIRT = lathe([[0.2, 0], [0.17, 0.3], [0.15, 0.42]], 20)
+
 /** Someone invisible is wearing a coat and hat beside the rail: the clothes are filled out by nobody. */
 function InvisibleMan() {
   const coat = matteMaterial('#6a5440')
@@ -373,7 +406,7 @@ function InvisibleMan() {
   return (
     <group>
       <mesh geometry={BALL} material={coat} position={[0, 1.2, 0]} scale={[0.22, 0.34, 0.14]} castShadow />
-      <mesh geometry={lathe([[0.2, 0], [0.24, 0.3], [0.2, 0.62]], 16)} material={coat} position={[0, 0.62, 0]} scale={[1, 1, 0.7]} castShadow />
+      <mesh geometry={COAT_SKIRT} material={clothInside('#6a5440')} position={[0, 0.62, 0]} scale={[1, 1, 0.7]} castShadow />
       {[-1, 1].map((s) => (
         <group key={s}>
           <Bar a={[s * 0.24, 1.42, 0]} b={[s * 0.3, 0.9, 0.06]} r={0.055} material={coat} />
@@ -382,7 +415,7 @@ function InvisibleMan() {
         </group>
       ))}
       {/* the collar stands up round a neck that isn't there; the hat floats over it */}
-      <mesh geometry={lathe([[0.09, 0], [0.1, 0.08]], 14)} material={coat} position={[0, 1.5, 0]} />
+      <mesh geometry={COLLAR} material={clothInside('#6a5440')} position={[0, 1.5, 0]} />
       <group position={[0, 1.8, 0]} rotation={[0, 0, 0.08]}>
         <mesh geometry={HATS.trilby.crown} material={matteMaterial('#3a3028')} />
         <mesh geometry={HATS.trilby.brim} material={matteMaterial('#3a3028')} />
@@ -438,7 +471,7 @@ function Dummy({ wave }: { wave: boolean }) {
         <Bar key={s} a={[s * 0.08, 0.92, 0]} b={[s * 0.085, 0.12, 0.02]} r={0.06} material={matteMaterial('#26262c')} />
       ))}
       <mesh geometry={TORSO} material={coat} position={[0, 0.82, 0]} scale={[1, 1, 0.68]} castShadow />
-      <mesh geometry={lathe([[0.2, 0], [0.17, 0.3], [0.15, 0.42]], 18)} material={coat} position={[0, 0.5, 0]} scale={[1, 1, 0.7]} castShadow />
+      <mesh geometry={DUMMY_SKIRT} material={clothInside('#a8242c')} position={[0, 0.5, 0]} scale={[1, 1, 0.7]} castShadow />
       <Bar a={[-0.17, 1.44, 0]} b={[-0.22, 0.98, 0.04]} r={0.045} material={coat} />
       {wave ? <Bar a={[0.17, 1.44, 0]} b={[0.32, 1.88, 0.06]} r={0.045} material={coat} /> : <Bar a={[0.17, 1.44, 0]} b={[0.22, 0.98, 0.04]} r={0.045} material={coat} />}
       <mesh geometry={BALL} material={MANNEQUIN} position={wave ? [0.34, 1.93, 0.07] : [0.23, 0.94, 0.04]} scale={[0.04, 0.06, 0.03]} />
@@ -469,14 +502,72 @@ export function BuskerStool() {
   return <Model id="metal_stool_01" scale={0.85} />
 }
 
+/** The planter: boarded sides between corner posts with pyramid caps, a capping rail, earth and bark chips. One mesh. */
+const planterBox = once(() => {
+  const b = new Builder()
+  const wood = '#6b4429'
+  const dark = '#3e2616'
+  const cap = '#80553a'
+  // dark backing, so the gaps between the boards read as shadow
+  b.box([0.8, 0.56, 0.8], [0, 0.3, 0], dark)
+  for (const [sx, sz] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
+    b.box([0.11, 0.66, 0.11], [sx * 0.4, 0.33, sz * 0.4], wood)
+    b.add(new ConeGeometry(0.085, 0.07, 4).rotateY(PI / 4), cap, [sx * 0.4, 0.695, sz * 0.4])
+  }
+  for (let k = 0; k < 3; k++) {
+    const y = 0.11 + k * 0.18
+    b.box([0.7, 0.165, 0.035], [0, y, 0.415], wood)
+    b.box([0.7, 0.165, 0.035], [0, y, -0.415], wood)
+    b.box([0.035, 0.165, 0.7], [0.415, y, 0], wood)
+    b.box([0.035, 0.165, 0.7], [-0.415, y, 0], wood)
+  }
+  // the capping rail round the top, sitting over the boards
+  for (const s of [-1, 1]) {
+    b.box([0.7, 0.035, 0.1], [0, 0.6, s * 0.4], cap)
+    b.box([0.1, 0.035, 0.7], [s * 0.4, 0.6, 0], cap)
+  }
+  b.box([0.7, 0.02, 0.7], [0, 0.575, 0], '#2f2117')
+  const rng = mulberry32(31)
+  for (let k = 0; k < 22; k++) {
+    const a = rng() * PI * 2
+    const r = 0.08 + rng() * 0.24
+    b.box([0.05, 0.012, 0.035], [Math.cos(a) * r, 0.588, Math.sin(a) * r], k % 3 ? '#8a5a36' : '#a0703f', [rng() * 0.3, rng() * 6, 0])
+  }
+  return b.merge()
+})
+
+/** The bay tree: a slim stem and a clipped ball of leaves, lumpy where it's grown out since the last trim, darker underneath. */
+const bayTree = once(() => {
+  const stem = new Builder()
+  taper(stem, [0, 0.55, 0], [0, 1.4, 0], 0.035, 0.024, '#5a3a22', 10)
+  const leaves = new Builder()
+  const rng = mulberry32(37)
+  const ball = leafBall(2.3, 0.06, 22)
+  leaves.add(ball, '#3f7a2c', [0, 1.65, 0], undefined, [0.5, 0.52, 0.5])
+  ball.dispose()
+  const n = 30
+  for (let k = 0; k < n; k++) {
+    // little tufts grown out of the surface since the last trim, spread evenly over the ball
+    const y = 1 - ((k + 0.5) / n) * 2
+    const a = k * 2.4
+    const rr = Math.sqrt(1 - y * y)
+    const g = leafBall(rng() * 9, 0.12, 10)
+    leaves.add(g, k % 3 ? '#457e2f' : '#3a6e28', [Math.cos(a) * rr * 0.42, 1.65 + y * 0.44, Math.sin(a) * rr * 0.42], [rng(), rng() * 6, 0], [0.13, 0.1, 0.13])
+    g.dispose()
+  }
+  return { stem: stem.merge(), leaves: shadeBelow(leaves.merge(), 1.2, 1.85, 0.6) }
+})
+const PLANTER_WOOD = new MeshStandardMaterial({ vertexColors: true, roughness: 0.8 })
+const BAY_LEAVES = new MeshStandardMaterial({ vertexColors: true, roughness: 0.55 })
+
 /** A big timber planter with a clipped bay tree in it. */
 export function Planter() {
+  const t = bayTree()
   return (
     <group>
-      <mesh geometry={UNIT_BOX} material={MAT.darkWood} position={[0, 0.3, 0]} scale={[0.9, 0.6, 0.9]} castShadow receiveShadow />
-      <mesh geometry={UNIT_BOX} material={matteMaterial('#3a2a1c')} position={[0, 0.59, 0]} scale={[0.8, 0.02, 0.8]} />
-      <mesh geometry={DISC} material={MAT.darkWood} position={[0, 1.0, 0]} scale={[0.04, 0.8, 0.04]} castShadow />
-      <mesh geometry={BALL} material={matteMaterial('#3f6a2a')} position={[0, 1.65, 0]} scale={[0.5, 0.55, 0.5]} castShadow />
+      <mesh geometry={planterBox()} material={PLANTER_WOOD} castShadow receiveShadow />
+      <mesh geometry={t.stem} material={PLANTER_WOOD} castShadow />
+      <mesh geometry={t.leaves} material={BAY_LEAVES} castShadow receiveShadow />
     </group>
   )
 }

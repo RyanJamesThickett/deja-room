@@ -116,8 +116,20 @@ export const SHARK = {
   ]),
 }
 
-/** Goldfish fins: a little rounded back fin and paddle-shaped side fins. */
+/** Goldfish fins: a little rounded back fin, paddle-shaped side fins and a forked fan of a tail. */
 export const GOLDFISH = {
+  /** Joins the body at (0, 0) and fans out behind it into two rounded lobes. */
+  tail: upright([
+    [0.012, 0.014],
+    [-0.03, 0.042],
+    [-0.072, 0.062],
+    [-0.085, 0.04],
+    [-0.055, 0.004],
+    [-0.085, -0.04],
+    [-0.072, -0.062],
+    [-0.03, -0.042],
+    [0.012, -0.014],
+  ]),
   dorsal: upright([
     [0.04, -0.005],
     [0.02, 0.03],

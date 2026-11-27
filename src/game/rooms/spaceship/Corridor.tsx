@@ -120,6 +120,7 @@ function CorridorShell() {
       <Pipe from={[-OUTER, H - 0.08, 0.45]} to={[OUTER, H - 0.08, 0.45]} radius={0.04} />
 
       {/* ceiling light, which only needs to reach the walls */}
+      <Block size={[0.98, 0.02, 0.3]} position={[0, H - 0.01, 0]} color="#59626c" metalness={0.7} roughness={0.4} radius={0.006} />
       <Block size={[0.9, 0.03, 0.22]} position={[0, H - 0.015, 0]} color="#e6f0ff" emissive="#e6f0ff" emissiveIntensity={2} radius={0.005} />
       <pointLight position={[0, H - 0.3, 0]} intensity={2.2} distance={3.2} decay={1.6} color="#e6f0ff" />
     </>
@@ -148,7 +149,8 @@ export function Corridor() {
         </Variant>
         <Variant of="boots" name="ceiling">
           {/* stood upside down on the ceiling, magnets on */}
-          <group position={[0, H, 0]} rotation={[0, 0, PI]}>
+          {/* shifted into the clear patch between the pipe and the light, so nothing runs through them */}
+          <group position={[-0.35, H, 0.3]} rotation={[0, 0, PI]}>
             <Boots />
           </group>
         </Variant>

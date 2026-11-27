@@ -1,6 +1,6 @@
 import type { Material, Texture } from 'three'
 import type { Vec3 } from '../../mutations'
-import { BALL, BOX, CYL, PLANE, printed, ROD, shining } from './parts'
+import { BALL, BOX, CYL, PLANE, printed, ROD, rounded, shining } from './parts'
 
 /*
  * Primitive parts, sized by scaling shared unit geometry. `paint` marks a
@@ -13,6 +13,11 @@ const tag = (paint?: boolean) => (paint ? { paint: true } : undefined)
 
 export function Box({ size, at, rot, mat, paint, shadow = true }: Common & { size: Vec3 }) {
   return <mesh geometry={BOX} material={mat} position={at} rotation={rot} scale={size} castShadow={shadow} receiveShadow userData={tag(paint)} />
+}
+
+/** A box with its edges rounded off by `r`: for anything chunky that's seen close up. */
+export function Soft({ size, r = 0.03, at, rot, mat, paint, shadow = true }: Common & { size: Vec3; r?: number }) {
+  return <mesh geometry={rounded(...size, r)} material={mat} position={at} rotation={rot} castShadow={shadow} receiveShadow userData={tag(paint)} />
 }
 
 /** An upright cylinder, `r` round and `h` tall, centred on `at`. */

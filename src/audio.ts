@@ -239,6 +239,34 @@ export const sfx = {
     ;[72, 76, 79, 84].forEach((n) => tone(sfxBus, t + 0.36, midi(n), 1.2, { ...brass, gain: 0.08, vibrato: 0.01 }))
     if (newBest) [84, 88, 91, 96, 100].forEach((n, i) => tone(sfxBus, t + 0.6 + i * 0.06, midi(n), 0.5, { gain: 0.07 }))
   },
+  /**
+   * Co-op: a pin going in. Yours is a bright "plink" and a thunk; a
+   * teammate's is softer and pitched by their colour, so you can hear who
+   * without looking.
+   */
+  pin(mine = true, voice = 0) {
+    const t = now()
+    if (t === null) return
+    const base = mine ? 84 : [76, 79, 81, 74, 77, 83][voice % 6]
+    tone(sfxBus, t, midi(base), 0.12, { type: 'triangle', gain: mine ? 0.16 : 0.1 })
+    tone(sfxBus, t + 0.05, midi(base + 7), 0.16, { type: 'sine', gain: mine ? 0.12 : 0.07 })
+    tone(sfxBus, t, 140, 0.08, { type: 'sine', glide: 70, gain: mine ? 0.22 : 0.12 })
+    hiss(sfxBus, t, 0.04, { freq: 5000, gain: mine ? 0.06 : 0.035 })
+  },
+  /** Co-op: a pin pulled back out. */
+  unpin() {
+    const t = now()
+    if (t === null) return
+    tone(sfxBus, t, midi(79), 0.1, { type: 'triangle', glide: midi(67), gain: 0.1 })
+  },
+  /** Co-op: every pin's down and the team's guess goes in. A drum fill into a thud. */
+  lockIn() {
+    const t = now()
+    if (t === null) return
+    for (let i = 0; i < 4; i++) hiss(sfxBus, t + i * 0.055, 0.05, { type: 'bandpass', freq: 1800, q: 0.8, gain: 0.07 + i * 0.03 })
+    tone(sfxBus, t + 0.23, 110, 0.3, { type: 'sine', glide: 50, gain: 0.35 })
+    hiss(sfxBus, t + 0.23, 0.2, { type: 'lowpass', freq: 900, gain: 0.12 })
+  },
   /** Menu taps. */
   click() {
     const t = now()

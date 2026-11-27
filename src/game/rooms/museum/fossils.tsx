@@ -11,6 +11,8 @@ import {
   boneAt,
   CENTRUM_GEO,
   DINO_PLINTH,
+  FISH_CORE,
+  FISH_STONE,
   FOSSIL,
   FOSSIL_2S,
   FOSSIL_DARK,
@@ -39,9 +41,11 @@ import {
   TUSK_GEO,
   TUSK_HOLDS,
   UPPER_TEETH,
+  WING_BONES,
   WING_GEO,
 } from './fossilParts'
 import { fishTexture, meteoriteTexture, slabTexture, veinTexture } from './natural'
+import { CaseCabinet, CaseHood } from './parts'
 
 /*
  * The natural history gallery's exhibits: the tyrannosaur, the fossil fish,
@@ -152,7 +156,7 @@ function Head() {
         <group position={[-0.02, -0.18, 0]}>
           <mesh geometry={SKULL_GEO} material={FOSSIL} castShadow />
           {/* dark in the eye socket, so it reads as a hollow from any side */}
-          <mesh geometry={KNOB_GEO} material={SOCKET} position={[0.15, 0.25, 0]} scale={[0.04, 0.045, 0.06]} />
+          <mesh geometry={KNOB_GEO} material={SOCKET} position={[0.15, 0.25, 0]} scale={[0.04, 0.045, 0.09]} />
           <Instanced geometry={TOOTH_GEO} material={TOOTH_MAT} items={UPPER_TEETH} />
           <group position={[0.02, 0.03, 0]} rotation={[0, 0, -0.2]}>
             <mesh geometry={JAW_GEO} material={FOSSIL_DARK} castShadow />
@@ -233,26 +237,12 @@ export function Tyrannosaur({ mode }: { mode: 'normal' | 'watching' | 'wagging' 
 // Cases and the things in them
 // ---------------------------------------------------------------------------
 
-/** A wooden cabinet with a glass hood on top: `w` × `d`, top at `top`, hood `hood` tall. */
+/** A wooden cabinet with a glass hood on top: `w` x `d`, top at `top`, hood `hood` tall. */
 function GlassCase({ w, d, top, hood }: { w: number; d: number; top: number; hood: number }) {
   return (
     <>
-      <Block size={[w, top, d]} position={[0, top / 2, 0]} color="#3b2a1e" roughness={0.55} />
-      <Block size={[w - 0.06, 0.02, d - 0.06]} position={[0, top + 0.01, 0]} color="#2a2a2a" roughness={0.95} />
-      <mesh material={GLASS} position={[0, top + hood / 2 + 0.02, 0]}>
-        <boxGeometry args={[w - 0.02, hood, d - 0.02]} />
-      </mesh>
-      {[
-        [-1, -1],
-        [-1, 1],
-        [1, -1],
-        [1, 1],
-      ].map(([sx, sz], i) => (
-        <Block key={i} size={[0.014, hood, 0.014]} position={[sx * (w / 2 - 0.01), top + hood / 2 + 0.02, sz * (d / 2 - 0.01)]} color="#6a4a2a" metalness={0.6} roughness={0.4} />
-      ))}
-      {[-1, 1].map((sz) => (
-        <Block key={sz} size={[w, 0.014, 0.014]} position={[0, top + hood + 0.02, sz * (d / 2 - 0.01)]} color="#6a4a2a" metalness={0.6} roughness={0.4} />
-      ))}
+      <CaseCabinet w={w} d={d} top={top} felt="#2a2a2a" />
+      <CaseHood w={w - 0.02} d={d - 0.02} h={hood + 0.02} y={top} />
     </>
   )
 }
@@ -260,7 +250,7 @@ function GlassCase({ w, d, top, hood }: { w: number; d: number; top: number; hoo
 /** The fish that has come out of its stone: swims laps of the case. */
 function SwimmingFish({ map, top }: { map: Texture; top: number }) {
   const ref = useRef<Group>(null)
-  const body = useRef<Mesh>(null)
+  const body = useRef<Group>(null)
   useFrame(({ clock }) => {
     const g = ref.current
     if (!g) return
@@ -272,10 +262,16 @@ function SwimmingFish({ map, top }: { map: Texture; top: number }) {
   })
   return (
     <group ref={ref}>
-      <mesh ref={body}>
-        <planeGeometry args={[0.48, 0.24]} />
-        <meshStandardMaterial map={map} alphaTest={0.5} side={DoubleSide} roughness={0.8} />
-      </mesh>
+      <group ref={body}>
+        {/* a slice of stone with the fish on both faces */}
+        <mesh geometry={FISH_CORE} material={FISH_STONE} />
+        {[-1, 1].map((s) => (
+          <mesh key={s} position={[0, 0, s * 0.0056]}>
+            <planeGeometry args={[0.48, 0.24]} />
+            <meshStandardMaterial map={map} alphaTest={0.5} side={DoubleSide} roughness={0.8} />
+          </mesh>
+        ))}
+      </group>
     </group>
   )
 }
@@ -557,6 +553,19 @@ export function Meteorite({ glowing }: { glowing: boolean }) {
         <cylinderGeometry args={[0.4, 0.42, top, 40]} />
         <meshStandardMaterial color="#2d2b29" roughness={0.6} />
       </mesh>
+      {/* a plinth base and a pale stone top with a rounded edge */}
+      <mesh position={[0, 0.025, 0]} receiveShadow>
+        <cylinderGeometry args={[0.45, 0.45, 0.05, 40]} />
+        <meshStandardMaterial color="#1c1a19" roughness={0.6} />
+      </mesh>
+      <mesh position={[0, top - 0.0125, 0]} receiveShadow>
+        <cylinderGeometry args={[0.41, 0.41, 0.035, 40]} />
+        <meshStandardMaterial color="#6e665a" roughness={0.8} />
+      </mesh>
+      <mesh position={[0, top - 0.015, 0]} rotation={[PI / 2, 0, 0]}>
+        <torusGeometry args={[0.41, 0.015, 8, 48]} />
+        <meshStandardMaterial color="#6e665a" roughness={0.8} />
+      </mesh>
       <group ref={ref} position={[0, top, 0]} rotation={[0, 0.6, 0]}>
         {/* each variant has its own material, so the pulse never touches anything else */}
         <mesh ref={rock} geometry={METEORITE_GEO} castShadow>
@@ -564,7 +573,7 @@ export function Meteorite({ glowing }: { glowing: boolean }) {
         </mesh>
       </group>
       {glowing && (
-        <mesh ref={ring} position={[0, top + 0.002, 0]} rotation={[-PI / 2, 0, 0]}>
+        <mesh ref={ring} position={[0, top + 0.008, 0]} rotation={[-PI / 2, 0, 0]}>
           <ringGeometry args={[0.16, 0.38, 40]} />
           <meshStandardMaterial color="#1a3a24" emissive="#6dff9a" emissiveIntensity={0.6} transparent opacity={0.35} depthWrite={false} />
         </mesh>
@@ -709,20 +718,27 @@ export function OwlDome({ mode }: { mode: 'normal' | 'watching' | 'hanging' }) {
 // Pteranodon
 // ---------------------------------------------------------------------------
 
-/** One wing: arm bones along its leading edge and the membrane behind, out along +z (or -z). */
+/** One wing: arm bones along its leading edge and the membrane behind, out along +z (or -z), tipped up a little. */
 function Wing({ side, flap }: { side: 1 | -1; flap: boolean }) {
   const ref = useRef<Group>(null)
   useFrame(({ clock }) => {
     if (!flap || !ref.current) return
     ref.current.rotation.x = side * Math.sin(clock.elapsedTime * 2.2) * 0.45
   })
+  const [shoulder, elbow, wrist, tip] = WING_BONES
   return (
-    <group ref={ref} position={[0.04, 0, side * 0.05]}>
+    <group ref={ref} position={[0.04, 0.01, side * 0.05]}>
       <group scale={[1, 1, side]}>
-        <mesh geometry={WING_GEO} material={MEMBRANE} />
-        <Bone a={[0.08, 0, 0]} b={[0.14, 0.01, 0.32]} r={0.014} />
-        <Bone a={[0.14, 0.01, 0.32]} b={[0.06, 0.01, 0.52]} r={0.012} />
-        <Bone a={[0.06, 0.01, 0.52]} b={[-0.02, 0, 1.08]} r={0.009} />
+        <group rotation={[-0.1, 0, 0]}>
+          <mesh geometry={WING_GEO} material={MEMBRANE} castShadow />
+          <Bone a={shoulder} b={elbow} r={0.02} />
+          <Bone a={elbow} b={wrist} r={0.016} />
+          <Bone a={wrist} b={tip} r={0.011} />
+          {/* the three little clawed fingers at the wrist */}
+          {[-1, 0, 1].map((f) => (
+            <Bone key={f} a={wrist} b={[wrist[0] + 0.07, wrist[1] - 0.01, wrist[2] + f * 0.025]} r={0.005} knobs={false} />
+          ))}
+        </group>
       </group>
     </group>
   )
@@ -735,24 +751,39 @@ function Wing({ side, flap }: { side: 1 | -1; flap: boolean }) {
 export function Pteranodon({ flapping, wire }: { flapping: boolean; wire: number }) {
   return (
     <>
-      {/* the wires: one in front of the wings, one behind */}
+      {/* the wires: one in front of the wings, one behind, each to a little plate on the ceiling */}
       {[0.12, -0.18].map((x) => (
-        <mesh key={x} material={STEEL} position={[x, wire / 2, 0]}>
-          <cylinderGeometry args={[0.002, 0.002, wire, 4]} />
-        </mesh>
+        <group key={x}>
+          <mesh material={STEEL} position={[x, wire / 2, 0]}>
+            <cylinderGeometry args={[0.002, 0.002, wire, 4]} />
+          </mesh>
+          <mesh material={STEEL} position={[x, wire - 0.005, 0]}>
+            <cylinderGeometry args={[0.025, 0.025, 0.01, 16]} />
+          </mesh>
+        </group>
       ))}
-      <mesh position={[0, 0, 0]} scale={[1.6, 0.6, 0.6]} castShadow>
-        <sphereGeometry args={[0.07, 16, 12]} />
-        <meshStandardMaterial color="#8a6f4e" roughness={0.8} />
+      {/* body, with a keel of breastbone under the chest */}
+      <mesh scale={[2.0, 0.7, 0.74]} material={FOSSIL} castShadow>
+        <sphereGeometry args={[0.09, 24, 16]} />
       </mesh>
-      <Bone a={[0.1, 0.02, 0]} b={[0.26, 0.06, 0]} r={0.018} />
-      <group position={[0.3, 0.06, 0]} rotation={[0, 0, -0.1]}>
+      <mesh geometry={KNOB_GEO} material={FOSSIL_DARK} position={[0.05, -0.04, 0]} scale={[0.09, 0.03, 0.025]} />
+      {/* neck and head, the beak long and the crest swept back */}
+      <Bone a={[0.13, 0.02, 0]} b={[0.3, 0.08, 0]} r={0.022} />
+      <group position={[0.33, 0.09, 0]} rotation={[0, 0, -0.12]} scale={1.25}>
         <mesh geometry={PTERO_HEAD_GEO} material={FOSSIL} castShadow />
+        {[1, -1].map((s) => (
+          <mesh key={s} geometry={KNOB_GEO} material={SOCKET} position={[-0.03, 0.035, s * 0.021]} scale={[0.014, 0.012, 0.006]} />
+        ))}
       </group>
-      {/* the stubby tail and the legs trailing behind */}
-      <Bone a={[-0.1, 0, 0]} b={[-0.2, -0.01, 0]} r={0.012} />
+      {/* the stubby tail and the legs trailing behind, toes splayed */}
+      <Bone a={[-0.14, 0, 0]} b={[-0.27, -0.01, 0]} r={0.012} />
       {[1, -1].map((s) => (
-        <Bone key={s} a={[-0.06, -0.02, s * 0.03]} b={[-0.3, -0.03, s * 0.1]} r={0.009} />
+        <group key={s}>
+          <Bone a={[-0.08, -0.025, s * 0.035]} b={[-0.34, -0.045, s * 0.11]} r={0.011} />
+          {[-1, 0, 1].map((t) => (
+            <Bone key={t} a={[-0.34, -0.045, s * 0.11]} b={[-0.41, -0.05, s * 0.11 + t * 0.022]} r={0.005} knobs={false} />
+          ))}
+        </group>
       ))}
       <Wing side={1} flap={flapping} />
       <Wing side={-1} flap={flapping} />

@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef, type ReactNode } from 'react'
 import {
   CapsuleGeometry,
+  CircleGeometry,
   CatmullRomCurve3,
   CylinderGeometry,
   DoubleSide,
@@ -42,10 +43,45 @@ const INSIDE = { color: '#2b2e33', roughness: 0.85 }
 
 const TYRE = new MeshStandardMaterial({ color: '#17171a', roughness: 0.92 })
 const HUB = new MeshStandardMaterial({ color: '#d5d9dd', roughness: 0.3, metalness: 0.85 })
-const FRONT_TYRE = new CylinderGeometry(0.5, 0.5, 0.36, 36)
-const REAR_TYRE = new CylinderGeometry(0.5, 0.5, 0.5, 36)
-const HUB_GEO = new CylinderGeometry(0.27, 0.27, 0.02, 32)
-const CAP_GEO = new CylinderGeometry(0.09, 0.11, 0.06, 20)
+const RIM_PAINT = new MeshStandardMaterial({ color: '#b9bec4', roughness: 0.35, metalness: 0.7 })
+const TYRE_R = 0.5
+
+/** A tyre turned on the y axis: flat sidewalls, a rounded shoulder into the tread. Closed, so it reads from every side. */
+function tyreGeometry(width: number) {
+  const w = width / 2
+  const c = 0.075
+  const pts = [new Vector2(0, -w), new Vector2(TYRE_R - c, -w)]
+  for (let i = 1; i < 6; i++) {
+    const a = -PI / 2 + (i / 6) * (PI / 2)
+    pts.push(new Vector2(TYRE_R - c + Math.cos(a) * c, -w + c + Math.sin(a) * c))
+  }
+  pts.push(new Vector2(TYRE_R, -w + c), new Vector2(TYRE_R, w - c))
+  for (let i = 1; i < 6; i++) {
+    const a = (i / 6) * (PI / 2)
+    pts.push(new Vector2(TYRE_R - c + Math.cos(a) * c, w - c + Math.sin(a) * c))
+  }
+  pts.push(new Vector2(TYRE_R - c, w), new Vector2(0, w))
+  return new LatheGeometry(pts, 40)
+}
+const FRONT_TYRE = tyreGeometry(0.36)
+const REAR_TYRE = tyreGeometry(0.5)
+/** The steel wheel: a dished disc with a raised rim round it, and the hub in the middle. */
+const RIM_GEO = new TorusGeometry(0.285, 0.022, 10, 40)
+const DISC_GEO = new CylinderGeometry(0.29, 0.29, 0.02, 32)
+const HUB_GEO = new CylinderGeometry(0.13, 0.15, 0.05, 24)
+const CAP_GEO = new CylinderGeometry(0.06, 0.08, 0.06, 20)
+const NUT_GEO = new CylinderGeometry(0.016, 0.016, 0.03, 6)
+const NUTS: Placement[] = Array.from({ length: 8 }, (_, i) => {
+  const a = (i / 8) * PI * 2
+  return { at: [Math.cos(a) * 0.105, Math.sin(a) * 0.105, 0.035] as Vec3, rot: [PI / 2, 0, 0] as Vec3 }
+})
+/** Holes round the wheel disc, just dark dots on its face. */
+const VENT_GEO = new CircleGeometry(0.035, 16)
+const VENT_MAT = new MeshStandardMaterial({ color: '#2a2d31', roughness: 0.7 })
+const VENTS: Placement[] = Array.from({ length: 6 }, (_, i) => {
+  const a = (i / 6) * PI * 2 + PI / 6
+  return { at: [Math.cos(a) * 0.205, Math.sin(a) * 0.205, 0.0105] as Vec3 }
+})
 const GLASS = new MeshStandardMaterial({ color: '#16202b', roughness: 0.06, metalness: 0.7 })
 
 /** One wheel, standing on the floor with its hub facing +z. */
@@ -55,15 +91,19 @@ export function Wheel({ rear = false, kind = 'round' }: { rear?: boolean; kind?:
     <>
       {kind === 'round' && <mesh geometry={rear ? REAR_TYRE : FRONT_TYRE} material={TYRE} position={[0, 0.5, 0]} rotation={[PI / 2, 0, 0]} castShadow />}
       {kind === 'flat' && (
-        // squashed at the bottom and bulging out, the rim sagging towards the floor
+        // squashed at the bottom and bulging out sideways, the rim sagging towards the floor (scaled before it's turned: y is its width)
         <mesh geometry={rear ? REAR_TYRE : FRONT_TYRE} material={TYRE} position={[0, 0.41, 0]} rotation={[PI / 2, 0, 0]} scale={[1.07, 1.12, 0.82]} castShadow />
       )}
       {kind === 'square' && (
         <RoundedBox args={[0.96, 0.96, width]} radius={0.07} smoothness={3} position={[0, 0.48, 0]} material={TYRE} castShadow />
       )}
-      <group position={[0, kind === 'flat' ? 0.44 : 0.5, width / 2]}>
-        <mesh geometry={HUB_GEO} material={HUB} rotation={[PI / 2, 0, 0]} />
-        <mesh geometry={CAP_GEO} material={HUB} position={[0, 0, 0.03]} rotation={[PI / 2, 0, 0]} />
+      <group position={[0, kind === 'flat' ? 0.44 : 0.5, (kind === 'flat' ? width * 0.56 : width / 2) + 0.002]}>
+        <mesh geometry={DISC_GEO} material={RIM_PAINT} rotation={[PI / 2, 0, 0]} />
+        <mesh geometry={RIM_GEO} material={HUB} position={[0, 0, 0.01]} />
+        <Instanced geometry={VENT_GEO} material={VENT_MAT} items={VENTS} />
+        <mesh geometry={HUB_GEO} material={HUB} position={[0, 0, 0.02]} rotation={[PI / 2, 0, 0]} />
+        <Instanced geometry={NUT_GEO} material={HUB} items={NUTS} />
+        <mesh geometry={CAP_GEO} material={HUB} position={[0, 0, 0.06]} rotation={[PI / 2, 0, 0]} />
       </group>
     </>
   )
@@ -191,6 +231,13 @@ export function Engine() {
       <Block size={[0.3, 0.48, 2.4]} position={[3.65, 0.84, 0]} {...RED} radius={0.02} paint />
       <Block size={[0.16, 0.36, 2.44]} position={[3.88, 0.74, 0]} {...GREY} radius={0.03} />
       <Block size={[0.03, 0.42, 1.3]} position={[3.81, 1.45, 0]} {...BLACK} radius={0.01} />
+      {/* chrome slats across the grille, and the frame round it */}
+      {[1.31, 1.4, 1.49, 1.58].map((y) => (
+        <Block key={y} size={[0.02, 0.028, 1.2]} position={[3.832, y, 0]} {...GREY} radius={0.008} />
+      ))}
+      {[-1, 1].map((s) => (
+        <Block key={s} size={[0.025, 0.42, 0.035]} position={[3.83, 1.45, s * 0.64]} {...GREY} radius={0.008} />
+      ))}
       <mesh position={[3.803, 2.38, 0]} rotation={[0, PI / 2, 0]} material={GLASS}>
         <planeGeometry args={[2.1, 0.8]} />
       </mesh>
@@ -300,10 +347,9 @@ export function Beacons({ flashing }: { flashing: boolean }) {
     })
   })
   const lens = (i: number, size: Vec3, at: Vec3) => (
-    <mesh key={i} ref={(m) => void (lenses.current[i] = m)} position={at} userData={{ paint: true }}>
-      <boxGeometry args={size} />
+    <RoundedBox key={i} ref={(m: Mesh | null) => void (lenses.current[i] = m)} args={size} radius={Math.min(0.04, Math.min(...size) / 2 - 0.001)} smoothness={3} position={at} userData={{ paint: true }}>
       <meshStandardMaterial color="#1f4fff" emissive="#2a5cff" emissiveIntensity={0.25} roughness={0.15} transparent opacity={0.92} />
-    </mesh>
+    </RoundedBox>
   )
   return (
     <>

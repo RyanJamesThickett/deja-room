@@ -41,6 +41,8 @@ type Phase = 'title' | 'study' | 'shift' | 'hunt' | 'wait' | 'reveal' | 'end' | 
 interface RoundResult {
   found: boolean
   points: number
+  /** Not found because the clock ran out (rather than the tries). */
+  timedOut?: boolean
 }
 interface RoomScore {
   label: string
@@ -154,6 +156,10 @@ export default function App() {
   const [resetToken, setResetToken] = useState(0)
   const [locked, setLocked] = useState(false)
   const [toast, setToast] = useState<{ msg: string; id: number } | null>(null)
+  /** Co-op: the team's guess just went in and it wasn't it. Shown big for a moment. */
+  const [teamCall, setTeamCall] = useState<{ what: string; left: number; id: number } | null>(null)
+  /** Online: when the server moves on from this reveal, whether or not everyone's ready (local clock). */
+  const [revealEnds, setRevealEnds] = useState(0)
   // true once the "something is different" splash fully covers the screen
   const [covered, setCovered] = useState(false)
   // secret mode
@@ -326,23 +332,24 @@ export default function App() {
   function timeUp() {
     sfx.fail()
     flash('Time’s up!')
-    finishRound(false, 0)
+    finishRound(false, 0, true)
   }
 
-  function finishRound(found: boolean, points: number) {
+  function finishRound(found: boolean, points: number, timedOut = false) {
     if (online && match.mode === 'vs') {
       // VS: send the result in, then wait to see how the other player did
       const huntStarted = mp.toLocal(match.huntStart + SHIFT_MS)
       mp.send({
         t: 'result',
         round,
-        outcome: { found, points, misses: found ? ATTEMPTS - attemptsLeft : ATTEMPTS, ms: Math.max(0, Date.now() - huntStarted) },
+        // out of time with tries left counts the tries actually used, so the reveal can say which ran out
+        outcome: { found, points, misses: found || timedOut ? ATTEMPTS - attemptsLeft : ATTEMPTS, ms: Math.max(0, Date.now() - huntStarted) },
       })
-      setResults((r) => [...r.slice(0, round), { found, points }])
+      setResults((r) => [...r.slice(0, round), { found, points, timedOut }])
       setPhase('wait')
       return
     }
-    setResults((r) => [...r.slice(0, round), { found, points }])
+    setResults((r) => [...r.slice(0, round), { found, points, timedOut }])
     setPhase('reveal')
     setShowBefore(false)
     // the mouse stays captured: walk over and have a proper look at what changed
@@ -441,12 +448,12 @@ export default function App() {
       if (match.coop.votes[mp.me.id]?.key === key) {
         // clicking your own pick again takes the pin back out
         mp.send({ t: 'vote', round, vote: null })
-        sfx.nope()
+        sfx.unpin()
         flash('Pin taken back')
         return
       }
       mp.send({ t: 'vote', round, vote: { key, point, correct: item === current.target } })
-      sfx.click()
+      sfx.pin()
       flash(`Your pin's on the ${name}`)
       return
     }
@@ -500,6 +507,10 @@ export default function App() {
   const applied = useRef('')
   /** Co-op: the last team guess already announced. */
   const lastGuessAt = useRef(0)
+  /** Co-op: everyone's pins as last seen, to hear and see a teammate put one down. */
+  const seenVotes = useRef<{ at: string; votes: Record<string, string> }>({ at: '', votes: {} })
+  /** Co-op: the last second of the "going with…" countdown that ticked. */
+  const lastSettleTick = useRef(0)
 
   /** A vote's key as words: an item's label, or a red herring's. */
   function keyLabel(key: string) {
@@ -555,12 +566,32 @@ export default function App() {
     const myResults = outcomes.map((o) => (o ? { found: o.found, points: o.points } : { found: false, points: 0 }))
     // co-op: a team guess just went in and it wasn't it (a right one ends the hunt instead)
     const guess = s.mode === 'coop' && s.stage === 'hunt' ? s.coop?.lastGuess : null
-    if (guess && guess.at !== lastGuessAt.current) {
+    const freshGuess = !!guess && guess.at !== lastGuessAt.current
+    if (guess && freshGuess) {
       lastGuessAt.current = guess.at
       if (!guess.correct) {
-        sfx.wrong()
-        flash(`The team went with the ${keyLabel(guess.key)}. Not it!`)
+        sfx.lockIn()
+        window.setTimeout(() => sfx.wrong(), 280)
+        setTeamCall({ what: keyLabel(guess.key), left: s.coop?.attemptsLeft ?? 0, id: guess.at })
       }
+    }
+    // co-op: a teammate put a pin down, moved it or took it back
+    if (s.mode === 'coop' && s.coop && s.stage === 'hunt') {
+      const at = `${s.seed}:${s.round}`
+      const before = seenVotes.current.at === at ? seenVotes.current.votes : {}
+      const after: Record<string, string> = {}
+      for (const [id, v] of Object.entries(s.coop.votes)) after[id] = v.key
+      // a guess going in clears every pin: that isn't everyone taking theirs back
+      if (!freshGuess) {
+        for (const p of s.players) {
+          if (p.id === mp.me.id || before[p.id] === after[p.id]) continue
+          if (after[p.id]) {
+            sfx.pin(false, p.colour)
+            flash(`${p.name} pinned the ${keyLabel(after[p.id])}`)
+          } else sfx.unpin()
+        }
+      }
+      seenVotes.current = { at, votes: after }
     }
     // Each step below happens once. Two messages can land before React has
     // re-rendered, so the phase in this closure can't be trusted to say whether
@@ -613,11 +644,14 @@ export default function App() {
         }
         break
       case 'reveal':
+        setRevealEnds(mp.toLocal(s.deadline))
+        setNow(Date.now())
         if (first) {
           setHistory(changesUpTo(s.seed, r, s.round + 1))
           setRound(s.round)
           setResults(myResults)
           setShowBefore(false)
+          setTeamCall(null)
           setPhase('reveal')
           // the results land for everyone at once, so this is the moment for the sound
           if (outcomes[s.round]?.found) sfx.found()
@@ -682,6 +716,11 @@ export default function App() {
       lastTick.current = left
       sfx.tick(left === 1)
     }
+    // co-op: everyone's pinned, and the team's guess goes in after a short countdown
+    const settleAt = online && match.mode === 'coop' && phase === 'hunt' ? match.coop?.settleAt : 0
+    const settleLeft = settleAt ? Math.ceil((mp.toLocal(settleAt) - t) / 1000) : 0
+    if (settleLeft >= 1 && settleLeft !== lastSettleTick.current) sfx.tick(settleLeft === 1)
+    lastSettleTick.current = settleLeft
     if (t < deadline || !deadline) return
     // online, the server ends the first look for everyone at once
     if (phase === 'study') {
@@ -707,7 +746,7 @@ export default function App() {
   useEffect(() => upNext?.preload?.(), [upNext])
 
   useEffect(() => {
-    if (phase !== 'study' && phase !== 'hunt' && phase !== 'wait') return
+    if (phase !== 'study' && phase !== 'hunt' && phase !== 'wait' && phase !== 'reveal') return
     const id = setInterval(() => tick(), 250)
     return () => clearInterval(id)
   }, [phase])
@@ -733,6 +772,12 @@ export default function App() {
       clearTimeout(done)
     }
   }, [phase])
+
+  useEffect(() => {
+    if (!teamCall) return
+    const id = setTimeout(() => setTeamCall(null), 2600)
+    return () => clearTimeout(id)
+  }, [teamCall])
 
   useEffect(() => {
     if (!toast) return
@@ -881,6 +926,15 @@ export default function App() {
   /** VS: the other player (if there is one). */
   const rival = online && match.mode === 'vs' ? match.players.find((p) => p.id !== mp.me.id) : undefined
   const waitingFor = online ? match.players.filter((p) => p.connected && p.id !== mp.me.id && !p.ready) : []
+  // how this change went: online the server's word (co-op: the team's), offline this player's
+  const outcomeNow = online ? (match.mode === 'coop' ? match.coop?.outcomes[round] : meOnline?.outcomes[round]) : undefined
+  const ranOutOfTime = online ? !!outcomeNow && !outcomeNow.found && outcomeNow.misses < ATTEMPTS : !!results[round]?.timedOut
+  const verdict = results[round]?.found ? 'Found it!' : ranOutOfTime ? 'Time’s up!' : 'Out of tries!'
+  const revealLeft = online && phase === 'reveal' ? Math.max(0, Math.ceil((revealEnds - now) / 1000)) : 0
+  /** How many changes this game has: online, what the host set up (a test game can have fewer than the room's usual). */
+  const changesThisGame = (online && match.setup?.changes) || room.changes
+  const readyCount = online ? match.players.filter((p) => p.connected && p.ready).length : 0
+  const hereCount = online ? match.players.filter((p) => p.connected).length : 0
 
   return (
     <div className="app">
@@ -978,8 +1032,8 @@ export default function App() {
             <>
               <span className="sticker where">{room.label}</span>
               <span className="sticker room">
-                Change {Math.min(round + 1, room.changes)}
-                <small>/{room.changes}</small>
+                Change {Math.min(round + 1, changesThisGame)}
+                <small>/{changesThisGame}</small>
               </span>
               <span className="sticker score">
                 {score}
@@ -1175,6 +1229,18 @@ export default function App() {
           </section>
         )}
 
+        {phase === 'hunt' && teamCall && (
+          <div className="team-call" key={teamCall.id} role="status">
+            <Burst tone="blue" className="team-call-burst">
+              Not it!
+            </Burst>
+            <div className="team-call-line">
+              The team went with the <strong>{teamCall.what}</strong>.{' '}
+              {teamCall.left > 0 ? `${teamCall.left} ${teamCall.left === 1 ? 'try' : 'tries'} left` : 'No tries left'}
+            </div>
+          </div>
+        )}
+
         {phase === 'hunt' && online && match.mode === 'coop' && (
           <CoopVoteBoard
             state={match}
@@ -1205,7 +1271,7 @@ export default function App() {
         {phase === 'reveal' && current && (
           <section className={`panel reveal-panel${locked ? ' walking' : ''}`}>
             <Burst tone={results[round]?.found ? 'yellow' : 'blue'} className="verdict">
-              {results[round]?.found ? 'Found it!' : 'Nope!'}
+              {verdict}
             </Burst>
             {results[round]?.found && <div className="points">+{results[round].points}</div>}
             <p className="reveal-line">{current.description}.</p>
@@ -1240,17 +1306,27 @@ export default function App() {
                 </button>
               )}
             </div>
+            {online && revealEnds > 0 && (
+              <div className="reveal-clock" aria-live="off">
+                <span className="reveal-clock-n">{revealLeft}</span>
+                <span>
+                  {round + 1 >= changesThisGame ? 'Results' : 'Next change'} in {revealLeft}s
+                  {hereCount > 1 && ` · ${readyCount} of ${hereCount} ready`}
+                </span>
+              </div>
+            )}
           </section>
         )}
 
         {phase === 'end' && online && (
           <section className={`panel end-panel${locked ? ' walking' : ''}`}>
             <div className="caption">{room.label} done!</div>
-            <Burst tone="red" className="final vs-final">
+            {/* co-op: a score, sized like the solo one; VS: a line of words, so smaller text */}
+            <Burst tone="red" className={match.mode === 'coop' ? 'final' : 'final vs-final'}>
               {match.mode === 'coop' ? (
                 <>
                   {score}
-                  <small>/{room.changes * ATTEMPTS}</small>
+                  <small>/{changesThisGame * ATTEMPTS}</small>
                 </>
               ) : (() => {
                 const table = standings(match)
@@ -1263,7 +1339,7 @@ export default function App() {
               <>
                 {/* co-op: one team, one score; every change and whether the team got it */}
                 <p className="coop-summary">
-                  The team found <strong>{results.filter((r) => r.found).length}</strong> of {room.changes}, for{' '}
+                  The team found <strong>{results.filter((r) => r.found).length}</strong> of {changesThisGame}, for{' '}
                   <strong>{score}</strong> {score === 1 ? 'point' : 'points'}.
                 </p>
                 <ol className="results compact">
@@ -1280,7 +1356,7 @@ export default function App() {
                   <li key={player.id} style={{ '--player': PLAYER_COLOURS[player.colour] } as CSSProperties}>
                     <span className="vs-name">{player.id === mp.me.id ? 'You' : player.name}</span>
                     <span className="vs-line">
-                      {player.outcomes.filter((o) => o?.found).length} of {room.changes} found · {(ms / 1000).toFixed(1)}s
+                      {player.outcomes.filter((o) => o?.found).length} of {changesThisGame} found · {(ms / 1000).toFixed(1)}s
                     </span>
                     <span className="vs-points">{points}</span>
                   </li>
@@ -1474,7 +1550,7 @@ export default function App() {
               Paused!
             </h2>
             <div className="caption">
-              {room.label} · change {round + 1} of {room.changes} ·{' '}
+              {room.label} · change {round + 1} of {changesThisGame} ·{' '}
               {phase === 'study'
                 ? `${formatTime(remaining)} left to look`
                 : `${formatTime(remaining)} and ${attemptsLeft} tries left`}

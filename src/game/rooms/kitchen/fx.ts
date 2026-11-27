@@ -353,3 +353,22 @@ export const carrotTop = once(() => {
   const merged = mergeGeometries(parts.map((p) => (p.index ? p.toNonIndexed() : p)))
   return merged
 })
+
+// ---------------------------------------------------------------------------
+// Crockery
+// ---------------------------------------------------------------------------
+
+/** A stack of `n` plates (or bowls, `step` apart): one lathe, ridged where each plate's rim sits on the next. */
+export function plateStack(r: number, n: number, step = 0.021) {
+  const pts: Vector2[] = [new Vector2(0, 0), new Vector2(r * 0.8, 0)]
+  for (let k = 0; k < n; k++) {
+    const y = k * step
+    pts.push(new Vector2(r * 0.97, y + step * 0.25), new Vector2(r, y + step * 0.75), new Vector2(r * 0.97, y + step))
+  }
+  // the top plate's well
+  const top = n * step
+  pts.push(new Vector2(r * 0.8, top - 0.004), new Vector2(0, top - 0.006))
+  const g = new LatheGeometry(pts, 32)
+  g.translate(0, -top / 2, 0)
+  return g
+}

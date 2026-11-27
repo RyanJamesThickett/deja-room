@@ -2,10 +2,11 @@ import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef, type ReactNode } from 'react'
 import { CylinderGeometry, DoubleSide, MeshStandardMaterial, TorusGeometry, type Group } from 'three'
 import { Block, PI } from '../../kit'
+import type { Vec3 } from '../../mutations'
 import { FacesYou } from '../living/oddities'
 import { BODY, fishParts, skin, TAIL } from './fishParts'
-import { carrotTop, cheeseSlab, HOOK_DROP, sHook, slottedBlade, whiskWires } from './fx'
-import { BENCH, BRUSHED, DARK_STEEL, STAINLESS, STEEL_MAT, WHITE_CHINA } from './layout'
+import { carrotTop, cheeseSlab, HOOK_DROP, plateStack, sHook, slottedBlade, whiskWires } from './fx'
+import { BENCH, BRUSHED, CHINA_OPEN, DARK_STEEL, STAINLESS, STEEL_MAT, STEEL_OPEN, WHITE_CHINA } from './layout'
 import { fireBlanketTexture } from './textures'
 
 /*
@@ -389,31 +390,67 @@ export function VegPrep() {
       <Block size={[0.3, 0.02, 0.24]} position={[0.1, BENCH + 0.09, -0.05]} color="#efe9d8" roughness={0.8} radius={0.005} />
       {/* a stack of steel bowls */}
       {[0, 1, 2].map((k) => (
-        <mesh key={k} position={[-0.05, BENCH + 0.035 + k * 0.025, 0.25]} material={STEEL_MAT}>
-          <cylinderGeometry args={[0.12, 0.07, 0.07, 24, 1, true]} />
-        </mesh>
+        <group key={k} position={[-0.05, BENCH + 0.035 + k * 0.025, 0.25]}>
+          <mesh material={STEEL_OPEN}>
+            <cylinderGeometry args={[0.12, 0.07, 0.07, 24, 1, true]} />
+          </mesh>
+          <mesh position={[0, 0.035, 0]} rotation={[PI / 2, 0, 0]} material={STEEL_MAT}>
+            <torusGeometry args={[0.12, 0.004, 6, 32]} />
+          </mesh>
+        </group>
       ))}
+      <mesh position={[-0.05, BENCH + 0.002, 0.25]} material={STEEL_MAT}>
+        <cylinderGeometry args={[0.07, 0.07, 0.004, 24]} />
+      </mesh>
     </>
   )
 }
+
+const PEPPER_MILL = new MeshStandardMaterial({ color: '#3a2618', roughness: 0.45 })
+/** Lemons down in the bowl, and two more on top of the heap. */
+const LEMONS: Vec3[] = [
+  [0.05, 0.045, 0.0],
+  [-0.025, 0.045, 0.045],
+  [-0.03, 0.045, -0.045],
+  [0.015, 0.085, 0.015],
+  [-0.03, 0.08, -0.005],
+]
 
 /** A bowl of lemons and a pepper mill, sitting on the worktop (origin). */
 export function Lemons() {
   return (
     <>
-      <mesh position={[0, 0.04, 0]} material={WHITE_CHINA}>
-        <cylinderGeometry args={[0.12, 0.08, 0.08, 24]} />
+      {/* a hollow china bowl: its sides, a foot, and the floor inside */}
+      <mesh position={[0, 0.04, 0]} material={CHINA_OPEN}>
+        <cylinderGeometry args={[0.12, 0.07, 0.07, 28, 1, true]} />
       </mesh>
-      {[0, 1, 2, 3].map((i) => (
-        <mesh key={i} position={[Math.cos(i * 1.6) * 0.05, 0.09 + (i === 3 ? 0.03 : 0), Math.sin(i * 1.6) * 0.05]} scale={[1, 0.8, 0.8]}>
-          <sphereGeometry args={[0.035, 14, 10]} />
+      <mesh position={[0, 0.075, 0]} rotation={[PI / 2, 0, 0]} material={WHITE_CHINA}>
+        <torusGeometry args={[0.12, 0.005, 6, 36]} />
+      </mesh>
+      <mesh position={[0, 0.006, 0]} material={WHITE_CHINA}>
+        <cylinderGeometry args={[0.07, 0.065, 0.012, 28]} />
+      </mesh>
+      {LEMONS.map((at, i) => (
+        <mesh key={i} position={at} rotation={[0, i * 1.3, 0.3]} scale={[1, 0.78, 0.78]}>
+          <sphereGeometry args={[0.035, 16, 12]} />
           <meshStandardMaterial color="#f2d23a" roughness={0.5} />
         </mesh>
       ))}
-      <mesh position={[0.15, 0.09, 0.28]}>
-        <cylinderGeometry args={[0.025, 0.03, 0.18, 14]} />
-        <meshStandardMaterial color="#3a2618" roughness={0.5} />
-      </mesh>
+      {/* the pepper mill: a waisted body and a knob on top */}
+      <group position={[0.15, 0, 0.28]}>
+        <mesh position={[0, 0.06, 0]} material={PEPPER_MILL}>
+          <cylinderGeometry args={[0.024, 0.03, 0.12, 16]} />
+        </mesh>
+        <mesh position={[0, 0.14, 0]} material={PEPPER_MILL}>
+          <cylinderGeometry args={[0.026, 0.024, 0.04, 16]} />
+        </mesh>
+        <mesh position={[0, 0.16, 0]} material={PEPPER_MILL} scale={[1, 0.7, 1]}>
+          <sphereGeometry args={[0.026, 16, 8, 0, PI * 2, 0, PI / 2]} />
+        </mesh>
+        <mesh position={[0, 0.182, 0]} material={STEEL_MAT}>
+          <sphereGeometry args={[0.009, 10, 8]} />
+        </mesh>
+      </group>
     </>
   )
 }
@@ -421,6 +458,32 @@ export function Lemons() {
 /** The blue (fish) chopping board, sitting on the worktop (origin). */
 export function FishBoard() {
   return <Block size={[0.62, 0.025, 0.4]} position={[0, 0.0125, 0]} color="#2a5fc6" roughness={0.6} radius={0.006} />
+}
+
+const SACK_TIE = new TorusGeometry(1, 0.18, 6, 16)
+
+/** A sack standing on its bottom (`at`), tied off at the neck; `band`: a printed stripe round its front. */
+export function Sack({ at, size, colour, band, rotation }: { at: Vec3; size: Vec3; colour: string; band?: string; rotation?: Vec3 }) {
+  const [w, h, d] = size
+  const body = h * 0.78
+  return (
+    <group position={at} rotation={rotation}>
+      <Block size={[w, body, d]} position={[0, body / 2, 0]} color={colour} roughness={0.95} radius={Math.min(w, d) * 0.38} />
+      {/* gathered in at the top, tied, and the ends fanning out above the tie */}
+      <mesh position={[0, body - 0.01 + h * 0.07, 0]}>
+        <cylinderGeometry args={[w * 0.12, w * 0.3, h * 0.16, 14]} />
+        <meshStandardMaterial color={colour} roughness={0.95} />
+      </mesh>
+      <mesh geometry={SACK_TIE} position={[0, body + h * 0.13, 0]} rotation={[PI / 2, 0, 0]} scale={[w * 0.12, w * 0.12, w * 0.12]}>
+        <meshStandardMaterial color="#8a6a3a" roughness={0.8} />
+      </mesh>
+      <mesh position={[0, body + h * 0.19, 0]} scale={[w * 0.2, h * 0.07, w * 0.2]}>
+        <sphereGeometry args={[1, 14, 8]} />
+        <meshStandardMaterial color={colour} roughness={0.95} />
+      </mesh>
+      {band && <Block size={[w * 0.72, h * 0.12, 0.006]} position={[0, body * 0.5, d / 2 + 0.001]} color={band} roughness={0.8} radius={0.002} />}
+    </group>
+  )
 }
 
 /** A stand mixer and a sack of flour for the wall bench. */
@@ -431,17 +494,27 @@ export function MixerAndFlour() {
       <Block size={[0.24, 0.06, 0.36]} position={[0, BENCH + 0.03, 0]} {...paint} radius={0.02} />
       <Block size={[0.12, 0.34, 0.12]} position={[0, BENCH + 0.2, -0.12]} {...paint} radius={0.03} />
       <Block size={[0.16, 0.12, 0.36]} position={[0, BENCH + 0.4, -0.02]} {...paint} radius={0.05} />
-      <mesh position={[0, BENCH + 0.14, 0.05]} material={STEEL_MAT}>
+      {/* the bowl, and the beater coming down into it from the head */}
+      <mesh position={[0, BENCH + 0.14, 0.05]} material={STEEL_OPEN}>
         <cylinderGeometry args={[0.1, 0.07, 0.16, 24, 1, true]} />
+      </mesh>
+      <mesh position={[0, BENCH + 0.22, 0.05]} rotation={[PI / 2, 0, 0]} material={STEEL_MAT}>
+        <torusGeometry args={[0.1, 0.005, 6, 32]} />
       </mesh>
       <mesh position={[0, BENCH + 0.07, 0.05]} material={STEEL_MAT}>
         <cylinderGeometry args={[0.07, 0.07, 0.01, 24]} />
       </mesh>
-      {/* flour sack, slumped */}
-      <mesh position={[-0.6, BENCH + 0.15, 0.05]} scale={[0.16, 0.15, 0.12]}>
-        <sphereGeometry args={[1, 18, 12]} />
-        <meshStandardMaterial color="#e9e1cc" roughness={0.95} />
+      <mesh position={[0, BENCH + 0.29, 0.05]} material={STEEL_MAT}>
+        <cylinderGeometry args={[0.008, 0.008, 0.1, 10]} />
       </mesh>
+      <mesh position={[0, BENCH + 0.19, 0.05]} material={STEEL_MAT} scale={[1, 1.4, 1]}>
+        <torusGeometry args={[0.035, 0.006, 6, 20]} />
+      </mesh>
+      {/* the speed lever and a chrome strip along the head */}
+      <Block size={[0.02, 0.02, 0.06]} position={[0.07, BENCH + 0.36, -0.12]} color="#e9e7e1" roughness={0.4} radius={0.008} />
+      <Block size={[0.004, 0.04, 0.12]} position={[0.081, BENCH + 0.4, 0.0]} {...STAINLESS} radius={0.0015} />
+      {/* a sack of flour, slumped against the wall */}
+      <Sack at={[-0.6, BENCH, 0.05]} size={[0.3, 0.34, 0.22]} colour="#e9e1cc" band="#c8302c" />
     </>
   )
 }
@@ -494,6 +567,9 @@ export function TrayTrolley() {
   )
 }
 
+const WARM_STACK = plateStack(0.14, 11)
+const WARM_BOWLS = plateStack(0.12, 7, 0.024)
+
 /** Hot cupboard by the pass: plates kept warm inside, a stack on top. */
 export function PlateWarmer() {
   return (
@@ -506,12 +582,8 @@ export function PlateWarmer() {
       {[-1, 1].map((s) => (
         <Block key={`h${s}`} size={[0.1, 0.02, 0.02]} position={[s * 0.06, 0.62, 0.32]} {...DARK_STEEL} radius={0.006} />
       ))}
-      <mesh position={[-0.2, 1.06, 0]} material={WHITE_CHINA}>
-        <cylinderGeometry args={[0.14, 0.14, 0.24, 28]} />
-      </mesh>
-      <mesh position={[0.18, 1.02, 0.02]} material={WHITE_CHINA}>
-        <cylinderGeometry args={[0.12, 0.12, 0.16, 28]} />
-      </mesh>
+      <mesh geometry={WARM_STACK} material={WHITE_CHINA} position={[-0.2, 0.94 + 0.1155, 0]} />
+      <mesh geometry={WARM_BOWLS} material={WHITE_CHINA} position={[0.18, 0.94 + 0.084, 0.02]} />
       {[-1, 1].map((s) => (
         <mesh key={`l${s}`} position={[s * 0.4, 0.04, 0]} rotation={[PI / 2, 0, 0]}>
           <cylinderGeometry args={[0.04, 0.04, 0.03, 14]} />

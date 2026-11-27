@@ -2,17 +2,26 @@ import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef, type ReactNode } from 'react'
 import {
   BackSide,
+  BufferGeometry,
+  BoxGeometry,
   CanvasTexture,
   CatmullRomCurve3,
   Color,
+  CylinderGeometry,
   DoubleSide,
+  Euler,
   ExtrudeGeometry,
+  Float32BufferAttribute,
   InstancedMesh,
+  MeshStandardMaterial,
   Object3D,
   PlaneGeometry,
+  Quaternion,
   RingGeometry,
   ShaderMaterial,
   Shape,
+  ShapeGeometry,
+  SphereGeometry,
   SRGBColorSpace,
   TubeGeometry,
   Vector3,
@@ -20,8 +29,9 @@ import {
   type Mesh,
   type PointLight,
 } from 'three'
-import { Block, PI } from '../../kit'
+import { Block, Instanced, PI, type Placement } from '../../kit'
 import { GOLDFISH, SHARK } from './fishParts'
+import type { Surface } from '../../assets'
 import type { Vec3 } from '../../mutations'
 import { mulberry32 } from '../../rng'
 
@@ -233,6 +243,15 @@ export function OutsideWorld() {
 // An eye set into the wall. It follows you. It blinks.
 // ---------------------------------------------------------------------------
 
+/** A cap of a sphere just over the eyeball's surface, centred on its +z pole, `angle` wide (from the pole to its edge). */
+function eyeCap(radius: number, angle: number) {
+  return new SphereGeometry(radius, 40, 8, 0, PI * 2, 0, angle).rotateX(PI / 2)
+}
+const IRIS = eyeCap(0.1508, 0.43)
+const PUPIL = eyeCap(0.1514, 0.19)
+/** Where the lashes sit round the front of the lid's edge (angles round y, +z is straight ahead). */
+const LASHES = [0.25, 0.4, 0.5, 0.6, 0.75].map((t) => t * PI)
+
 export function WallEye({ asleep = false, x = 0 }: { asleep?: boolean; x?: number }) {
   const ball = useRef<Group>(null)
   const lid = useRef<Mesh>(null)
@@ -267,19 +286,28 @@ export function WallEye({ asleep = false, x = 0 }: { asleep?: boolean; x?: numbe
           <sphereGeometry args={[0.15, 48, 32]} />
           <meshStandardMaterial color="#f8f4ee" roughness={0.15} />
         </mesh>
-        <mesh position={[0, 0, 0.142]} userData={{ paint: true }}>
-          <circleGeometry args={[0.062, 40]} />
+        {/* iris, pupil and a glint: caps that wrap the front of the ball (flat discs sank into it) */}
+        <mesh geometry={IRIS} userData={{ paint: true }}>
           <meshStandardMaterial color="#2f8f5b" roughness={0.3} />
         </mesh>
-        <mesh position={[0, 0, 0.1445]}>
-          <circleGeometry args={[0.028, 32]} />
+        <mesh geometry={PUPIL}>
           <meshStandardMaterial color="#050505" roughness={0.1} />
         </mesh>
+        <mesh position={[0.026, 0.03, 0.146]}>
+          <sphereGeometry args={[0.011, 12, 8]} />
+          <meshBasicMaterial color="#ffffff" />
+        </mesh>
       </group>
-      {/* eyelid: an upper cap that swings down over the ball */}
+      {/* eyelid: an upper cap that swings down over the ball, with lashes along its edge */}
       <mesh ref={lid} position={[0, 0, 0.02]}>
         <sphereGeometry args={[0.158, 48, 16, 0, PI * 2, 0, PI / 2]} />
         <meshStandardMaterial color="#d98c8c" roughness={0.55} side={DoubleSide} />
+        {LASHES.map((a) => (
+          <mesh key={a} position={[Math.cos(a) * 0.179, 0.0135, Math.sin(a) * 0.179]} rotation={[0, -a, -1]}>
+            <cylinderGeometry args={[0.003, 0.005, 0.05, 6]} />
+            <meshStandardMaterial color="#1a1010" roughness={0.6} />
+          </mesh>
+        ))}
       </mesh>
     </group>
   )
@@ -289,10 +317,29 @@ export function WallEye({ asleep = false, x = 0 }: { asleep?: boolean; x?: numbe
 // A little rain cloud that lives indoors.
 // ---------------------------------------------------------------------------
 
+/** A zigzag lightning bolt hanging down from the storm cloud's base. */
+const BOLT = (() => {
+  const shape = new Shape()
+  const pts: [number, number][] = [
+    [-0.03, 0],
+    [0.07, 0],
+    [0.02, -0.28],
+    [0.09, -0.28],
+    [-0.06, -0.8],
+    [-0.01, -0.38],
+    [-0.08, -0.38],
+  ]
+  shape.moveTo(...pts[0])
+  pts.slice(1).forEach((p) => shape.lineTo(...p))
+  shape.closePath()
+  return new ExtrudeGeometry(shape, { depth: 0.02, bevelEnabled: false })
+})()
+
 export function RainCloud({ stormy = false }: { stormy?: boolean }) {
   const drops = stormy ? 90 : 40
   const rain = useRef<InstancedMesh>(null)
   const flash = useRef<PointLight>(null)
+  const bolt = useRef<Mesh>(null)
   // falling drops live in a ref: they change every frame, React never sees them
   const state = useRef<{ x: number; y: number; z: number; v: number }[]>([])
   const dummy = useRef(new Object3D())
@@ -315,7 +362,9 @@ export function RainCloud({ stormy = false }: { stormy?: boolean }) {
     mesh.instanceMatrix.needsUpdate = true
     if (flash.current) {
       const t = clock.elapsedTime % 3.7
-      flash.current.intensity = stormy && (t < 0.06 || (t > 0.14 && t < 0.18)) ? 5 : 0
+      const lit = stormy && (t < 0.06 || (t > 0.14 && t < 0.18))
+      flash.current.intensity = lit ? 5 : 0
+      if (bolt.current) bolt.current.visible = lit || (t > 0.06 && t < 0.3)
     }
   })
   const puffs: [Vec3, number][] = [
@@ -325,9 +374,28 @@ export function RainCloud({ stormy = false }: { stormy?: boolean }) {
     [[0.1, 0.12, -0.06], 0.2],
     [[-0.1, 0.08, 0.1], 0.18],
     [[0.38, -0.08, -0.05], 0.13],
+    // fill out the back and the far end, so it's round from every side
+    [[0.06, 0.03, -0.12], 0.18],
+    [[-0.2, 0.04, 0.13], 0.16],
+    [[-0.42, -0.08, 0.04], 0.12],
   ]
   return (
     <>
+      {/* a flattened base, so it has the flat underside of a cartoon cloud rather than a bunch of balloons */}
+      <mesh position={[0, -0.1, 0]} scale={[0.5, 0.11, 0.27]} castShadow userData={{ paint: true }}>
+        <sphereGeometry args={[1, 32, 16]} />
+        <meshStandardMaterial
+          color={stormy ? '#5c5f6b' : '#f4f6fb'}
+          emissive={stormy ? '#1d1f2a' : '#8ea6c8'}
+          emissiveIntensity={0.25}
+          roughness={1}
+        />
+      </mesh>
+      {stormy && (
+        <mesh ref={bolt} geometry={BOLT} position={[0.06, -0.16, 0.06]} visible={false}>
+          <meshBasicMaterial color="#fff36b" toneMapped={false} />
+        </mesh>
+      )}
       {puffs.map(([at, r], i) => (
         <mesh key={i} position={at} castShadow userData={{ paint: true }}>
           <sphereGeometry args={[r, 24, 16]} />
@@ -384,9 +452,8 @@ export function AirFish({ count, radius = 0.9 }: { count: number; radius?: numbe
             <meshStandardMaterial color={f.colour} roughness={0.35} metalness={0.2} />
           </mesh>
           <group position={[0, 0, -0.11]}>
-            <mesh rotation={[PI / 2, 0, 0]} position={[0, 0, -0.04]} scale={[0.3, 1, 1]} userData={{ paint: true }}>
-              <coneGeometry args={[0.05, 0.08, 16]} />
-              <meshStandardMaterial color={f.colour} roughness={0.35} side={DoubleSide} />
+            <mesh geometry={GOLDFISH.tail} userData={{ paint: true }}>
+              <meshStandardMaterial color={f.colour} roughness={0.35} side={DoubleSide} transparent opacity={0.9} />
             </mesh>
           </group>
           <mesh position={[0.03, 0.015, 0.075]}>
@@ -464,14 +531,63 @@ function tailTexture() {
  * It lies still, then flicks every few seconds. Built from the tail's root
  * along +x.
  */
-export function TigerTail() {
+/**
+ * The rug's top for the tiger swap: the same rug, lifted into a long low
+ * mound where something big is lying underneath it, rising to the edge the
+ * tail comes out of. Rug-local: the rug is 2.6 × 1.7, the tail leaves its +x
+ * edge at z = `tailZ`.
+ */
+function tigerRugGeometry(tailZ: number) {
+  const g = new PlaneGeometry(2.6, 1.7, 130, 68).rotateX(-PI / 2)
+  const pos = g.attributes.position
+  const smooth = (a: number, b: number, x: number) => {
+    const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
+    return t * t * (3 - 2 * t)
+  }
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i)
+    const z = pos.getZ(i)
+    // a broad, low hump past the end of the coffee table...
+    const body = 0.07 * smooth(0.62, 0.92, x) * (1 - smooth(1.08, 1.3, x)) * Math.exp(-(((z - tailZ) / 0.32) ** 2))
+    // ...narrowing to a ridge over the tail that lifts the rug's edge
+    const tail = 0.05 * smooth(0.8, 1.2, x) * Math.exp(-(((z - tailZ) / 0.07) ** 2))
+    pos.setY(i, Math.max(body, tail))
+  }
+  g.computeVertexNormals()
+  return g
+}
+
+/** Where the tail comes out from under the rug, across the rug's width. */
+const TIGER_Z = 0.3
+const TIGER_RUG = tigerRugGeometry(TIGER_Z)
+
+/**
+ * The tiger swap's extras for the rug (rug-local): the rug's top humped over
+ * whatever is lying under it, and the tail coming out from under the lifted
+ * edge. Lies just over the usual flat rug, which stays underneath for its edges.
+ */
+export function TigerRug({ surface }: { surface: Surface }) {
+  return (
+    <>
+      <mesh geometry={TIGER_RUG} position={[0, 0.0115, 0]} receiveShadow userData={{ paint: true }}>
+        <meshStandardMaterial color="#ffffff" roughness={1} side={DoubleSide} {...surface} />
+      </mesh>
+      <group position={[1.16, 0, TIGER_Z]}>
+        <TigerTail />
+      </group>
+    </>
+  )
+}
+
+function TigerTail() {
   const { geometry, map } = useMemo(() => {
+    // resting on the floor all the way along (its radius is 0.026)
     const curve = new CatmullRomCurve3([
-      new Vector3(0, 0.02, 0),
+      new Vector3(0, 0.026, 0),
       new Vector3(0.22, 0.026, 0.03),
-      new Vector3(0.42, 0.03, 0.14),
-      new Vector3(0.5, 0.032, 0.32),
-      new Vector3(0.4, 0.034, 0.44),
+      new Vector3(0.42, 0.026, 0.14),
+      new Vector3(0.5, 0.026, 0.32),
+      new Vector3(0.4, 0.026, 0.44),
     ])
     return { geometry: new TubeGeometry(curve, 48, 0.026, 12, false), map: tailTexture() }
   }, [])
@@ -485,8 +601,8 @@ export function TigerTail() {
         <meshStandardMaterial map={map} roughness={0.9} />
       </mesh>
       {/* black tip */}
-      <mesh position={[0.4, 0.034, 0.44]}>
-        <sphereGeometry args={[0.03, 14, 10]} />
+      <mesh position={[0.4, 0.029, 0.44]}>
+        <sphereGeometry args={[0.029, 16, 12]} />
         <meshStandardMaterial color="#1a1410" roughness={0.9} />
       </mesh>
     </group>
@@ -529,35 +645,74 @@ function clockFaceTexture() {
   return t
 }
 
-/** Stretches the lower half of a disc downwards into drips. */
-function melt(g: RingGeometry, radius: number) {
+/**
+ * Where a point of the clock ends up once it has melted: the lower half
+ * stretches downwards into drips. `size` sets how far it sags. Everything
+ * on the clock goes through the same mapping, so its parts stay lined up.
+ */
+function meltPoint(x: number, y: number, size: number): [number, number] {
+  const t = Math.max(0, -y / size)
+  return [x * (1 - 0.18 * t), y - size * 1.1 * t * t * (1 + 0.5 * Math.sin(x * 38))]
+}
+
+function melt(g: RingGeometry, size: number) {
   const pos = g.attributes.position
-  for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i)
-    const y = pos.getY(i)
-    const t = Math.max(0, -y / radius)
-    pos.setXY(i, x * (1 - 0.18 * t), y - radius * 1.1 * t * t * (1 + 0.5 * Math.sin(x * 38)))
+  for (let i = 0; i < pos.count; i++) pos.setXY(i, ...meltPoint(pos.getX(i), pos.getY(i), size))
+  g.computeVertexNormals()
+  return g
+}
+
+/** The melted case's outer wall: a band `depth` deep running round the melted rim of a disc of `radius`. */
+function meltedBand(radius: number, size: number, depth: number) {
+  const n = 128
+  const positions: number[] = []
+  const index: number[] = []
+  for (let i = 0; i <= n; i++) {
+    const a = (i / n) * PI * 2
+    const [x, y] = meltPoint(Math.cos(a) * radius, Math.sin(a) * radius, size)
+    positions.push(x, y, 0, x, y, depth)
+    if (i < n) {
+      const k = i * 2
+      index.push(k, k + 2, k + 1, k + 1, k + 2, k + 3)
+    }
   }
+  const g = new BufferGeometry()
+  g.setAttribute('position', new Float32BufferAttribute(positions, 3))
+  g.setIndex(index)
   g.computeVertexNormals()
   return g
 }
 
 export function MeltedClock({ radius = 0.17 }: { radius?: number }) {
-  const { face, back, map } = useMemo(
-    () => ({
-      face: melt(new RingGeometry(0.0001, radius, 64, 24), radius),
-      back: melt(new RingGeometry(0.0001, radius * 1.09, 64, 24), radius * 1.09),
+  const { face, back, band, lip, map } = useMemo(() => {
+    const outer = radius * 1.09
+    return {
+      face: melt(new RingGeometry(0.0001, radius, 64, 24), outer),
+      back: melt(new RingGeometry(0.0001, outer, 64, 24), outer),
+      // the case: a wall round the edge and a rolled lip over the face's rim
+      band: meltedBand(outer, outer, 0.028),
+      lip: melt(new RingGeometry(radius * 0.97, outer, 96, 4), outer),
       map: clockFaceTexture(),
-    }),
-    [radius],
-  )
+    }
+  }, [radius])
   return (
     <group rotation={[0, 0, 0.12]}>
-      <mesh geometry={back} position={[0, 0, 0.01]} userData={{ paint: true }}>
+      <mesh geometry={back} position={[0, 0, 0.004]} userData={{ paint: true }}>
         <meshStandardMaterial color="#b9a17a" metalness={0.6} roughness={0.35} side={DoubleSide} />
       </mesh>
-      <mesh geometry={face} position={[0, 0, 0.016]}>
+      <mesh geometry={band} position={[0, 0, 0.004]} userData={{ paint: true }}>
+        <meshStandardMaterial color="#b9a17a" metalness={0.6} roughness={0.35} side={DoubleSide} />
+      </mesh>
+      <mesh geometry={face} position={[0, 0, 0.022]}>
         <meshStandardMaterial map={map} roughness={0.5} side={DoubleSide} />
+      </mesh>
+      <mesh geometry={lip} position={[0, 0, 0.032]} userData={{ paint: true }}>
+        <meshStandardMaterial color="#b9a17a" metalness={0.6} roughness={0.35} side={DoubleSide} />
+      </mesh>
+      {/* the pin the hands turn on */}
+      <mesh position={[0, 0, 0.026]} rotation={[PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.011, 0.011, 0.008, 16]} />
+        <meshStandardMaterial color="#2b2622" metalness={0.5} roughness={0.4} />
       </mesh>
     </group>
   )
@@ -567,13 +722,31 @@ export function MeltedClock({ radius = 0.17 }: { radius?: number }) {
 // Book lying open with a page that keeps turning
 // ---------------------------------------------------------------------------
 
+/** A page of print: a heading and ragged lines of grey "text". */
+function pageTexture() {
+  const c = document.createElement('canvas')
+  c.width = 256
+  c.height = 180
+  const g = c.getContext('2d')!
+  g.fillStyle = '#f6f0e0'
+  g.fillRect(0, 0, c.width, c.height)
+  g.fillStyle = '#6d6455'
+  g.fillRect(28, 18, 110, 9)
+  const rng = mulberry32(5)
+  for (let y = 40; y < 166; y += 10) g.fillRect(28, y, 150 + rng() * 50, 4)
+  const t = new CanvasTexture(c)
+  t.colorSpace = SRGBColorSpace
+  return t
+}
+
 export function OpenBook({ colour }: { colour: string }) {
   const page = useRef<Group>(null)
+  const print = useMemo(() => pageTexture(), [])
   useFrame(({ clock }) => {
     if (!page.current) return
-    // turn a page every 2.5 seconds
+    // turn a page every 2.5 seconds: it lifts off the right-hand pages and lands on the left
     const t = (clock.elapsedTime % 2.5) / 2.5
-    page.current.rotation.z = -0.15 - Math.min(1, t * 1.6) * (PI - 0.3)
+    page.current.rotation.z = 0.1 + Math.min(1, t * 1.6) * (PI - 0.2)
   })
   return (
     <>
@@ -581,12 +754,17 @@ export function OpenBook({ colour }: { colour: string }) {
         <group key={s} rotation={[0, 0, s * 0.08]}>
           <Block size={[0.24, 0.006, 0.17]} position={[s * 0.12, 0.003, 0]} color={colour} roughness={0.6} radius={0.002} paint />
           <Block size={[0.225, 0.016, 0.16]} position={[s * 0.115, 0.013, 0]} color="#f1ead8" roughness={0.9} radius={0.002} />
+          {/* the printed page on top of each side */}
+          <mesh position={[s * 0.115, 0.0215, 0]} rotation={[-PI / 2, 0, 0]}>
+            <planeGeometry args={[0.2, 0.145]} />
+            <meshStandardMaterial map={print} roughness={0.9} />
+          </mesh>
         </group>
       ))}
-      <group ref={page} position={[0, 0.022, 0]}>
+      <group ref={page} position={[0, 0.023, 0]}>
         <mesh position={[0.11, 0, 0]} rotation={[-PI / 2, 0, 0]}>
           <planeGeometry args={[0.22, 0.155]} />
-          <meshStandardMaterial color="#f6f0e0" roughness={0.9} side={DoubleSide} />
+          <meshStandardMaterial map={print} roughness={0.9} side={DoubleSide} />
         </mesh>
       </group>
     </>
@@ -596,12 +774,44 @@ export function OpenBook({ colour }: { colour: string }) {
 /** Coffee spilled across the table from a knocked-over mug. */
 export function CoffeePuddle() {
   return (
-    <mesh position={[-0.11, 0.002, 0.02]} rotation={[-PI / 2, 0, 0.3]} scale={[1.7, 1, 1]}>
-      <circleGeometry args={[0.07, 40]} />
-      <meshStandardMaterial color="#2e1a0e" roughness={0.05} />
-    </mesh>
+    <group position={[-0.11, 0.0015, 0.02]} rotation={[-PI / 2, 0, 0.3]}>
+      <mesh geometry={PUDDLE}>
+        <meshStandardMaterial color="#2e1a0e" roughness={0.05} />
+      </mesh>
+      {/* a few splashes flicked out past the edge */}
+      {(
+        [
+          [-0.15, 0.03, 0.009],
+          [-0.17, -0.025, 0.006],
+          [-0.12, 0.07, 0.007],
+        ] as const
+      ).map(([x, y, r]) => (
+        <mesh key={x} position={[x, y, 0]}>
+          <circleGeometry args={[r, 16]} />
+          <meshStandardMaterial color="#2e1a0e" roughness={0.05} />
+        </mesh>
+      ))}
+    </group>
   )
 }
+
+/** A spill's outline: a long blob with a lumpy edge, wider at the mug's end. */
+const PUDDLE = (() => {
+  const shape = new Shape()
+  const n = 28
+  for (let i = 0; i <= n; i++) {
+    const a = (i / n) * PI * 2
+    const lump = 1 + 0.12 * Math.sin(a * 5 + 0.6) + 0.07 * Math.sin(a * 9 + 2)
+    // wider towards +x, where the mug is
+    const rx = 0.12 * lump
+    const ry = (0.055 + 0.018 * Math.cos(a)) * lump
+    const x = Math.cos(a) * rx
+    const y = Math.sin(a) * ry
+    if (i === 0) shape.moveTo(x, y)
+    else shape.lineTo(x, y)
+  }
+  return new ShapeGeometry(shape)
+})()
 
 // ---------------------------------------------------------------------------
 // A shark circling with the goldfish
@@ -654,30 +864,62 @@ export function Shark({ radius = 1.35 }: { radius?: number }) {
 // Glowing flowers for the plant
 // ---------------------------------------------------------------------------
 
+const FLOWER_SPOTS: [Vec3, string][] = [
+  [[0.18, 1.18, 0.12], '#ff4fd8'],
+  [[-0.15, 1.05, 0.2], '#b6ff3d'],
+  [[0.05, 1.32, -0.1], '#3dfcff'],
+  [[-0.22, 0.9, -0.12], '#ff4fd8'],
+  [[0.25, 0.85, -0.05], '#ffde21'],
+  [[0.0, 0.98, 0.26], '#ff8a1f'],
+  [[-0.05, 1.25, 0.15], '#ffde21'],
+]
+
+/**
+ * Each flower faces out and a little up from the middle of the plant, on a
+ * stem that runs back in and down into the foliage, so none of them hang in
+ * the air on their own.
+ */
+const FLOWERS = FLOWER_SPOTS.map(([at, colour]) => {
+  const head = new Vector3(...at)
+  const out = new Vector3(at[0], 0, at[2]).normalize()
+  const facing = new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), out.clone().multiplyScalar(0.8).setY(0.6).normalize())
+  // the stem starts just behind the flower head and ends deep in the plant
+  const root = new Vector3(at[0] * 0.3, at[1] - 0.26, at[2] * 0.3)
+  const tip = head.clone().addScaledVector(out, -0.02)
+  const stem = tip.clone().sub(root)
+  return {
+    at,
+    colour,
+    facing: new Euler().setFromQuaternion(facing),
+    stem: {
+      at: root.clone().add(tip).multiplyScalar(0.5).toArray() as Vec3,
+      length: stem.length(),
+      rot: new Euler().setFromQuaternion(new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), stem.normalize())),
+    },
+  }
+})
+const STEM = new CylinderGeometry(0.006, 0.009, 1, 8)
+
 export function GlowingFlowers() {
-  const spots: [Vec3, string][] = [
-    [[0.18, 1.18, 0.12], '#ff4fd8'],
-    [[-0.15, 1.05, 0.2], '#b6ff3d'],
-    [[0.05, 1.32, -0.1], '#3dfcff'],
-    [[-0.22, 0.9, -0.12], '#ff4fd8'],
-    [[0.25, 0.85, -0.05], '#ffde21'],
-    [[0.0, 0.98, 0.26], '#ff8a1f'],
-    [[-0.05, 1.25, 0.15], '#ffde21'],
-  ]
   return (
     <>
-      {spots.map(([at, c], i) => (
-        <group key={i} position={at}>
-          {[0, 1, 2, 3, 4].map((p) => (
-            <mesh key={p} position={[Math.cos((p / 5) * PI * 2) * 0.06, 0, Math.sin((p / 5) * PI * 2) * 0.06]}>
-              <sphereGeometry args={[0.05, 14, 10]} />
-              <meshStandardMaterial color={c} emissive={c} emissiveIntensity={1.6} roughness={0.4} />
-            </mesh>
-          ))}
-          <mesh>
-            <sphereGeometry args={[0.035, 12, 8]} />
-            <meshStandardMaterial color="#fff6c2" emissive="#fff6c2" emissiveIntensity={1.5} />
+      {FLOWERS.map((f, i) => (
+        <group key={i}>
+          <mesh geometry={STEM} position={f.stem.at} rotation={f.stem.rot} scale={[1, f.stem.length, 1]}>
+            <meshStandardMaterial color="#3f8a3a" roughness={0.7} />
           </mesh>
+          <group position={f.at} rotation={f.facing}>
+            {[0, 1, 2, 3, 4].map((p) => (
+              <mesh key={p} position={[Math.cos((p / 5) * PI * 2) * 0.055, 0, Math.sin((p / 5) * PI * 2) * 0.055]} scale={[1, 0.45, 1]}>
+                <sphereGeometry args={[0.048, 16, 10]} />
+                <meshStandardMaterial color={f.colour} emissive={f.colour} emissiveIntensity={1.6} roughness={0.4} />
+              </mesh>
+            ))}
+            <mesh position={[0, 0.012, 0]} scale={[1, 0.7, 1]}>
+              <sphereGeometry args={[0.032, 14, 10]} />
+              <meshStandardMaterial color="#fff6c2" emissive="#fff6c2" emissiveIntensity={1.5} />
+            </mesh>
+          </group>
         </group>
       ))}
       <pointLight position={[0, 1.1, 0.3]} intensity={0.9} distance={2.5} decay={2} color="#ff9ae6" />
@@ -710,6 +952,38 @@ const RAMP = (() => {
   return g
 })()
 
+/**
+ * A flight as one solid with a stepped side, so it has no seams between the
+ * steps. The outline is drawn inset by the bevel, which grows it back out to
+ * exactly STEPS * RUN long and TOP high, with softened edges.
+ */
+const FLIGHT = (() => {
+  const b = 0.008
+  const shape = new Shape()
+  shape.moveTo(b, b)
+  shape.lineTo(STEPS * RUN - b, b)
+  shape.lineTo(STEPS * RUN - b, TOP - b)
+  for (let i = STEPS - 1; i >= 0; i--) {
+    shape.lineTo(i * RUN + b, (i + 1) * RISE - b)
+    if (i > 0) shape.lineTo(i * RUN + b, i * RISE - b)
+  }
+  const g = new ExtrudeGeometry(shape, { depth: DEPTH - 2 * b, bevelEnabled: true, bevelThickness: b, bevelSize: b, bevelSegments: 2, curveSegments: 1 })
+  g.translate(0, 0, -DEPTH / 2 + b)
+  return g
+})()
+
+/** A red stair runner down the middle of every flight, held at the foot of each riser by a brass rod. */
+const RUNNER_WIDTH = 0.18
+const RUNNER_TREAD = new BoxGeometry(RUN + 0.004, 0.008, RUNNER_WIDTH)
+const RUNNER_RISER = new BoxGeometry(0.008, RISE, RUNNER_WIDTH)
+const STAIR_ROD = new CylinderGeometry(0.006, 0.006, RUNNER_WIDTH + 0.04, 10).rotateX(PI / 2)
+const RUNNER_CLOTH = new MeshStandardMaterial({ color: '#c8324a', roughness: 0.95 })
+const ROD_BRASS = new MeshStandardMaterial({ color: '#d4ac5a', metalness: 0.85, roughness: 0.3 })
+const STEP_INDEX = Array.from({ length: STEPS }, (_, i) => i)
+const TREADS: Placement[] = STEP_INDEX.map((i) => ({ at: [(i + 0.5) * RUN - 0.002, (i + 1) * RISE + 0.004, 0] }))
+const RISERS: Placement[] = STEP_INDEX.map((i) => ({ at: [i * RUN - 0.004, i * RISE + RISE / 2 + 0.004, 0] }))
+const RODS: Placement[] = STEP_INDEX.map((i) => ({ at: [i * RUN - 0.012, i * RISE + 0.012, 0] }))
+
 /** One flight in its own frame: climbs along +x, its floor is the y = 0 plane. */
 function Flight({ position, rotation, colour, ramp = false }: { position: Vec3; rotation?: Vec3; colour: string; ramp?: boolean }) {
   if (ramp)
@@ -720,17 +994,12 @@ function Flight({ position, rotation, colour, ramp = false }: { position: Vec3; 
     )
   return (
     <group position={position} rotation={rotation}>
-      {Array.from({ length: STEPS }, (_, i) => (
-        <Block
-          key={i}
-          size={[RUN, (i + 1) * RISE, DEPTH]}
-          position={[(i + 0.5) * RUN, ((i + 1) * RISE) / 2, 0]}
-          color={colour}
-          roughness={0.6}
-          radius={0.008}
-          paint
-        />
-      ))}
+      <mesh geometry={FLIGHT} castShadow receiveShadow userData={{ paint: true }}>
+        <meshStandardMaterial color={colour} roughness={0.6} />
+      </mesh>
+      <Instanced geometry={RUNNER_TREAD} material={RUNNER_CLOTH} items={TREADS} />
+      <Instanced geometry={RUNNER_RISER} material={RUNNER_CLOTH} items={RISERS} />
+      <Instanced geometry={STAIR_ROD} material={ROD_BRASS} items={RODS} />
     </group>
   )
 }
@@ -742,6 +1011,7 @@ function StairFlights({ extra = false, ramp = false }: { extra?: boolean; ramp?:
       {/* on the floor, climbing to the right */}
       <Flight position={[1.15, 0, STAIR_Z]} colour={c} ramp={ramp} />
       <Block size={[0.35, TOP, DEPTH]} position={[2.525, TOP / 2, STAIR_Z]} color={c} roughness={0.6} radius={0.008} paint />
+      {!ramp && <Block size={[0.35, 0.008, RUNNER_WIDTH]} position={[2.525, TOP + 0.004, STAIR_Z]} color="#c8324a" roughness={0.95} radius={0.003} />}
       {/* up the wall: its floor is the vertical plane x = 2.7 */}
       <Flight position={[2.7, TOP, STAIR_Z]} rotation={[0, 0, PI / 2]} colour={c} ramp={ramp} />
       {/* across the ceiling, upside down, heading back left */}

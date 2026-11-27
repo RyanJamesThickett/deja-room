@@ -446,6 +446,15 @@ export function LockerBank() {
       <mesh position={[0, 1.78, 0]} material={STEEL} rotation={[0, 0, PI / 2]}>
         <cylinderGeometry args={[0.01, 0.01, w - 0.04, 8]} />
       </mesh>
+      {/* the coat hanger the jumpsuit hangs from */}
+      <mesh position={[0, 1.735, 0]} material={STEEL}>
+        <cylinderGeometry args={[0.006, 0.006, 0.08, 8]} />
+      </mesh>
+      {[-1, 1].map((s) => (
+        <mesh key={`hg${s}`} position={[s * 0.08, 1.69, 0]} rotation={[0, 0, s * 1.2]} material={STEEL}>
+          <cylinderGeometry args={[0.006, 0.006, 0.18, 8]} />
+        </mesh>
+      ))}
       <Block size={[0.3, 0.55, 0.08]} position={[0, 1.4, 0]} color="#ff7a1a" roughness={0.8} radius={0.03} />
       {[-1, 1].map((s) => (
         <Block key={s} size={[0.12, 0.62, 0.07]} position={[s * 0.075, 0.82, 0]} color="#ff7a1a" roughness={0.8} radius={0.03} />
@@ -525,9 +534,15 @@ function Gauge({ x, reading, twitch = 0.01 }: { x: number; reading: number; twit
 
 function GaugeBezel() {
   return (
-    <mesh position={[0, 0, 0.055]} rotation={[PI / 2, 0, 0]} material={STEEL} castShadow>
-      <cylinderGeometry args={[0.1, 0.1, 0.05, 40]} />
-    </mesh>
+    <>
+      <mesh position={[0, 0, 0.055]} rotation={[PI / 2, 0, 0]} material={STEEL} castShadow>
+        <cylinderGeometry args={[0.1, 0.1, 0.05, 40]} />
+      </mesh>
+      {/* a rolled lip round the face */}
+      <mesh position={[0, 0, 0.081]} material={STEEL}>
+        <torusGeometry args={[0.092, 0.01, 10, 40]} />
+      </mesh>
+    </>
   )
 }
 
@@ -806,6 +821,9 @@ export function Boots() {
           <Block size={[0.11, 0.04, 0.3]} position={[0, 0.02, 0.01]} color="#2b2f36" metalness={0.7} roughness={0.4} radius={0.012} />
           <Block size={[0.1, 0.1, 0.26]} position={[0, 0.09, 0.0]} {...white} radius={0.035} />
           <Block size={[0.1, 0.2, 0.12]} position={[0, 0.23, -0.07]} {...white} radius={0.03} />
+          {/* padded cuff round the top, and a strap over the instep */}
+          <Block size={[0.112, 0.035, 0.132]} position={[0, 0.325, -0.07]} color="#ff8a1f" roughness={0.5} radius={0.012} />
+          <Block size={[0.108, 0.03, 0.045]} position={[0, 0.138, 0.04]} color="#ff8a1f" roughness={0.5} radius={0.01} />
           <mesh position={[0, 0.02, 0.161]}>
             <planeGeometry args={[0.08, 0.012]} />
             <meshBasicMaterial color="#3dfcff" />
@@ -932,10 +950,22 @@ export function VentTentacle() {
 export function VentSock() {
   return (
     <group position={[0.04, -0.02, 0.05]} rotation={[0, 0, -0.15]}>
-      <Block size={[0.09, 0.2, 0.03]} position={[0, -0.08, 0]} color="#f2f4f7" roughness={0.9} radius={0.012} />
-      <Block size={[0.09, 0.04, 0.032]} position={[0, -0.12, 0]} color="#ff3131" roughness={0.9} radius={0.012} />
-      <Block size={[0.09, 0.04, 0.032]} position={[0, -0.04, 0]} color="#ff3131" roughness={0.9} radius={0.012} />
-      <Block size={[0.09, 0.08, 0.14]} position={[0, -0.2, 0.05]} color="#f2f4f7" roughness={0.9} radius={0.03} />
+      {/* the leg, squashed flat where the grille has it, with two red hoops */}
+      <mesh position={[0, -0.08, 0]} scale={[1, 1, 0.45]}>
+        <capsuleGeometry args={[0.045, 0.14, 6, 16]} />
+        <meshStandardMaterial color="#f2f4f7" roughness={0.9} />
+      </mesh>
+      {[-0.12, -0.04].map((y) => (
+        <mesh key={y} position={[0, y, 0]} scale={[1, 1, 0.45]}>
+          <cylinderGeometry args={[0.047, 0.047, 0.035, 16]} />
+          <meshStandardMaterial color="#ff3131" roughness={0.9} />
+        </mesh>
+      ))}
+      {/* the foot hanging out of the vent, heel and toe rounded */}
+      <mesh position={[0, -0.19, 0.05]} rotation={[PI / 2, 0, 0]} scale={[1, 1, 0.8]}>
+        <capsuleGeometry args={[0.042, 0.09, 6, 16]} />
+        <meshStandardMaterial color="#f2f4f7" roughness={0.9} />
+      </mesh>
     </group>
   )
 }
@@ -1010,6 +1040,13 @@ export function Drum({ color = '#2f6e3f' }: { color?: string }) {
         <mesh key={y} position={[0, y, 0]} rotation={[PI / 2, 0, 0]}>
           <torusGeometry args={[0.292, 0.012, 8, 40]} />
           <meshStandardMaterial color={color} metalness={0.5} roughness={0.5} />
+        </mesh>
+      ))}
+      {/* rolled rims top and bottom */}
+      {[0.014, 0.866].map((y) => (
+        <mesh key={y} position={[0, y, 0]} rotation={[PI / 2, 0, 0]}>
+          <torusGeometry args={[0.285, 0.014, 8, 40]} />
+          <meshStandardMaterial color={color} metalness={0.5} roughness={0.45} />
         </mesh>
       ))}
       <mesh position={[0.15, 0.885, 0.05]}>

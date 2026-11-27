@@ -706,7 +706,7 @@ export function plaqueTexture(title: string, artist: string, detail: string) {
 }
 
 /** A plain printed card with centred lines of text; the first line is the big one. */
-export function cardTexture(lines: string[], { w = 384, h = 256, bg = '#f5f2ea', ink = '#2b2824', size = 46 } = {}) {
+export function cardTexture(lines: string[], { w = 384, h = 256, bg = '#f5f2ea', ink = '#2b2824', size = 46, even = false } = {}) {
   const [c, g] = canvas(w, h)
   g.fillStyle = bg
   g.fillRect(0, 0, w, h)
@@ -715,7 +715,7 @@ export function cardTexture(lines: string[], { w = 384, h = 256, bg = '#f5f2ea',
   g.textBaseline = 'middle'
   const gap = h / (lines.length + 1)
   lines.forEach((line, i) => {
-    g.font = i === 0 ? `bold ${size}px Georgia, serif` : `${Math.round(size * 0.5)}px Georgia, serif`
+    g.font = i === 0 || even ? `bold ${size}px Georgia, serif` : `${Math.round(size * 0.5)}px Georgia, serif`
     g.fillText(line, w / 2, gap * (i + 1))
   })
   return finish(c)

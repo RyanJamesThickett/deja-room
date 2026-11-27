@@ -1,6 +1,6 @@
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef, type ReactNode } from 'react'
-import { AdditiveBlending, DoubleSide, IcosahedronGeometry, MeshStandardMaterial, type Group } from 'three'
+import { AdditiveBlending, CylinderGeometry, DoubleSide, IcosahedronGeometry, MeshStandardMaterial, type Group } from 'three'
 import { Instanced, PI, type Placement } from '../../kit'
 import { ShadowFigure } from '../../figure'
 import { once } from '../../outsideLayers'
@@ -13,6 +13,7 @@ import { BALL, DISC, glossMaterial, lathe, matteMaterial, PLANE, UNIT_BOX } from
 import {
   alongRope,
   BENCH,
+  benchEnd,
   benchSlats,
   bentColumn,
   bikeParts,
@@ -169,12 +170,7 @@ export function Bench({ melted = false }: { melted?: boolean }) {
     <group>
       {[-1, 1].map((side) => (
         <group key={side} position={[side * half, 0, 0]} rotation={[0, 0, melted ? side * 0.22 : 0]}>
-          {/* cast-iron end: front leg, back leg rising into the backrest, the armrest */}
-          <mesh geometry={UNIT_BOX} material={IRON_MAT} position={[0, 0.22, 0.2]} scale={[0.05, 0.44, 0.05]} castShadow />
-          <mesh geometry={UNIT_BOX} material={IRON_MAT} position={[0, 0.42, -0.24]} rotation={[-0.22, 0, 0]} scale={[0.05, 0.86, 0.05]} castShadow />
-          <mesh geometry={UNIT_BOX} material={IRON_MAT} position={[0, 0.42, -0.02]} scale={[0.05, 0.04, 0.48]} />
-          <mesh geometry={UNIT_BOX} material={IRON_MAT} position={[0.0, 0.64, 0.02]} scale={[0.06, 0.04, 0.42]} castShadow />
-          <mesh geometry={UNIT_BOX} material={IRON_MAT} position={[0, 0.53, 0.21]} scale={[0.04, 0.2, 0.04]} />
+          <mesh geometry={benchEnd()} material={IRON_MAT} castShadow />
         </group>
       ))}
       {[-0.15, -0.05, 0.05, 0.15].map((z) => (
@@ -206,6 +202,7 @@ const BIN_BODY = lathe(
 )
 const BIN_LID = lathe(
   [
+    [0, 0],
     [0.27, 0],
     [0.27, 0.04],
     [0.2, 0.12],
@@ -260,11 +257,13 @@ export function Bin({ mode = 'default' }: { mode?: 'default' | 'overflow' | 'eye
 }
 const GLOWING_EYE = new MeshStandardMaterial({ color: '#fff7d0', emissive: '#ffe680', emissiveIntensity: 0.8, roughness: 0.2 })
 
+const BOLLARD = lathe([[0.1, 0], [0.1, 0.7], [0.12, 0.75], [0.1, 0.82], [0.05, 0.9], [0, 0.92]], 20)
+
 /** A black iron bollard with a gold band. */
 export function Bollard() {
   return (
     <group>
-      <mesh geometry={lathe([[0.1, 0], [0.1, 0.7], [0.12, 0.75], [0.1, 0.82], [0.05, 0.9], [0, 0.92]], 16)} material={MAT.black} castShadow />
+      <mesh geometry={BOLLARD} material={MAT.black} castShadow />
       <mesh geometry={DISC} material={MAT.brass} position={[0, 0.62, 0]} scale={[0.104, 0.03, 0.104]} />
     </group>
   )
@@ -331,6 +330,10 @@ export function PhoneBox({ inside = false }: { inside?: boolean }) {
 }
 const FACES = [0, PI / 2, PI, -PI / 2]
 
+/** The pillar box's door: a curved panel standing just proud of the front. */
+const POST_DOOR = new CylinderGeometry(0.238, 0.238, 0.52, 10, 1, false, -0.62, 1.24)
+const POST_CAP = lathe([[0, 0], [0.25, 0], [0.26, 0.04], [0.22, 0.1], [0.12, 0.17], [0, 0.19]], 24)
+
 /** A pillar box: red cylinder, a slot under the cap, and the collection plate. */
 export function PostBox({ letters = false }: { letters?: boolean }) {
   const red = glossMaterial('#c8202a')
@@ -338,9 +341,17 @@ export function PostBox({ letters = false }: { letters?: boolean }) {
     <group>
       <mesh geometry={DISC} material={MAT.black} position={[0, 0.06, 0]} scale={[0.25, 0.12, 0.25]} />
       <mesh geometry={DISC} material={red} position={[0, 0.66, 0]} scale={[0.23, 1.1, 0.23]} castShadow />
-      <mesh geometry={lathe([[0.25, 0], [0.26, 0.04], [0.22, 0.1], [0.12, 0.17], [0, 0.19]], 24)} material={red} position={[0, 1.21, 0]} castShadow />
-      <mesh geometry={UNIT_BOX} material={MAT.black} position={[0, 1.08, 0.215]} scale={[0.2, 0.03, 0.04]} />
-      <mesh geometry={UNIT_BOX} material={MAT.white} position={[0, 0.85, 0.226]} scale={[0.14, 0.1, 0.01]} />
+      <mesh geometry={POST_CAP} material={red} position={[0, 1.21, 0]} castShadow />
+      {/* mouldings round the foot and the top of the pillar */}
+      <mesh geometry={DISC} material={red} position={[0, 0.15, 0]} scale={[0.242, 0.04, 0.242]} />
+      <mesh geometry={DISC} material={red} position={[0, 1.18, 0]} scale={[0.245, 0.05, 0.245]} />
+      {/* the slot under a little hood, the door below it with its plate and the royal cypher */}
+      <mesh geometry={UNIT_BOX} material={MAT.black} position={[0, 1.07, 0.215]} scale={[0.2, 0.03, 0.04]} />
+      <mesh geometry={UNIT_BOX} material={red} position={[0, 1.1, 0.225]} rotation={[0.5, 0, 0]} scale={[0.24, 0.015, 0.05]} />
+      <mesh geometry={POST_DOOR} material={red} position={[0, 0.66, 0]} />
+      <mesh geometry={UNIT_BOX} material={MAT.white} position={[0, 0.85, 0.235]} scale={[0.14, 0.1, 0.01]} />
+      <mesh geometry={UNIT_BOX} material={MAT.brass} position={[0, 0.66, 0.236]} scale={[0.08, 0.07, 0.01]} />
+      <mesh geometry={UNIT_BOX} material={MAT.black} position={[0.11, 0.6, 0.216]} scale={[0.015, 0.05, 0.012]} />
       {letters && <Instanced geometry={UNIT_BOX} material={MAT.white} items={LETTERS_OUT()} castShadow />}
     </group>
   )
@@ -365,15 +376,21 @@ const LETTERS_OUT = once(() => {
 
 const BARK = new MeshStandardMaterial({ vertexColors: true, roughness: 0.9 })
 const LEAVES = new MeshStandardMaterial({ vertexColors: true, roughness: 0.85 })
+const GRATE = new MeshStandardMaterial({ vertexColors: true, roughness: 0.5, metalness: 0.5 })
 
 /** A London plane in an iron grate. */
 export function Tree({ crown = 'summer' }: { crown?: 'summer' | 'autumn' | 'bare' }) {
   const t = treeParts()
   return (
     <group>
-      <mesh geometry={UNIT_BOX} material={MAT.iron} position={[0, 0.005, 0]} scale={[1.2, 0.01, 1.2]} receiveShadow />
-      <mesh geometry={t.wood} material={BARK} castShadow receiveShadow />
-      {crown !== 'bare' && <mesh geometry={crown === 'autumn' ? t.autumn : t.summer} material={LEAVES} castShadow receiveShadow />}
+      <mesh geometry={t.grate} material={GRATE} receiveShadow />
+      <mesh geometry={t.trunk} material={BARK} castShadow receiveShadow />
+      <mesh geometry={t.limbs} material={BARK} castShadow receiveShadow />
+      {crown === 'bare' ? (
+        <mesh geometry={t.seeds} material={BARK} />
+      ) : (
+        <mesh geometry={crown === 'autumn' ? t.autumn : t.summer} material={LEAVES} castShadow receiveShadow />
+      )}
     </group>
   )
 }

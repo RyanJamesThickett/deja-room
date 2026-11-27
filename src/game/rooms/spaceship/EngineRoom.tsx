@@ -117,6 +117,13 @@ function EngineShell() {
           <meshStandardMaterial color="#7f8a84" metalness={0.75} roughness={0.4} />
         </mesh>
       ))}
+      {/* hangers holding the deckhead run up to the ceiling */}
+      {[1.9, 1.2, 0.6].map((x) => (
+        <Block key={`hx${x}`} size={[0.05, height - 2.4, 0.16]} position={[x, (height + 2.4) / 2, COOLANT[2]]} color="#4a4f47" metalness={0.8} roughness={0.4} />
+      ))}
+      {[-1.2, -0.6].map((z) => (
+        <Block key={`hz${z}`} size={[0.16, height - 2.4, 0.05]} position={[REACTOR[0], (height + 2.4) / 2, z]} color="#4a4f47" metalness={0.8} roughness={0.4} />
+      ))}
       {/* the line the valve sits on, along the -z wall behind the tank */}
       <Pipe from={[-0.6, 0, -halfZ + 0.12]} to={[-0.6, 1.05, -halfZ + 0.12]} radius={0.05} />
       <Pipe from={[-0.6, 1.05, -halfZ + 0.12]} to={[halfX, 1.05, -halfZ + 0.12]} radius={0.05} />
@@ -135,6 +142,7 @@ function EngineLights() {
     <>
       {[-1.7, 2.2].map((x) => (
         <group key={x}>
+          <Block size={[0.24, 0.035, 4.28]} position={[x, height - 0.0175, 0]} color="#4a4f47" metalness={0.8} roughness={0.35} radius={0.008} />
           <Block size={[0.16, 0.04, 4.2]} position={[x, height - 0.03, 0]} color="#ffe9c4" emissive="#ffe9c4" emissiveIntensity={1.8} radius={0.01} />
           <PanelLight position={[x, height - 0.06, 0]} size={[0.25, 4.2]} facing={[x, 0, 0]} color="#ffe9c4" intensity={2.4} />
         </group>
